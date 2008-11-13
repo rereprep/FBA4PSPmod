@@ -6,7 +6,7 @@
 
 unexport
 
-PSPSDK = `psp-config --pspsdk-path`
+PSPSDK = $(shell psp-config --pspsdk-path)
 PSP_FW_VERSION = 200
 VERSION_MINOR = 1
 VERSION_MAJOR = 0
@@ -25,7 +25,8 @@ DEPEND = 1
 #
 
 # Specify the name of the executable file, without ".exe"
-NAME = bin/sega/FBA4PSP.elf
+BINDIR = bin/sega
+NAME = ${BINDIR}/FBA4PSP.elf
 
 #ifndef	CPUTYPE
 #	CPUTYPE	= i686
@@ -216,7 +217,7 @@ $(NAME):	$(allobj)
 	@$(FIXUP) $@
 	@psp-strip $(NAME) -o eboot_strip.elf
 	@mksfoex -d MEMSIZE=1 'FinalBurn Alpha for PSP' eboot.sfo
-	@pack-pbp bin/sega/EBOOT.PBP eboot.sfo $(srcdir)psp/fbapsp.png NULL NULL NULL NULL eboot_strip.elf NULL
+	@pack-pbp ${BINDIR}/EBOOT.PBP eboot.sfo $(srcdir)psp/fbapsp_sega.png NULL NULL NULL NULL eboot_strip.elf NULL
 	-@rm -f eboot.sfo eboot_strip.elf
 
 
@@ -245,7 +246,7 @@ burn.o burn.d:	driverlist.h
 
 $(driverlist.h): $(drvobj) $(srcdir)scripts/gamelist.pl
 ifdef	PERL
-	@$(srcdir)scripts/gamelist.pl -o $@ -l bin/sega/gamelist.txt \
+	@$(srcdir)scripts/gamelist.pl -o $@ -l ${BINDIR}/gamelist.txt \
 		$(filter %.cpp,$(foreach file,$(drvobj:.o=.cpp),$(foreach dir,$(alldir), \
 		$(firstword $(wildcard $(srcdir)$(dir)/$(file))))))
 else
@@ -362,7 +363,7 @@ ctv.d ctv.o:	$(ctv.h)
 
 $(ctv.h):	ctv_make.cpp
 	@echo Generating $(srcdir)generated/$(@F)...
-	@gcc $< \
+	@gcc ${CXXFLAGS} $< \
 		-o $(subst $(srcdir),$(objdir),$(<D))/$(<F:.cpp=.exe)
 	@$(subst $(srcdir),$(objdir),$(<D))/$(<F:.cpp=.exe) >$@
 
@@ -490,6 +491,7 @@ init:
 	@echo
 	@mkdir -p $(foreach dir, $(alldir),$(objdir)$(dir))
 	@mkdir -p $(srcdir)generated
+	@mkdir -p ${BINDIR}
 
 cleandep:
 	@echo Removing depend files from $(objdir)...
