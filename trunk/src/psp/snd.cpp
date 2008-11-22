@@ -59,7 +59,7 @@ int sound_start()
 	int aures = sceAudioSRCChReserve( SND_FRAME_SIZE, SND_RATE, 2 );
 	if ( aures ) return aures;
 	
-	sound_thread_id = sceKernelCreateThread("sound_thread", sound_thread, 0x11, 0xFA0, 0, NULL);
+	sound_thread_id = sceKernelCreateThread("sound_thread", sound_thread, 0x11, 0x400, 0, NULL);
 	if (sound_thread_id < 0) {
 		sceAudioSRCChRelease();
 		return -1;
@@ -93,7 +93,7 @@ void sound_next()
 {	
 	mixbufid ++;
 	pBurnSoundOut = pmixbuf[mixbufid & 0x7];
-	//memset(pBurnSoundOut,0,SND_FRAME_SIZE * 2 );
+
 }
 
 void sound_pause()

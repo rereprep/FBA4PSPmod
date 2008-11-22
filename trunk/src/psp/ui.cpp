@@ -11,16 +11,18 @@
 #include "burnint.h"
 #include "UniCache.h"
 #include "burner.h"
-
+#include "pspadhoc.h"
+#include "pspadhoc.h"
 
 #define find_rom_list_cnt	10
 
 short gameSpeedCtrl = 1;
 unsigned int hotButtons = (PSP_CTRL_SQUARE|PSP_CTRL_CIRCLE|PSP_CTRL_CROSS);
 short screenMode=0;
+short wifiStatus=0;
 short saveIndex=0;
 bool enableJoyStick=true;
-char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_V11p3)";
+char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_preV12 DEMO5)";
 static int find_rom_count = 0;
 static int find_rom_select = 0;
 static int find_rom_top = 0;
@@ -63,6 +65,7 @@ static char *ui_main_menu[] = {
 	"CPU Speed %3dMHz ",
 	"JoyStick: %s ",
 	"Exit FinaBurn Alpha",
+	"Wifi Game: %s"
 };
 
 static void update_status_str(char *batt_str)
@@ -97,15 +100,13 @@ void draw_ui_main()
 	char buf[320];
 	drawRect(GU_FRAME_ADDR(work_frame), 0, 0, 480, 272, UI_BGCOLOR);
 	drawString(LBVer, GU_FRAME_ADDR(work_frame), 10, 10, UI_COLOR);
-	//unsigned int kdv = sceKernelDevkitVersion();
-	//sprintf(buf, "FW: %X.%X%X.%02X", kdv >> 24, (kdv&0xf0000)>>16, (kdv&0xf00)>>8, kdv&0xff);
 	update_status_str(buf);
 	drawString(buf, GU_FRAME_ADDR(work_frame), 470 - getDrawStringLength(buf), 10, UI_COLOR);
     drawRect(GU_FRAME_ADDR(work_frame), 8, 28, 464, 1, UI_COLOR);
     
     drawRect(GU_FRAME_ADDR(work_frame), 10, 40+ui_mainmenu_select*18, 460, 18, UI_COLOR);
     
-    for(int i=0; i<10; i++)  {
+    for(int i=0; i<11; i++)  {
 	    unsigned short fc = set_ui_main_menu_item_color(i);
 	    
 	    switch ( i ) {
@@ -137,6 +138,23 @@ void draw_ui_main()
 	    	else
 	    		sprintf( buf, ui_main_menu[i], "DISABLED" );
 			break;
+		case 10:
+			switch(wifiStatus)
+			{
+				case 1:
+					sprintf( buf, ui_main_menu[i], "HOST" );
+					break;
+				case 2:
+					sprintf( buf, ui_main_menu[i], "CLIENT" );
+					break;
+				case 3:
+					sprintf( buf, ui_main_menu[i], "P2P" );
+					break;
+				default:
+					sprintf( buf, ui_main_menu[i], "OFF" );
+					break;
+			}
+			break;
 	    default:
 	    	sprintf( buf, ui_main_menu[i]);
     	}
@@ -146,7 +164,7 @@ void draw_ui_main()
 	    			44 + i * 18, fc);
 	}
 	
-    drawRect(GU_FRAME_ADDR(work_frame), 8, 230, 464, 1, UI_COLOR);
+    //drawRect(GU_FRAME_ADDR(work_frame), 8, 230, 464, 1, UI_COLOR);
     drawString("FB Alpha contains parts of MAME & Final Burn. (C) 2004, Team FB Alpha.", GU_FRAME_ADDR(work_frame), 10, 238, UI_COLOR);
     drawString("FinalBurn Alpha for PSP (C) 2008, OopsWare and LBICELYNE", GU_FRAME_ADDR(work_frame), 10, 255, UI_COLOR);
 }
@@ -229,12 +247,20 @@ void draw_ui_browse(bool rebuiltlist)
 static void return_to_game()
 {
 	if ( nPrevGame < nBurnDrvCount ) {
-		scePowerSetClockFrequency(
-					cpu_speeds[cpu_speeds_select].cpu, 
-					cpu_speeds[cpu_speeds_select].cpu, 
-					cpu_speeds[cpu_speeds_select].bus );
+		if(wifiStatus)
+			adhocInit(BurnDrvGetTextA(DRV_NAME));
+		else
+			adhocTerm();
+		if(wifiStatus!=2)
+		{
+				scePowerSetClockFrequency(
+								cpu_speeds[cpu_speeds_select].cpu, 
+								cpu_speeds[cpu_speeds_select].cpu, 
+								cpu_speeds[cpu_speeds_select].bus );				
+				sound_continue();
+		}
+									
 		setGameStage(0);
-		sound_continue();
 	}
 }
 
@@ -249,13 +275,13 @@ static void process_key( int key, int down, int repeat )
 		switch( key ) {
 		case PSP_CTRL_UP:
 			if (ui_mainmenu_select <= 0)
-				ui_mainmenu_select = 9;
+				ui_mainmenu_select = 10;
 			else
 				ui_mainmenu_select--;
 			draw_ui_main();
 			break;
 		case PSP_CTRL_DOWN:
-			if (ui_mainmenu_select >=9 )
+			if (ui_mainmenu_select >=10 )
 				ui_mainmenu_select = 0;
 			else
 				ui_mainmenu_select++;
@@ -308,6 +334,14 @@ static void process_key( int key, int down, int repeat )
 				enableJoyStick=!enableJoyStick;
 				draw_ui_main();
 				break;
+			case 10:
+				wifiStatus--;
+				if(wifiStatus<0)
+				{
+					wifiStatus=3;
+				}
+				draw_ui_main();
+				break;
 			}
 			break;
 		case PSP_CTRL_RIGHT:
@@ -356,6 +390,14 @@ static void process_key( int key, int down, int repeat )
 				enableJoyStick=!enableJoyStick;
 				draw_ui_main();
 				break;
+			case 10:
+				wifiStatus++;
+				if(wifiStatus>3)
+				{
+					wifiStatus=0;
+				}
+				draw_ui_main();
+				break;
 			}
 			break;
 			
@@ -368,7 +410,7 @@ static void process_key( int key, int down, int repeat )
 				draw_ui_browse(true);
 				break;
 			case 1:
-				if(nPrevGame != ~0U)
+				if(nPrevGame != ~0U&&wifiStatus!=2)
 				{
 					strcpy(ui_current_path,szAppCachePath);
 					strcat(ui_current_path,BurnDrvGetTextA(DRV_NAME));
@@ -387,7 +429,7 @@ static void process_key( int key, int down, int repeat )
 				}
 				break;
 			case 2:
-				if(nPrevGame != ~0U)
+				if(nPrevGame != ~0U&&wifiStatus!=2)
 				{
 					strcpy(ui_current_path,szAppCachePath);
 					strcat(ui_current_path,BurnDrvGetTextA(DRV_NAME));
@@ -395,26 +437,25 @@ static void process_key( int key, int down, int repeat )
 					strcat(ui_current_path,buf);
 					if(!BurnStateSave(ui_current_path,1))
 					{
-						saveIndex++;
-						if(saveIndex>9)
-							saveIndex=0;
-						draw_ui_main();
+						scePowerSetClockFrequency(
+									cpu_speeds[cpu_speeds_select].cpu, 
+									cpu_speeds[cpu_speeds_select].cpu, 
+									cpu_speeds[cpu_speeds_select].bus );
+						setGameStage(0);
+						sound_continue();
 					}
 					
 				}
 				break;
 			case 4:
 				if(nPrevGame != ~0U)
-				{
-					InpMake(0x80000000);
-					BurnDrvFrame();
+				{					
 					scePowerSetClockFrequency(
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].bus );
-								
-					setGameStage(0);
-					sound_continue();
+					resetGame();
+					wifiSend(WIFI_CMD_RESET);
 				}
 				break;
 			case 9:	// Exit
@@ -481,9 +522,9 @@ static void process_key( int key, int down, int repeat )
 						nPrevGame = ~0U;
 						DrvExit();
 						InpExit();
-						gameSpeedCtrl = 1;
-						hotButtons = (PSP_CTRL_SQUARE|PSP_CTRL_CIRCLE|PSP_CTRL_CROSS);
-						screenMode=0;
+						adhocTerm();
+						loadDefaultInput();
+						nCurrentFrame=0;
 						
 					}
 					
@@ -498,13 +539,9 @@ static void process_key( int key, int down, int repeat )
 							BurnRecalcPal();
 							InpInit();
 							InpDIP();
-
-							scePowerSetClockFrequency(
-								cpu_speeds[cpu_speeds_select].cpu, 
-								cpu_speeds[cpu_speeds_select].cpu, 
-								cpu_speeds[cpu_speeds_select].bus );
-							setGameStage(0);
-							sound_continue();
+							nPrevGame = nBurnDrvSelect;
+							return_to_game();
+							
 						} else {
 							nBurnDrvSelect = ~0U; 
 							setGameStage(2);

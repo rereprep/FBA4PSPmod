@@ -43,9 +43,10 @@ burn/cps3 cpu cpu/c68k cpu/cz80
 
 incdir	= -I. -I$(PSPSDK)/include $(foreach dir,$(alldir),-I$(srcdir)$(dir)) -I$(objdir)generated
 
-lib		=  -lm -lpspgum -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
-			-lpspnet -lpspnet_inet -lpspnet_apctl -lpspnet_resolver -lpsputility \
+lib		=  -lm -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
+			-lpspnet -lpspnet_adhoc -lpspnet_adhocctl -lpspwlan -lpsputility \
 			-lpspuser -lpspkernel -lpsppower -lpspaudio -lpsprtc
+
 
 		
 drvobj	= d_cps3.o
@@ -63,7 +64,7 @@ depobj	:= 	$(drvobj) \
 	   	adler32.o compress.o crc32.o deflate.o inffast.o inflate.o inftrees.o trees.o uncompr.o zutil.o \
 	   	\
 	   	main.o drv.o input.o state.o statec.o unzip.o zipfn.o bzip.o font.o \
-	   	roms.o ui.o gui.o snd.o UniCache.o exception.o \
+	   	roms.o ui.o gui.o snd.o UniCache.o exception.o pspadhoc.o \
 	   	\
 	   	cps3run.o cps3snd.o
 	   	

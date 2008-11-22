@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "UniCache.h"
+//#include "pspadhoc.h"
 
 PspDebugRegBlock exception_regs;
 
@@ -105,7 +106,8 @@ void ExceptionHandler(PspDebugRegBlock * regs)
             break;
         }
 		sceKernelDelayThread(100000);
-    }    
+    }
+    //adhocTerm();    
     sceKernelExitGame();
 }
 

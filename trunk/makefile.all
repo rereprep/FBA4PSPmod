@@ -45,9 +45,10 @@ cpu/m6809 cpu/hd6309 cpu/m6800 burn/misc burn/misc/dec0 burn/konami burn/sega
 
 incdir	= -I. -I$(PSPSDK)/include $(foreach dir,$(alldir),-I$(srcdir)$(dir)) -I$(objdir)generated
 
-lib		=  -lm -lpspgum -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
-			-lpspnet -lpspnet_inet -lpspnet_apctl -lpspnet_resolver -lpsputility \
+lib		=  -lm -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
+			-lpspnet -lpspnet_adhoc -lpspnet_adhocctl -lpspwlan -lpsputility \
 			-lpspuser -lpspkernel -lpsppower -lpspaudio -lpsprtc
+
 
 		
 drvobj	= d_dodonpachi.o d_donpachi.o d_esprade.o d_feversos.o d_gaia.o d_guwange.o \
@@ -120,7 +121,7 @@ depobj	:= 	$(drvobj) \
 	   	adler32.o compress.o crc32.o deflate.o inffast.o inflate.o inftrees.o trees.o uncompr.o zutil.o \
 	   	\
 	   	main.o drv.o input.o state.o statec.o unzip.o zipfn.o bzip.o font.o \
-	   	roms.o ui.o gui.o snd.o UniCache.o exception.o m6502.o m6502_intf.o sh2.o \
+	   	roms.o ui.o gui.o snd.o UniCache.o exception.o pspadhoc.o m6502.o m6502_intf.o sh2.o \
 	   	\
 	   	tiles_generic.o \
 		irem_cpu.o\

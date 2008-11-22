@@ -16,6 +16,8 @@ extern int bGameRunning;
 extern char currentPath[];
 extern char szAppCachePath[];
 
+extern "C" void resetGame();
+
 struct Vertex
 {
 	unsigned short u, v;
@@ -40,6 +42,7 @@ void ui_update_progress2(float size, const char * txt);
 extern short gameSpeedCtrl;
 extern unsigned int hotButtons ;
 extern short screenMode;
+extern short wifiStatus;
 /* roms.cpp */
 
 int findRomsInDir(bool force);
@@ -61,13 +64,13 @@ void configureVertices();
 extern char szAppRomPath[];
 
 
-/*  */
+/* input */
 int DrvInit(int nDrvNum, bool bRestore);
 int DrvExit();
 int InpInit();
 int InpExit();
 void InpDIP();
-
+void loadDefaultInput();
 
 /* snd.cpp */
 
