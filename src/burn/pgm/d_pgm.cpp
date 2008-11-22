@@ -191,7 +191,7 @@ static struct BurnDIPInfo orld105kDIPList[] = {
 static struct BurnDIPInfo sangoDIPList[] = {
 
 	// Defaults
-	{0x2E,	0xFF, 0xFF,	0x02, NULL},
+	{0x2E,	0xFF, 0xFF,	0x05, NULL},
 
 	// DIP 2
 	{0,		0xFE, 0,	6,	  "Region"},
@@ -221,7 +221,7 @@ static struct BurnDIPInfo kovjDIPList[] = {
 static struct BurnDIPInfo killbldtDIPList[] = {
 
 	// Defaults
-	{0x2E,	0xFF, 0xFF,	0x19, NULL},
+	{0x2E,	0xFF, 0xFF,	0x21, NULL},
 
 	// DIP 2
 	{0,		0xFE, 0,	6,	  "Region"},
@@ -236,7 +236,7 @@ static struct BurnDIPInfo killbldtDIPList[] = {
 static struct BurnDIPInfo photoy2kDIPList[] = {
 
 	// Defaults
-	{0x2E,	0xFF, 0xFF,	0x02, NULL},
+	{0x2E,	0xFF, 0xFF,	0x03, NULL},
 
 	// DIP 2
 	{0,		0xFE, 0,	7,	  "Region"},
@@ -268,7 +268,7 @@ static struct BurnDIPInfo raf102jDIPList[] = {
 static struct BurnDIPInfo puzzli2DIPList[] = {
 
 	// Defaults
-	{0x2E,	0xFF, 0xFF,	0x02, NULL},
+	{0x2E,	0xFF, 0xFF,	0x05, NULL},
 
 	// DIP 2
 	{0,		0xFE, 0,	6,	  "Region"},

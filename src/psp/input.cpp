@@ -1,6 +1,6 @@
-#include "burner.h"
+#include "burnint.h"
 #include "psp.h"
-
+#include "pspadhoc.h"
 struct GameInp {
 	unsigned char *pVal;  // Destination for the Input Value
 	unsigned char nType;  // 0=binary (0,1) 1=analog (0x01-0xFF) 2=dip switch
@@ -169,7 +169,13 @@ int DoInputBlank(int bDipSwitch)
 	    	continue;
 	    }   	
     	if(currentInp!=0&&bii.szInfo[1]-'0'!=currentInp)
-    		continue;
+    	{
+    		for(int i=0;i<=11;i++)
+    		{
+    			if (strcmp(bii.szInfo+3, keyDefArray[i].keyString) == 0)		
+	    			pgi->nBit  = 127; //invalid Value
+    		}
+    	}else{
     	// map my keypad def
 
 	    if (strcmp(bii.szInfo+3, keyDefArray[0].keyString) == 0)		// PSP_CTRL_SELECT = 0x000001,
@@ -207,7 +213,7 @@ int DoInputBlank(int bDipSwitch)
 	    else
 	    if (strcmp(bii.szInfo+3, keyDefArray[11].keyString) == 0)	// PSP_CTRL_LTRIGGER = 0x000100,
 	    	pgi->nBit  = keyDefArray[11].keyValue;
-	   
+    	}
 		    	
 
 	} else
@@ -350,13 +356,38 @@ int InpMake(unsigned int key)
 	if (skip != 1) return 1;
 #endif
 	
-	unsigned int i=0; 
+	unsigned int i=0;
 	unsigned int down = 0;
+	unsigned char currentInput,lastInput; 
+	currentInput=nCurrentFrame&1U;
+	lastInput=1-currentInput;
+	
+	inputKeys[currentInput][0]=0;
+	inputKeys[currentInput][1]=0;
+	inputKeys[currentInput][2]=nCurrentFrame;
 	for (i=0; i<nGameInpCount; i++) {
 		if (GameInp[i].pVal == NULL) continue;
 		
-		if ( GameInp[i].nBit >= 0 ) {
+		if ( GameInp[i].nBit >= 0 ) 
+		{
 			down = key & (1U << GameInp[i].nBit);
+			if(i<32)
+			{
+				if(down)
+				{	
+					inputKeys[currentInput][0]=inputKeys[currentInput][0]|(1U <<i);		
+				}
+				down=inputKeys[lastInput][0]&(1U <<i);
+			}else
+			{
+				int j=i-32;
+				if(down)
+				{	
+					inputKeys[currentInput][1]=inputKeys[currentInput][1]|(1U <<j);		
+				}
+				down=inputKeys[lastInput][1]&(1U <<j);		
+			}
+			
 			
 			if (GameInp[i].nType!=1) {
 				// Set analog controls to full
@@ -373,7 +404,6 @@ int InpMake(unsigned int key)
 			*(GameInp[i].pVal) = GameInp[i].nConst;
 		}
 	}
-	
 	return 0;
 }
 

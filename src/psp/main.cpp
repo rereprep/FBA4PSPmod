@@ -19,6 +19,7 @@
 #include "psp.h"
 #include "UniCache.h"
 #include "exception.h"
+#include "pspadhoc.h"
 
 PSP_MODULE_INFO(PBPNAME, PSP_MODULE_USER, VERSION_MAJOR, VERSION_MINOR);
 PSP_HEAP_SIZE_MAX();
@@ -26,12 +27,15 @@ PSP_MAIN_THREAD_ATTR( THREAD_ATTR_USER );
 
 extern int mixbufidDiff;
 extern bool enableJoyStick;
+
 //#define MAX_PATH		1024
 short skipFrame=0;
 int nGameStage = 0;
 int bGameRunning = 0;
 char currentPath[MAX_PATH];
-void loadDefaultInput();
+//SceUID sendThreadSem, recvThreadSem;
+static bool p2pFrameStatus=false;
+unsigned int debugValue=0;
 
 void returnToMenu()
 {
@@ -55,6 +59,7 @@ int power_callback(int unknown, int powerInfo, void *arg) {
 		sceKernelDelayThread(100000);
 		sceIoClose(cacheFile);
 		cacheFile = -1;
+		wifiStatus=0;
 		//sleep_flag = 1;
 	}
 	/*
@@ -110,9 +115,15 @@ void chech_and_mk_dir(const char * dir)
 
 int main(int argc, char** argv) {
 	initExceptionHandler();
-	SceCtrlData pad;
+	SceCtrlData pad,padTemp;
 	unsigned int autoFireButtons=0;
 
+	//sceKernelChangeThreadPriority(sceKernelGetThreadId(),0xFE);
+	//sendThreadSem=sceKernelCreateSema("sendThreadSem", 0, 0, 1, 0);
+	//recvThreadSem=sceKernelCreateSema("recvThreadSem", 0, 0, 1, 0);
+	
+	adhocLoadDrivers();
+	
 	loadDefaultInput();
 	sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
 	getcwd(currentPath, MAX_PATH - 1);
@@ -157,19 +168,20 @@ int main(int argc, char** argv) {
 	ptk = ctk;
 */
 	while( bGameRunning ) {
+GAME_RUNNING:
 		sceCtrlPeekBufferPositive(&pad, 1); 
 		
-	/*
+/*	
 		sceRtcGetCurrentTick( &ctk );
 		nTicksCountInSec=ctk - ptk;
 		if ( nTicksCountInSec>= 1000000 ) {
 			ptk += 1000000;
-			sprintf( fps, "%2d FPS, mixbufidDiff: %u",  nframes,mixbufidDiff);
+			sprintf( fps, "%2d FPS, debugValue: %u",  nframes,debugValue);
 			nframes = 0;
 			nTicksCountInSec=0;
 		}
 		nframes ++;
-*/	
+*/
 		if ( nGameStage ) {
 
 			do_ui_key( pad.Buttons );	
@@ -193,29 +205,86 @@ int main(int argc, char** argv) {
 				if(pad.Buttons&PSP_CTRL_LTRIGGER)
 					pad.Buttons|=hotButtons;
 				//key hook end
-				
+			
+			if ( (pad.Buttons & PSP_CTRL_RTRIGGER) && (pad.Buttons& PSP_CTRL_SELECT) ) 
+			{
+				returnToMenu();								
+				continue;
+			}		
+						
 			if((nCurrentFrame&0x3)<2)
 			{
 				autoFireButtons=autoFireButtons&pad.Buttons;
-				
+				if(pad.Buttons&PSP_CTRL_SELECT)
+				{
+					autoFireButtons=autoFireButtons|PSP_CTRL_SELECT;
+				}
 				if ( pad.Buttons & PSP_CTRL_RTRIGGER ) 
 				{
-					
-					if( pad.Buttons&PSP_CTRL_SELECT )
-					{
-						returnToMenu();								
-						continue;
-					}else
 					{
 						autoFireButtons=autoFireButtons|(pad.Buttons&(~PSP_CTRL_RTRIGGER));
 					}
 				}
 			}else
 				pad.Buttons=pad.Buttons&(~autoFireButtons);
-				
-			InpMake(pad.Buttons);
 			
-			nCurrentFrame++;
+			
+			if(wifiStatus)
+			{
+				
+				if(wifiStatus==2)
+				{
+					nCurrentFrame=0;
+					inputKeys[0][0]=0;
+					inputKeys[0][1]=0;
+					InpMake(pad.Buttons);
+					wifiSend(0);
+					sceKernelDelayThread(5000);
+					continue;
+				}else if(wifiStatus==3)
+				{
+					if(p2pFrameStatus)
+					{
+						sceKernelDelayThread(5000);
+						while(wifiRecv()!=0)
+						{
+							//debugValue++;
+							wifiSend(0);
+							sceCtrlPeekBufferPositive(&padTemp, 1);
+							if ( (padTemp.Buttons & PSP_CTRL_RTRIGGER) && (padTemp.Buttons& PSP_CTRL_SELECT) ) 
+							{
+								returnToMenu();								
+								goto GAME_RUNNING;
+							}
+							sceKernelDelayThread(5000);						
+						}
+						nCurrentFrame++;
+						InpMake(pad.Buttons);
+						wifiSend(0);
+						sceKernelDelayThread(3000);
+						p2pFrameStatus=false;
+					}else
+					{
+						//wifiSend(0);
+						p2pFrameStatus=true;
+					}
+					
+					
+								
+				}else //1-HOST
+				{					
+					sceKernelDelayThread(8000);
+					wifiRecv();
+					nCurrentFrame++;
+					InpMake(pad.Buttons);
+				}
+					
+			}else
+			{	
+				nCurrentFrame++;
+				InpMake(pad.Buttons);
+			}
+			
 			
 			if(mixbufidDiff<4&&skipFrame<gameSpeedCtrl)
 			{
@@ -231,10 +300,10 @@ int main(int argc, char** argv) {
 				
 				pBurnDraw = (unsigned char *) video_frame_addr(tex_frame, 0, 0);
 			}
-/*			
-			drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 11, 11, R8G8B8_to_B5G6R5(0x404040));
-			drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 10, 10, R8G8B8_to_B5G6R5(0xffffff));
-*/			
+			
+			//drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 11, 11, R8G8B8_to_B5G6R5(0x404040));
+			//drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 10, 10, R8G8B8_to_B5G6R5(0xffffff));
+			
 			if(pBurnDraw)
 				show_frame = draw_frame;
 				draw_frame = sceGuSwapBuffers();
@@ -260,8 +329,18 @@ int main(int argc, char** argv) {
 	InpExit();
 	
 	sceAudioSRCChRelease();
-	
+	adhocTerm();
 	sceKernelExitGame();
 }
 
+void resetGame()
+{
+	setGameStage(0);
+					sound_continue();
+					nCurrentFrame=0;
+					InpMake(0x80000000);
+					nCurrentFrame++;
+					InpMake(0x80000000);
+					p2pFrameStatus=false;
 
+}
