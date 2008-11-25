@@ -15,8 +15,8 @@ extern int nGameStage;
 extern int bGameRunning;
 extern char currentPath[];
 extern char szAppCachePath[];
-
-extern "C" void resetGame();
+extern unsigned int debugValue[2];
+void resetGame();
 
 struct Vertex
 {

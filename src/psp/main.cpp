@@ -35,7 +35,7 @@ int bGameRunning = 0;
 char currentPath[MAX_PATH];
 //SceUID sendThreadSem, recvThreadSem;
 static bool p2pFrameStatus=false;
-unsigned int debugValue=0;
+//unsigned int debugValue[2]={0,};
 
 void returnToMenu()
 {
@@ -171,12 +171,12 @@ int main(int argc, char** argv) {
 GAME_RUNNING:
 		sceCtrlPeekBufferPositive(&pad, 1); 
 		
-/*	
+/*
 		sceRtcGetCurrentTick( &ctk );
 		nTicksCountInSec=ctk - ptk;
 		if ( nTicksCountInSec>= 1000000 ) {
 			ptk += 1000000;
-			sprintf( fps, "%2d FPS, debugValue: %u",  nframes,debugValue);
+			sprintf( fps, "%2d FPS, mixbufidDiff:%u",  nframes,mixbufidDiff);
 			nframes = 0;
 			nTicksCountInSec=0;
 		}
@@ -286,7 +286,7 @@ GAME_RUNNING:
 			}
 			
 			
-			if(mixbufidDiff<4&&skipFrame<gameSpeedCtrl)
+			if(mixbufidDiff<3&&skipFrame<gameSpeedCtrl)
 			{
 				skipFrame++;
 			}else

@@ -148,7 +148,7 @@ void initCacheStructure(float ratio)
 	}
 	free (uniCacheHead);
 	
-	totalMemBlocks = (unsigned int)(totalMemBlocks*((ratio<=1&&ratio>0)?ratio:0.7))-2; //reserve for other dynamic using
+	totalMemBlocks = (unsigned int)(totalMemBlocks*((ratio<=1&&ratio>0)?ratio:0.7))-3; //reserve for other dynamic using
 	uniCacheHead = (unsigned char *)malloc(totalMemBlocks<<CACHE_INDEX_SHIFT);
 
 	indexRecycleListHead=SHORT_INVALID_VALUE; indexRecycleListEnd=SHORT_INVALID_VALUE;

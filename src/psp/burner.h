@@ -21,7 +21,8 @@
 
 #include "title.h"
 #include "burn.h"
-
+#include <malloc.h>
+#define malloc(size) memalign(4, size)
 // ---------------------------------------------------------------------------
 // OS dependent functionality
 

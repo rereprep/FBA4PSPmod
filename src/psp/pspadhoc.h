@@ -14,7 +14,7 @@ int adhocTerm();
 int adhocInit(char* netWorkName);
 int wifiSend(unsigned int wifiCMD);
 int wifiRecv();
-
+void sendSyncGame();
 #ifdef __cplusplus
 }
 #endif
