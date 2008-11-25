@@ -21,8 +21,9 @@ unsigned int hotButtons = (PSP_CTRL_SQUARE|PSP_CTRL_CIRCLE|PSP_CTRL_CROSS);
 short screenMode=0;
 short wifiStatus=0;
 short saveIndex=0;
+short resetOrSync=0;
 bool enableJoyStick=true;
-char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_preV12 DEMO5)";
+char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_preV12 DEMO6)";
 static int find_rom_count = 0;
 static int find_rom_select = 0;
 static int find_rom_top = 0;
@@ -123,6 +124,12 @@ void draw_ui_main()
 	    	else
 	    		strcpy(buf,"Controller: ALL");
 			break;
+		case 4:
+			if(resetOrSync)
+	    		strcpy( buf, "Sync Game" );
+	    	else
+	    		strcpy( buf, "Reset Game" );
+	    	break;
 	    case 5:
 	    	sprintf( buf, ui_main_menu[i],gameSpeedCtrl );
 			break;
@@ -258,8 +265,7 @@ static void return_to_game()
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].bus );				
 				sound_continue();
-		}
-									
+		}			
 		setGameStage(0);
 	}
 }
@@ -303,6 +309,10 @@ static void process_key( int key, int down, int repeat )
 					currentInp=4;
 				if(nPrevGame!=~0U)
 					DoInputBlank(0);
+				draw_ui_main();
+				break;
+			case 4:
+				resetOrSync=1-resetOrSync;
 				draw_ui_main();
 				break;
 			case 5:
@@ -359,6 +369,10 @@ static void process_key( int key, int down, int repeat )
 					currentInp=0;
 				if(nPrevGame!=~0U)
 					DoInputBlank(0);
+				draw_ui_main();
+				break;
+			case 4:
+				resetOrSync=1-resetOrSync;
 				draw_ui_main();
 				break;
 			case 5:
@@ -450,12 +464,22 @@ static void process_key( int key, int down, int repeat )
 			case 4:
 				if(nPrevGame != ~0U)
 				{					
-					scePowerSetClockFrequency(
+					if(resetOrSync)
+					{
+						return_to_game();
+						sendSyncGame();
+					}else
+					{
+						scePowerSetClockFrequency(
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].bus );
-					resetGame();
-					wifiSend(WIFI_CMD_RESET);
+						resetGame();
+						if(wifiStatus==3)
+							wifiSend(WIFI_CMD_RESET);
+					}
+	
+					
 				}
 				break;
 			case 9:	// Exit

@@ -12,7 +12,8 @@
 #include <ctype.h>
 
 #include "tchar.h"
-
+#include "malloc.h"
+#define malloc(size) memalign(4, size)
 // Macro to make quoted strings
 #define MAKE_STRING_2(s) #s
 #define MAKE_STRING(s) MAKE_STRING_2(s)

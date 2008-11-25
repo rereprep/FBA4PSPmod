@@ -9,7 +9,7 @@
 
 #include "tchar.h"
 #include "burn.h"
-#include "malloc.h"
+#include <malloc.h>
 #define malloc(size) memalign(4, size)
 
 #ifndef MAX_PATH
