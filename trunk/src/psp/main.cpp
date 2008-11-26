@@ -35,7 +35,7 @@ int bGameRunning = 0;
 char currentPath[MAX_PATH];
 //SceUID sendThreadSem, recvThreadSem;
 static bool p2pFrameStatus=false;
-//unsigned int debugValue[2]={0,};
+unsigned int debugValue[2]={0,};
 
 void returnToMenu()
 {
@@ -176,7 +176,7 @@ GAME_RUNNING:
 		nTicksCountInSec=ctk - ptk;
 		if ( nTicksCountInSec>= 1000000 ) {
 			ptk += 1000000;
-			sprintf( fps, "%2d FPS, mixbufidDiff:%u",  nframes,mixbufidDiff);
+			sprintf( fps, "%2d FPS, value1:%X, value2:%X",  nframes,debugValue[0],debugValue[1]);
 			nframes = 0;
 			nTicksCountInSec=0;
 		}
@@ -246,6 +246,9 @@ GAME_RUNNING:
 					if(p2pFrameStatus)
 					{
 						sceKernelDelayThread(5000);
+						clearMacRecvCount();
+						
+						int failureCount=0;
 						while(wifiRecv()!=0)
 						{
 							//debugValue++;
@@ -256,8 +259,16 @@ GAME_RUNNING:
 								returnToMenu();								
 								goto GAME_RUNNING;
 							}
-							sceKernelDelayThread(5000);						
+							sceKernelDelayThread(5000);
+							failureCount++;
+							if(failureCount==256)
+							{
+								removePspFromList();
+								failureCount=0;
+							}						
 						}
+						
+							
 						nCurrentFrame++;
 						InpMake(pad.Buttons);
 						wifiSend(0);
