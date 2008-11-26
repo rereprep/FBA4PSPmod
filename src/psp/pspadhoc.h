@@ -15,6 +15,9 @@ int adhocInit(char* netWorkName);
 int wifiSend(unsigned int wifiCMD);
 int wifiRecv();
 void sendSyncGame();
+void clearMacRecvCount();
+void removePspFromList();
+
 #ifdef __cplusplus
 }
 #endif
