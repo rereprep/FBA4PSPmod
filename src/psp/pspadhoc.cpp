@@ -7,11 +7,12 @@
 #include <pspwlan.h>
 #include <pspkernel.h>
 #include <string.h>
-
+#include "burner.h"
+#include "psp.h"
 #include "pspadhoc.h"
 
 #define PACKET_LENGTH 24
-
+#define MAX_PACKET_LENGTH 25600
 
 extern unsigned int nCurrentFrame;
 extern SceUID sendThreadSem,recvThreadSem;
@@ -22,47 +23,85 @@ static unsigned char g_mac[6]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 static SceUID recvThreadId=0, sendThreadId=0;
 //static int pdpStatLength=20;
 unsigned int inputKeys[3][3]={{0,},};
-static unsigned int recvBuffer[PACKET_LENGTH/4];
+static unsigned int recvBuffer[MAX_PACKET_LENGTH/4];
 static char adhocInited=0;
-void resetGame();
+static char needSync=0;
+static unsigned char otherPspCount=3;
+static unsigned int macBuf[2];
+static unsigned int macList[3][2]={{0,0},};
+static unsigned char* mac=(unsigned char*)macBuf+2;
+inline static bool hasPspNotRecved()
+{
+	for(int i=0;i<otherPspCount;i++)
+	{
+		if(macList[i][1]==0)
+			return true;
+	}
+	return false;
+}
+
+inline static void newPspJoined()
+{
+	if(otherPspCount<3)
+	{		
+		macList[otherPspCount][0]=macBuf[1];
+		otherPspCount++;
+	}
+}
+inline static void checkPspList()
+{
+	for(int i=0;i<otherPspCount;i++)
+	{
+		if(macList[i][0]==0)
+			macList[i][0]=macBuf[1];
+		if(macList[i][0]==macBuf[1])
+		{
+			macList[i][1]++;
+			return;
+		}
+	}
+	newPspJoined();
+	
+}
+void removePspFromList()
+{
+	if(otherPspCount>1)
+	{
+		otherPspCount--;
+		for(int i=0;i<otherPspCount;i++)
+		{
+			macList[i][0]=0;
+			macList[i][1]=0;
+		}
+	}
+}
+
+void clearMacRecvCount()
+{
+	for(int i=0;i<otherPspCount;i++)
+	{
+		macList[i][1]=0;
+	}
+}
+void sendSyncGame()
+{
+	needSync=1;
+	wifiSend(WIFI_CMD_SYNC_REQ);
+}
 
 int wifiRecv()
 {
 	unsigned short port;
-	unsigned char mac[8];
 	
-	unsigned int length,recvMaxFrame=0;
+	
+	unsigned int recvMaxFrame=0;
 	unsigned char currentInput=nCurrentFrame&1U;
-	int err;
-	//int recvExpiredFrameCount=0; 
-	//pdpStatStruct pspStat;
-	
-	//sceKernelDelayThread(5000); //to be improved here
-	
-/*
-	if(inputKeys[2][2]!=0&&inputKeys[2][2]<=nCurrentFrame)
-	{
-		if(inputKeys[2][2]==nCurrentFrame)
-		{
-			inputKeys[currentInput][0]=inputKeys[currentInput][0]|inputKeys[2][0];
-			inputKeys[currentInput][1]=inputKeys[currentInput][1]|inputKeys[2][1];
-		}
-		inputKeys[2][0]=0;
-		inputKeys[2][1]=0;
-		inputKeys[2][2]=0;
-	}
-*/
-	
-	//for(i=0;i<16;i++)
-	while(1)
-	{
-		//if(err||length!=PACKET_LENGTH)
-			//sceKernelDelayThread(5000);
-		//sceKernelWaitSema(recvThreadSem, 1, 0);
-		//sceNetAdhocGetPdpStat(&pdpStatLength, &pspStat);
+	int i,j,err,length;
+	unsigned char *Def = NULL;
 
-		//if (pspStat.rcvdData <=0 ) break;
-		length=PACKET_LENGTH;
+	while(1)
+	{		
+		length=MAX_PACKET_LENGTH;
 		err = sceNetAdhocPdpRecv(pdpId,
 					mac,
 					&port,
@@ -72,12 +111,6 @@ int wifiRecv()
 					1);	// 1 in lumines
 		if(err==0&&length==PACKET_LENGTH)
 		{
-			/*
-			if(recvBuffer[3]!=recvBuffer[0]+recvBuffer[1]+recvBuffer[2])
-			{
-				continue;
-			}
-			*/
 			if(recvBuffer[2]==0)
 			{
 				switch(recvBuffer[1])
@@ -85,34 +118,170 @@ int wifiRecv()
 					case WIFI_CMD_RESET:
 						resetGame();
 						return 0;
+					case WIFI_CMD_SYNC_REQ:
+						err = BurnStateCompress(&Def, &length, 1);		// Compress block from driver and return deflated buffer
+						if (Def == NULL) {
+							continue;
+						}
+						recvBuffer[1]=WIFI_CMD_SYNC_RESP;
+						recvBuffer[2]=0;
+						recvBuffer[4]=length;
+						recvBuffer[5]=nCurrentFrame;
+						sceNetAdhocPdpSend(pdpId,
+							&mac[0],
+							0x309,
+							&recvBuffer[0],
+							PACKET_LENGTH,
+							0,	// 0 in lumines
+							0);	// 1 in lumines
+						sceKernelDelayThread(3000);
+						sceNetAdhocPdpSend(pdpId,
+							&mac[0],
+							0x309,
+							&recvBuffer[0],
+							PACKET_LENGTH,
+							0,	// 0 in lumines
+							0);	// 1 in lumines
+						sceKernelDelayThread(3000);
+						sceNetAdhocPdpSend(pdpId,
+							&mac[0],
+							0x309,
+							&recvBuffer[0],
+							PACKET_LENGTH,
+							0,	// 0 in lumines
+							0);	// 1 in lumines
+						sceKernelDelayThread(5000);
+						if(length<=MAX_PACKET_LENGTH)
+						{
+							sceNetAdhocPdpSend(pdpId,
+								&mac[0],
+								0x309,
+								&Def[0],
+								length,
+								0,	// 0 in lumines
+								0);	// 1 in lumines
+							sceKernelDelayThread(10000);
+							sceNetAdhocPdpSend(pdpId,
+								&mac[0],
+								0x309,
+								&Def[0],
+								length,
+								0,	// 0 in lumines
+								0);	// 1 in lumines
+						}
+						else
+						{
+							sceNetAdhocPdpSend(pdpId,
+								&mac[0],
+								0x309,
+								&Def[0],
+								MAX_PACKET_LENGTH,
+								0,	// 0 in lumines
+								0);	// 1 in lumines
+							sceKernelDelayThread(10000);
+							sceNetAdhocPdpSend(pdpId,
+								&mac[0],
+								0x309,
+								&Def[MAX_PACKET_LENGTH],
+								length-MAX_PACKET_LENGTH,
+								0,	// 0 in lumines
+								0);	// 1 in lumines
+							sceKernelDelayThread(10000);
+							sceNetAdhocPdpSend(pdpId,
+								&mac[0],
+								0x309,
+								&Def[MAX_PACKET_LENGTH],
+								length-MAX_PACKET_LENGTH,
+								0,	// 0 in lumines
+								0);	// 1 in lumines
+
+						}
+						sceKernelDelayThread(20000);
+						free(Def);
+						Def=NULL;							
+						break;
+					case WIFI_CMD_SYNC_RESP:
+						if(needSync)
+						{
+							length=recvBuffer[4];							
+							Def=(unsigned char*)memalign(4,length);
+							if (Def == NULL) {
+								continue;
+							}
+							
+							for(i=0,j=0;i<256;i++)
+							{
+								
+								length=recvBuffer[4];
+								err = sceNetAdhocPdpRecv(pdpId,
+									mac,
+									&port,
+									&Def[j],
+									&length,
+									0,	// 0 in lumines
+									1);	// 1 in lumines
+								
+
+								if(err==0)
+								{
+								
+									
+									if(length==recvBuffer[4])
+									{
+										
+										BurnStateDecompress(Def, length+j, 1);
+										nCurrentFrame=recvBuffer[5];
+										needSync=0;
+										free(Def);
+										Def=NULL;
+										memset(inputKeys,0,36);
+										inputKeys[currentInput][2]=nCurrentFrame;
+										inputKeys[currentInput][5]=nCurrentFrame-1;
+										return -1;
+									}else if(length==MAX_PACKET_LENGTH&&recvBuffer[4]>MAX_PACKET_LENGTH)
+									{
+										recvBuffer[4]=recvBuffer[4]-MAX_PACKET_LENGTH;
+										j=MAX_PACKET_LENGTH;
+									}
+								}
+								sceKernelDelayThread(5000);
+							}
+							if(Def)
+							{
+								free(Def);
+								Def=NULL;
+							}
+							
+						}
+						break;
 					default:
+						checkPspList();
 						inputKeys[currentInput][0]=inputKeys[currentInput][0]|recvBuffer[0];
 						inputKeys[currentInput][1]=inputKeys[currentInput][1]|recvBuffer[1];
 				}
 			}else if(recvBuffer[2]==nCurrentFrame)
 			{
+				checkPspList();
 				inputKeys[currentInput][0]=inputKeys[currentInput][0]|recvBuffer[0];
 				inputKeys[currentInput][1]=inputKeys[currentInput][1]|recvBuffer[1];
-			}else if(recvBuffer[2]>nCurrentFrame)
+			}else if(recvBuffer[2]==nCurrentFrame+1)
 			{
-				if(recvBuffer[5]==nCurrentFrame)
-				{
+				checkPspList();
+				//if(recvBuffer[5]==nCurrentFrame)
+				{	
 					inputKeys[currentInput][0]=inputKeys[currentInput][0]|recvBuffer[3];
 					inputKeys[currentInput][1]=inputKeys[currentInput][1]|recvBuffer[4];
 				}
-				//else require re-sync
-			}
-			/*
-			else //recvBuffer[2]<nCurrentFrame
-			{
-				if(recvExpiredFrameCount>0)
+				/*
+				else
+				{
+					needSync=1;
+					wifiSend(WIFI_CMD_SYNC_REQ);
 					return -1;
-				recvExpiredFrameCount++;
-			}*/
-			if(recvBuffer[2]>recvMaxFrame)
-			{
-				recvMaxFrame=recvBuffer[2];
+				}
+				*/
 			}
+			
 			
 		}else
 		{
@@ -120,7 +289,7 @@ int wifiRecv()
 		}
 			
 	}
-	if(recvMaxFrame<nCurrentFrame)
+	if(hasPspNotRecved())
 	{
 		return -1;
 	}
@@ -139,7 +308,16 @@ int wifiSend(unsigned int wifiCMD)
 		sceNetAdhocPdpSend(pdpId,
 			&g_mac[0],
 			0x309,
-			&recvBuffer,
+			&recvBuffer[0],
+			PACKET_LENGTH,
+			0,	// 0 in lumines
+			0);	// 1 in lumines
+		sceKernelDelayThread(5000);
+		/*
+		sceNetAdhocPdpSend(pdpId,
+			&g_mac[0],
+			0x309,
+			&recvBuffer[0],
 			PACKET_LENGTH,
 			0,	// 0 in lumines
 			1);	// 1 in lumines
@@ -147,19 +325,12 @@ int wifiSend(unsigned int wifiCMD)
 		sceNetAdhocPdpSend(pdpId,
 			&g_mac[0],
 			0x309,
-			&recvBuffer,
+			&recvBuffer[0],
 			PACKET_LENGTH,
 			0,	// 0 in lumines
 			1);	// 1 in lumines
 		sceKernelDelayThread(5000);
-		sceNetAdhocPdpSend(pdpId,
-			&g_mac[0],
-			0x309,
-			&recvBuffer,
-			PACKET_LENGTH,
-			0,	// 0 in lumines
-			1);	// 1 in lumines
-		sceKernelDelayThread(5000);
+		*/
 	}else{
 		//sceKernelWaitSema(sendThreadSem, 1, 0);
 		currentInput=nCurrentFrame&1U;
@@ -201,9 +372,10 @@ int adhocLoadDrivers()
 int adhocInit(char* netWorkName)
 {
 	if ( netWorkName==0||adhocInited)
-		return;
+		return -1;
+	otherPspCount=4;
 	adhocInited=1;	
-	char mac[6];
+	u8 macTemp[6];
 	struct productStruct product;
 
 	strcpy(product.product, "ULUS99999");
@@ -266,15 +438,14 @@ int adhocInit(char* netWorkName)
     //printf2("Connected!\n");
   
     
-	sceWlanGetEtherAddr(mac);
-	
+	sceWlanGetEtherAddr(macTemp);
 	
     //printf2("sceNetAdhocPdpCreate\n");
     
     
-	pdpId = sceNetAdhocPdpCreate(mac,
+	pdpId = sceNetAdhocPdpCreate(macTemp,
 		     0x309,		// 0x309 in lumines
-		     0x400, 	// 0x400 in lumines
+		     MAX_PACKET_LENGTH, 	// 0x400 in lumines
 		     0);		// 0 in lumines
 	if(pdpId <= 0)
 	{
@@ -288,24 +459,9 @@ int adhocInit(char* netWorkName)
 }
 
 
-int adhocSend(void *buffer, int length)
-{
-	int err=0;
-
-	err = sceNetAdhocPdpSend(pdpId,
-			&g_mac[0],
-			0x309,
-			buffer,
-			length,
-			0,	// 0 in lumines
-			1);	// 1 in lumines
-
-	return err;
-}
-
 int adhocTerm()
 {
-    if(adhocInited==0) return;
+    if(adhocInited==0) return -1;
     
     u32 err;
 
