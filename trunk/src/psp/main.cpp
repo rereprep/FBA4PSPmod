@@ -25,7 +25,6 @@ PSP_MODULE_INFO(PBPNAME, PSP_MODULE_USER, VERSION_MAJOR, VERSION_MINOR);
 PSP_HEAP_SIZE_MAX();
 PSP_MAIN_THREAD_ATTR( THREAD_ATTR_USER );
 
-extern int mixbufidDiff;
 extern bool enableJoyStick;
 
 //#define MAX_PATH		1024
@@ -139,7 +138,7 @@ int main(int argc, char** argv) {
 	chech_and_mk_dir( szAppCachePath );
 	strcat(szAppCachePath, "/");
 	
-	int thid = sceKernelCreateThread(PBPNAME, CallbackThread, 0x11, 0xFA0, 0, 0);
+	int thid = sceKernelCreateThread(PBPNAME, CallbackThread, 0x11, 0x400, 0, 0);
 	if(thid >= 0) sceKernelStartThread(thid, 0, 0);
 	
 	setGameStage (1);
@@ -160,28 +159,28 @@ int main(int argc, char** argv) {
 	draw_ui_main();
 	bGameRunning = 1;
 	nCurrentFrame = 0;
-/*
+
 	u64 ctk, ptk;
 	int nframes = 0,nTicksCountInSec=0;
 	char fps[32] = {0, };
 	sceRtcGetCurrentTick( &ctk );
 	ptk = ctk;
-*/
+
 	while( bGameRunning ) {
 GAME_RUNNING:
 		sceCtrlPeekBufferPositive(&pad, 1); 
 		
-/*
+
 		sceRtcGetCurrentTick( &ctk );
 		nTicksCountInSec=ctk - ptk;
 		if ( nTicksCountInSec>= 1000000 ) {
 			ptk += 1000000;
-			sprintf( fps, "%2d FPS, value1:%X, value2:%X",  nframes,debugValue[0],debugValue[1]);
+			sprintf( fps, "%2d FPS, nCurrentFrame:%X",  nframes,nCurrentFrame);
 			nframes = 0;
 			nTicksCountInSec=0;
 		}
 		nframes ++;
-*/
+
 		if ( nGameStage ) {
 
 			do_ui_key( pad.Buttons );	
@@ -312,13 +311,15 @@ GAME_RUNNING:
 				pBurnDraw = (unsigned char *) video_frame_addr(tex_frame, 0, 0);
 			}
 			
-			//drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 11, 11, R8G8B8_to_B5G6R5(0x404040));
-			//drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 10, 10, R8G8B8_to_B5G6R5(0xffffff));
+			drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 11, 11, R8G8B8_to_B5G6R5(0x404040));
+			drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 10, 10, R8G8B8_to_B5G6R5(0xffffff));
 			
 			if(pBurnDraw)
+			{
 				show_frame = draw_frame;
 				draw_frame = sceGuSwapBuffers();
 				update_gui();
+			}
 			BurnDrvFrame();
 			pBurnDraw = NULL;
 			

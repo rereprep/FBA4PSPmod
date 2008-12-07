@@ -1130,7 +1130,7 @@ int cps3Init()
 	
 	if(needCreateCache)
 	{
-		if ((uniCacheHead = (unsigned char *)memalign(4,0x1300000)) == NULL) return 1;
+		if ((uniCacheHead = (unsigned char *)memalign(4,0x1200000)) == NULL) return 1;
 
 		memset(uniCacheHead,0,0x1200000);
 		// load graphic and sound roms
