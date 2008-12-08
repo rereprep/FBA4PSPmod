@@ -64,10 +64,10 @@
 		CPU->nCyclesLeft=-1; \
 		goto Cz80_Exec_Really_End; \
 	} \
-	/*PCDiff = (UINT32)CPU->Fetch[(A) >> CZ80_FETCH_SFT] - (UINT32)CPU->FetchData[(A) >> CZ80_FETCH_SFT];*/	\
+	PCDiff = (UINT32)CPU->Fetch[(A) >> CZ80_FETCH_SFT] - (UINT32)CPU->FetchData[(A) >> CZ80_FETCH_SFT];\
 	PC = (unsigned int)(A) + CPU->BasePC;
 
-#define GET_OP()			(*(UINT8 *)(PC))// + PCDiff))
+#define GET_OP()			(*(UINT8 *)(PC + PCDiff))
 
 #define READ_OP()			GET_OP(); PC++
 
@@ -275,7 +275,7 @@ INT32 Cz80_Exec(cz80_struc* CPU)
 #endif
 
     UINT32 PC;
-    //UINT32 PCDiff;    
+    UINT32 PCDiff;    
     
     UINT32 Opcode;
     
@@ -286,7 +286,7 @@ INT32 Cz80_Exec(cz80_struc* CPU)
     INT32 nTodo = 0;
 
     PC = CPU->PC;
-    //PCDiff = (UINT32)CPU->Fetch[(zRealPC) >> CZ80_FETCH_SFT] - (UINT32)CPU->FetchData[(zRealPC) >> CZ80_FETCH_SFT];
+    PCDiff = (UINT32)CPU->Fetch[(zRealPC) >> CZ80_FETCH_SFT] - (UINT32)CPU->FetchData[(zRealPC) >> CZ80_FETCH_SFT];
     
 //	CPU->nEI = 0;
 	

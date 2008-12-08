@@ -22,17 +22,18 @@ static short * pmixbuf[] = {
 static unsigned int mixbufid = 0;
 static unsigned int mixbufidPlay = 0;
 int mixbufidDiff = 0;
-unsigned char muteSound=0;
+unsigned char monoSound=0;
 static SceUID sound_thread_id;
 static short sound_active = 0;
 
 static int sound_thread(SceSize args, void *argp)
 {
+	short * currentMixBuf; 
 	while (sound_active) {
 		if(mixbufidDiff < 0)
 		{
 			
-			sceKernelDelayThread(500000);
+			sceKernelDelayThread(100000);
 
 			continue;
 		}
@@ -41,7 +42,16 @@ static int sound_thread(SceSize args, void *argp)
 		{
 			mixbufidPlay++;
 		}
-		sceAudioSRCOutputBlocking(PSP_AUDIO_VOLUME_MAX, pmixbuf[mixbufidPlay & 0x7]);
+		
+		currentMixBuf=pmixbuf[mixbufidPlay & 0x7];
+		if(monoSound)
+		{
+			for(int i=0;i<SND_FRAME_SIZE*2;i=i+2)
+			{
+				 currentMixBuf[i+1]=currentMixBuf[i];
+			}
+		}
+		sceAudioSRCOutputBlocking(PSP_AUDIO_VOLUME_MAX, currentMixBuf);
 
 
 	}
@@ -62,7 +72,7 @@ int sound_start()
 	int aures = sceAudioSRCChReserve( SND_FRAME_SIZE, SND_RATE, 2 );
 	if ( aures ) return aures;
 	
-	sound_thread_id = sceKernelCreateThread("sound_thread", sound_thread, 0x11, 0x400, 0, NULL);
+	sound_thread_id = sceKernelCreateThread("sound_thread", sound_thread, 0x0F, 0x400, 0, NULL);
 	if (sound_thread_id < 0) {
 		sceAudioSRCChRelease();
 		return -1;
@@ -96,6 +106,7 @@ void sound_next()
 {	
 	mixbufid ++;
 	pBurnSoundOut = pmixbuf[mixbufid & 0x7];
+	//sceKernelDelayThread(1);
 
 }
 
