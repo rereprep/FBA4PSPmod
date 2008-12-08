@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
 	SceCtrlData pad,padTemp;
 	unsigned int autoFireButtons=0;
 
-	//sceKernelChangeThreadPriority(sceKernelGetThreadId(),0xFE);
+	sceKernelChangeThreadPriority(sceKernelGetThreadId(),0x10);
 	//sendThreadSem=sceKernelCreateSema("sendThreadSem", 0, 0, 1, 0);
 	//recvThreadSem=sceKernelCreateSema("recvThreadSem", 0, 0, 1, 0);
 	
@@ -160,17 +160,18 @@ int main(int argc, char** argv) {
 	bGameRunning = 1;
 	nCurrentFrame = 0;
 
+#ifdef SHOW_FPS
 	u64 ctk, ptk;
 	int nframes = 0,nTicksCountInSec=0;
 	char fps[32] = {0, };
 	sceRtcGetCurrentTick( &ctk );
 	ptk = ctk;
-
+#endif
 	while( bGameRunning ) {
 GAME_RUNNING:
 		sceCtrlPeekBufferPositive(&pad, 1); 
 		
-
+#ifdef SHOW_FPS
 		sceRtcGetCurrentTick( &ctk );
 		nTicksCountInSec=ctk - ptk;
 		if ( nTicksCountInSec>= 1000000 ) {
@@ -180,7 +181,7 @@ GAME_RUNNING:
 			nTicksCountInSec=0;
 		}
 		nframes ++;
-
+#endif
 		if ( nGameStage ) {
 
 			do_ui_key( pad.Buttons );	
@@ -310,10 +311,10 @@ GAME_RUNNING:
 				
 				pBurnDraw = (unsigned char *) video_frame_addr(tex_frame, 0, 0);
 			}
-			
+#ifdef SHOW_FPS			
 			drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 11, 11, R8G8B8_to_B5G6R5(0x404040));
 			drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 10, 10, R8G8B8_to_B5G6R5(0xffffff));
-			
+#endif			
 			if(pBurnDraw)
 			{
 				show_frame = draw_frame;

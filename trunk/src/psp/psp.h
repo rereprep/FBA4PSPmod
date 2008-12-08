@@ -77,7 +77,7 @@ void loadDefaultInput();
 #define SND_RATE		22050
 #define SND_FRAME_SIZE	((SND_RATE * 100 + 5999) / 6000)
 extern int mixbufidDiff;
-extern unsigned char muteSound;
+extern unsigned char monoSound;
 int sound_start();
 int sound_stop();
 void sound_next();

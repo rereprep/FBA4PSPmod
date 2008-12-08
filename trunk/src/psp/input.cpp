@@ -67,7 +67,7 @@ void loadDefaultInput()
 {
 	//Read customized input info from ini file.
 	
-	muteSound=0;
+	monoSound=0;
 	gameSpeedCtrl=1;
 	screenMode=0;
 	FILE * fp = fopen("fba4psp.ini", "r");
@@ -306,13 +306,13 @@ else
 				int value=hex2int(p[2]);
 				if(value>=0&&value<=8)
 					screenMode=value;
-			}else if(p = strstr(IniLine, "muteSound"))
+			}else if(p = strstr(IniLine, "monoSound"))
 			{
 				p = strstr(p, "0x");
 				if(p==0||p[2]=='\0')
 					continue;
 				int value=hex2int(p[2]);
-				muteSound=value;
+				monoSound=value;
 			}
 		}
 		fclose(fp);
