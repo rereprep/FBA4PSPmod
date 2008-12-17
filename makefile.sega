@@ -47,7 +47,7 @@ incdir	= -I. -I$(PSPSDK)/include $(foreach dir,$(alldir),-I$(srcdir)$(dir)) -I$(
 
 lib		=  -lm -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
 			-lpspnet -lpspnet_adhoc -lpspnet_adhocctl -lpspwlan -lpsputility \
-			-lpspuser -lpspkernel -lpsppower -lpspaudio -lpsprtc
+			-lpspuser -lpspkernel -lpsppower -lpspaudio -lpsprtc -lpng -lg
 
 
 		

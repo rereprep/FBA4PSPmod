@@ -55,11 +55,12 @@ extern void * show_frame;
 extern void * draw_frame;
 extern void * work_frame;
 extern void * tex_frame;
-
+extern unsigned char* freeFrameBufMem;
 void init_gui();
 void exit_gui();
 void update_gui();
 void configureVertices();
+void drawPreview();
 /* bzip */
 extern char szAppRomPath[];
 

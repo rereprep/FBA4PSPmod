@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
 	SceCtrlData pad,padTemp;
 	unsigned int autoFireButtons=0;
 
-	sceKernelChangeThreadPriority(sceKernelGetThreadId(),0x10);
+	sceKernelChangeThreadPriority(sceKernelGetThreadId(),0x12);
 	//sendThreadSem=sceKernelCreateSema("sendThreadSem", 0, 0, 1, 0);
 	//recvThreadSem=sceKernelCreateSema("recvThreadSem", 0, 0, 1, 0);
 	
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 	chech_and_mk_dir( szAppCachePath );
 	strcat(szAppCachePath, "/");
 	
-	int thid = sceKernelCreateThread(PBPNAME, CallbackThread, 0x11, 0x400, 0, 0);
+	int thid = sceKernelCreateThread(PBPNAME, CallbackThread, 0x11, 0xFA0, 0, 0);
 	if(thid >= 0) sceKernelStartThread(thid, 0, 0);
 	
 	setGameStage (1);
