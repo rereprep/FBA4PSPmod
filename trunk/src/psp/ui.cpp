@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <pspdisplay.h>
+#include <png.h>
 
 #include "psp.h"
 #include "font.h"
@@ -18,12 +20,13 @@
 
 short gameSpeedCtrl = 1;
 unsigned int hotButtons = (PSP_CTRL_SQUARE|PSP_CTRL_CIRCLE|PSP_CTRL_CROSS);
+
 short screenMode=0;
 short wifiStatus=0;
 short saveIndex=0;
 short resetOrSync=0;
 bool enableJoyStick=true;
-char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_V12p1)";
+char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: preV12p2 DEMO2)";
 static int find_rom_count = 0;
 static int find_rom_select = 0;
 static int find_rom_top = 0;
@@ -36,6 +39,124 @@ static int ui_mainmenu_select = 0;
 static int ui_process_pos = 0;
 int InpMake(unsigned int);
 int DoInputBlank(int bDipSwitch);
+
+
+static void screenshot(const char* filename)
+{
+        u16* vram16;
+       	int VideoBufferWidth,VideoBufferHeight;
+      	
+        int i, x, y;
+        png_structp png_ptr;
+        png_infop info_ptr;
+        FILE* fp;
+        u8* line;
+        
+        fp = fopen(filename, "wb");
+        if (!fp) return;
+        png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        if (!png_ptr) return;
+        info_ptr = png_create_info_struct(png_ptr);
+        if (!info_ptr) {
+                png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+                fclose(fp);
+                return;
+        }
+        png_init_io(png_ptr, fp);
+        BurnDrvGetFullSize(&VideoBufferWidth, &VideoBufferHeight);
+        png_set_IHDR(png_ptr, info_ptr, VideoBufferWidth, VideoBufferHeight,
+                8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
+                PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+        png_write_info(png_ptr, info_ptr);
+        line = freeFrameBufMem;         
+        vram16 = GU_FRAME_ADDR(tex_frame);
+        for (y = 0; y < VideoBufferHeight; y++) {
+                for (i = 0, x = 0; x < VideoBufferWidth; x++) {
+                        u32 color = 0;
+                        u8 r = 0, g = 0, b = 0;
+                                         color = vram16[x + y * PSP_LINE_SIZE];
+                                        r = (color & 0x1f) << 3; 
+                                        g = ((color >> 5) & 0x3f) << 2 ;
+                                        b = ((color >> 11) & 0x1f) << 3 ;
+   		                line[i++] = r;
+                        line[i++] = g;
+                        line[i++] = b;
+                }
+                png_write_row(png_ptr, line);
+        }
+        //free(line);
+        png_write_end(png_ptr, info_ptr);
+        png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+        fclose(fp);
+}
+
+static void user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
+{
+        // ignore PNG warnings
+}
+
+static void loadImage(const char* filename, unsigned int* previewWidth, unsigned int* previewHeight)
+{
+
+        u16* vram16;
+
+
+        png_structp png_ptr;
+        png_infop info_ptr;
+        unsigned int sig_read = 0;
+
+        int bit_depth, color_type, interlace_type, x, y;
+        u32* line;
+        FILE *fp;
+
+        if ((fp = fopen(filename, "rb")) == NULL) return;
+        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        if (png_ptr == NULL) {
+                fclose(fp);
+                return;
+        }
+        png_set_error_fn(png_ptr, (png_voidp) NULL, (png_error_ptr) NULL, user_warning_fn);
+        info_ptr = png_create_info_struct(png_ptr);
+        if (info_ptr == NULL) {
+                fclose(fp);
+                png_destroy_read_struct(&png_ptr, png_infopp_NULL, png_infopp_NULL);
+                return;
+        }
+        png_init_io(png_ptr, fp);
+        png_set_sig_bytes(png_ptr, sig_read);
+        png_read_info(png_ptr, info_ptr);
+        png_get_IHDR(png_ptr, info_ptr, (png_uint_32*)previewWidth, (png_uint_32*)previewHeight, &bit_depth, &color_type, &interlace_type, int_p_NULL, int_p_NULL);
+        png_set_strip_16(png_ptr);
+        png_set_packing(png_ptr);
+        if (color_type == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(png_ptr);
+        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) png_set_gray_1_2_4_to_8(png_ptr);
+        if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
+        png_set_filler(png_ptr, 0xff, PNG_FILLER_AFTER);
+        line = (u32*)(freeFrameBufMem+PSP_LINE_SIZE * SCREEN_HEIGHT * 2); 
+        if (!line) {
+                fclose(fp);
+                png_destroy_read_struct(&png_ptr, png_infopp_NULL, png_infopp_NULL);
+                return;
+        }
+        vram16 = (u16*)freeFrameBufMem;
+        for (y = 0; y < *previewHeight; y++) {
+                png_read_row(png_ptr, (u8*) line, png_bytep_NULL);
+                for (x = 0; x < *previewWidth; x++) {
+                        u32 color32 = line[x];
+                        u16 color16;
+                        int r = color32 & 0xff;
+                        int g = (color32 >> 8) & 0xff;
+                        int b = (color32 >> 16) & 0xff;
+                                        color16 = (r >> 3) | ((g >> 2) << 5) | ((b >> 3) << 11);
+                                        vram16[x + y * PSP_LINE_SIZE] = color16;
+                  }
+        }
+
+        png_read_end(png_ptr, info_ptr);
+        png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
+        fclose(fp);
+}
+
 
 int DrvInitCallback()
 {
@@ -174,6 +295,24 @@ void draw_ui_main()
     //drawRect(GU_FRAME_ADDR(work_frame), 8, 230, 464, 1, UI_COLOR);
     drawString("FB Alpha contains parts of MAME & Final Burn. (C) 2004, Team FB Alpha.", GU_FRAME_ADDR(work_frame), 10, 238, UI_COLOR);
     drawString("FinalBurn Alpha for PSP (C) 2008, OopsWare and LBICELYNE", GU_FRAME_ADDR(work_frame), 10, 255, UI_COLOR);
+	
+	//Draw preview
+	if(ui_mainmenu_select==1&&nBurnDrvSelect < nBurnDrvCount)
+	{
+	    strcpy(buf,szAppCachePath);
+		strcat(buf,BurnDrvGetTextA(DRV_NAME));
+		sprintf(buf+300,"_%1u.png",saveIndex);	
+		strcat(buf,buf+300);
+		
+		if(access(buf,0)==0)
+		{
+			unsigned int imgW,imgH;
+			loadImage(buf, &imgW, &imgH);
+			drawImage(GU_FRAME_ADDR(work_frame), 80, 90, 320, 180, 
+			(unsigned short*)freeFrameBufMem, imgW, imgH, PSP_LINE_SIZE);
+		}
+	}
+	
 }
 
 void draw_ui_browse(bool rebuiltlist)
@@ -202,7 +341,7 @@ void draw_ui_browse(bool rebuiltlist)
 			fc = UI_COLOR;
 		}
 		
-		drawRect(GU_FRAME_ADDR(work_frame), 10, 40+i*18, 230, 18, bc);
+		drawRect(GU_FRAME_ADDR(work_frame), 10, 40+i*18, 140, 18, bc);
 		if (p) {
 			switch( getRomsFileStat(i+find_rom_top) ) {
 			case -2: // unsupport
@@ -218,13 +357,13 @@ void draw_ui_browse(bool rebuiltlist)
 		}
 		
 		if ( find_rom_count > find_rom_list_cnt ) {
-			drawRect(GU_FRAME_ADDR(work_frame), 242, 40, 5, 18 * find_rom_list_cnt, R8G8B8_to_B5G6R5(0x807060));
+			drawRect(GU_FRAME_ADDR(work_frame), 154, 40, 5, 18 * find_rom_list_cnt, R8G8B8_to_B5G6R5(0x807060));
 		
-			drawRect(GU_FRAME_ADDR(work_frame), 242, 
+			drawRect(GU_FRAME_ADDR(work_frame), 154, 
 					40 + find_rom_top * 18 * find_rom_list_cnt / find_rom_count , 5, 
 					find_rom_list_cnt * 18 * find_rom_list_cnt / find_rom_count, UI_COLOR);
 		} else
-			drawRect(GU_FRAME_ADDR(work_frame), 242, 40, 5, 18 * find_rom_list_cnt, UI_COLOR);
+			drawRect(GU_FRAME_ADDR(work_frame), 154, 40, 5, 18 * find_rom_list_cnt, UI_COLOR);
 
 	}
 	
@@ -248,7 +387,34 @@ void draw_ui_browse(bool rebuiltlist)
 	}
     drawString(buf, GU_FRAME_ADDR(work_frame), 10, 255, UI_COLOR, 460);
    
-    nBurnDrvSelect = bds;
+
+    if ( nBurnDrvSelect < nBurnDrvCount ) {
+	    strcpy(buf,szAppCachePath);
+		strcat(buf,BurnDrvGetTextA(DRV_NAME));
+		strcat(buf,".png");
+		int i=-1;
+		if(access(buf,0)!=0)
+		{
+			for(i=0;i<10;i++)
+			{
+				strcpy(buf,szAppCachePath);
+				strcat(buf,BurnDrvGetTextA(DRV_NAME));
+				sprintf(buf+512,"_%1u.png",i);	
+				strcat(buf,buf+512);
+				if(access(buf,0)==0)
+					break;
+			}
+		}
+		if(i<10)
+		{
+			unsigned int imgW,imgH;
+			loadImage(buf, &imgW, &imgH);
+			drawImage(GU_FRAME_ADDR(work_frame), 160, 40, 320, 180, 
+			(unsigned short*)freeFrameBufMem, imgW, imgH, PSP_LINE_SIZE);
+			
+		}
+    }
+	nBurnDrvSelect = bds;
 }
 
 static void return_to_game()
@@ -346,7 +512,7 @@ static void process_key( int key, int down, int repeat )
 				break;
 			case 10:
 				wifiStatus--;
-				if(wifiStatus<0)
+				if(wifiStatus<1)
 				{
 					wifiStatus=3;
 				}
@@ -408,7 +574,7 @@ static void process_key( int key, int down, int repeat )
 				wifiStatus++;
 				if(wifiStatus>3)
 				{
-					wifiStatus=0;
+					wifiStatus=1;
 				}
 				draw_ui_main();
 				break;
@@ -451,6 +617,11 @@ static void process_key( int key, int down, int repeat )
 					strcat(ui_current_path,buf);
 					if(!BurnStateSave(ui_current_path,1))
 					{
+						strcpy(ui_current_path,szAppCachePath);
+						strcat(ui_current_path,BurnDrvGetTextA(DRV_NAME));
+						sprintf(buf,"_%1u.png",saveIndex);	
+						strcat(ui_current_path,buf);
+						screenshot(ui_current_path);
 						scePowerSetClockFrequency(
 									cpu_speeds[cpu_speeds_select].cpu, 
 									cpu_speeds[cpu_speeds_select].cpu, 

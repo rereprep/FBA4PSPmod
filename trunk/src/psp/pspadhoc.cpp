@@ -99,7 +99,7 @@ int wifiRecv()
 	int i,j,err,length;
 	unsigned char *Def = NULL;
 
-	while(1)
+	while(adhocInited)
 	{		
 		length=MAX_PACKET_LENGTH;
 		err = sceNetAdhocPdpRecv(pdpId,
@@ -133,7 +133,7 @@ int wifiRecv()
 							&recvBuffer[0],
 							PACKET_LENGTH,
 							0,	// 0 in lumines
-							0);	// 1 in lumines
+							1);	// 1 in lumines
 						sceKernelDelayThread(3000);
 						sceNetAdhocPdpSend(pdpId,
 							&mac[0],
@@ -141,7 +141,7 @@ int wifiRecv()
 							&recvBuffer[0],
 							PACKET_LENGTH,
 							0,	// 0 in lumines
-							0);	// 1 in lumines
+							1);	// 1 in lumines
 						sceKernelDelayThread(3000);
 						sceNetAdhocPdpSend(pdpId,
 							&mac[0],
@@ -149,7 +149,7 @@ int wifiRecv()
 							&recvBuffer[0],
 							PACKET_LENGTH,
 							0,	// 0 in lumines
-							0);	// 1 in lumines
+							1);	// 1 in lumines
 						sceKernelDelayThread(5000);
 						if(length<=MAX_PACKET_LENGTH)
 						{
@@ -159,7 +159,7 @@ int wifiRecv()
 								&Def[0],
 								length,
 								0,	// 0 in lumines
-								0);	// 1 in lumines
+								1);	// 1 in lumines
 							sceKernelDelayThread(10000);
 							sceNetAdhocPdpSend(pdpId,
 								&mac[0],
@@ -167,7 +167,7 @@ int wifiRecv()
 								&Def[0],
 								length,
 								0,	// 0 in lumines
-								0);	// 1 in lumines
+								1);	// 1 in lumines
 						}
 						else
 						{
@@ -177,7 +177,7 @@ int wifiRecv()
 								&Def[0],
 								MAX_PACKET_LENGTH,
 								0,	// 0 in lumines
-								0);	// 1 in lumines
+								1);	// 1 in lumines
 							sceKernelDelayThread(10000);
 							sceNetAdhocPdpSend(pdpId,
 								&mac[0],
@@ -185,7 +185,7 @@ int wifiRecv()
 								&Def[MAX_PACKET_LENGTH],
 								length-MAX_PACKET_LENGTH,
 								0,	// 0 in lumines
-								0);	// 1 in lumines
+								1);	// 1 in lumines
 							sceKernelDelayThread(10000);
 							sceNetAdhocPdpSend(pdpId,
 								&mac[0],
@@ -193,7 +193,7 @@ int wifiRecv()
 								&Def[MAX_PACKET_LENGTH],
 								length-MAX_PACKET_LENGTH,
 								0,	// 0 in lumines
-								0);	// 1 in lumines
+								1);	// 1 in lumines
 
 						}
 						sceKernelDelayThread(20000);
@@ -311,7 +311,7 @@ int wifiSend(unsigned int wifiCMD)
 			&recvBuffer[0],
 			PACKET_LENGTH,
 			0,	// 0 in lumines
-			0);	// 1 in lumines
+			1);	// 1 in lumines
 		sceKernelDelayThread(5000);
 		/*
 		sceNetAdhocPdpSend(pdpId,
@@ -351,7 +351,7 @@ int wifiSend(unsigned int wifiCMD)
 			&inputKeys[currentInput],
 			PACKET_LENGTH,
 			0,	// 0 in lumines
-			0);	// 1 in lumines
+			1);	// 1 in lumines
 			//sceKernelDelayThread(3000);
 		}
 	}

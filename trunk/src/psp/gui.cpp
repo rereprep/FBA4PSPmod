@@ -15,7 +15,9 @@ void * show_frame = (void *)(PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 0);
 void * draw_frame = (void *)(PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 1);
 void * work_frame = (void *)(PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 2);
 void * tex_frame  = (void *)(PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 3);
+
 static unsigned char* list=(unsigned char*)((PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 4)|0x4000000);
+unsigned char* freeFrameBufMem=(unsigned char*)((PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 5)|0x4000000);
 
 struct Vertex* vertices=0;
 static int nPrevStage;

@@ -306,3 +306,16 @@ void drawRect(unsigned short *screenbuf, int x, int y, int w, int h, unsigned sh
 	}
 }
 
+void drawImage(unsigned short *screenbuf, int x, int y, int w,int h, unsigned short *imgBuf, int imgW, int imgH, int bufW)
+{
+	screenbuf += x + y * 512;
+	float wRatio= ((float)imgW)/w;
+	float hRatio= ((float)imgH)/h;
+	
+	for (int j=0 ;j<h; j++, screenbuf+=512) {
+		unsigned short * p = screenbuf;
+		for(int i=0; i<w; i++,p++) *p =
+		*(imgBuf+(int)(wRatio*i+0.5)+(int)(hRatio*j+0.5)*bufW);
+	}
+}
+
