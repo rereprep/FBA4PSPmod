@@ -7,7 +7,7 @@
 void drawString(const char *s, unsigned short *screenbuf, int x, int y, unsigned short c, int w = 0);
 int getDrawStringLength(const char *s);
 
-void drawRect(unsigned short *screenbuf, int x, int y, int w, int h, unsigned short c);
-void drawImage(unsigned short *screenbuf, int x, int y, int w,int h, unsigned short *imgBuf, int imgW, int imgH, int bufW);
+void drawRect(unsigned short *screenbuf, int x, int y, int w, int h, unsigned short c, unsigned char alpha = 0xFF);
+void drawImage(unsigned short *screenbuf, int x, int y, int w,int h, unsigned short *imgBuf, int imgW, int imgH);
 
 #endif	// _FONT_H_

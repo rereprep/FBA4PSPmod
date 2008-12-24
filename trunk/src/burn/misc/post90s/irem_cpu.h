@@ -6,6 +6,7 @@ extern const UINT8 dynablaster_decryption_table[];
 extern const UINT8 mysticri_decryption_table[];
 extern const UINT8 majtitl2_decryption_table[];
 extern const UINT8 hook_decryption_table[];
+extern const UINT8 leagueman_decryption_table[];
 extern const UINT8 rtypeleo_decryption_table[];
 extern const UINT8 inthunt_decryption_table[];
 extern const UINT8 gussun_decryption_table[];
