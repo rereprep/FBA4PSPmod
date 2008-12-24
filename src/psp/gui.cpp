@@ -17,7 +17,10 @@ void * work_frame = (void *)(PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 2);
 void * tex_frame  = (void *)(PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 3);
 
 static unsigned char* list=(unsigned char*)((PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 4)|0x4000000);
-unsigned char* freeFrameBufMem=(unsigned char*)((PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 5)|0x4000000);
+unsigned char* bgBuf=(unsigned char*)((PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 5)|0x4000000);
+unsigned char* previewBuf=(unsigned char*)((PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 6)|0x4000000);
+unsigned char* tmpBuf=(unsigned char*)((PSP_LINE_SIZE * SCREEN_HEIGHT * 2 * 7)|0x4000000);
+
 
 struct Vertex* vertices=0;
 static int nPrevStage;
@@ -203,53 +206,22 @@ void configureVertices()
 		vertices[2].v = SCREEN_HEIGHT;
 		vertices[3].u = SCREEN_WIDTH;
 		vertices[3].v = SCREEN_HEIGHT;
-	}else switch(screenMode)
+	}else
 	{
-		case 1:
-			vertices[0].x = (SCREEN_WIDTH-362)/2;
-			vertices[1].x = (SCREEN_WIDTH+362)/2;
-			vertices[2].x = (SCREEN_WIDTH-362)/2;
-			vertices[3].x = (SCREEN_WIDTH+362)/2;
-			vertices[0].y = 0;
-			vertices[1].y = 0;
-			vertices[2].y = SCREEN_HEIGHT;
-			vertices[3].y = SCREEN_HEIGHT;
-			vertices[0].u = 0;
-			vertices[0].v = 0;
-			vertices[1].u = VideoBufferWidth;
-			vertices[1].v = 0;
-			vertices[2].u = 0;
-			vertices[2].v = VideoBufferHeight;
-			vertices[3].u = VideoBufferWidth;
-			vertices[3].v = VideoBufferHeight;
-			break;
+		vertices[0].x = (SCREEN_WIDTH-gameScreenWidth)/2;
+		vertices[1].x = (SCREEN_WIDTH+gameScreenWidth)/2;
+		vertices[2].x = vertices[0].x;
+		vertices[3].x = vertices[1].x;
+		vertices[0].y = (SCREEN_HEIGHT-gameScreenHeight)/2;
+		vertices[1].y = vertices[0].y;
+		vertices[2].y = (SCREEN_HEIGHT+gameScreenHeight)/2;
+		vertices[3].y = vertices[2].y;
+	
+	switch(screenMode)
+	{
+		
 		case 2:
-			vertices[0].x = 0;
-			vertices[1].x = SCREEN_WIDTH;
-			vertices[2].x = 0;
-			vertices[3].x = SCREEN_WIDTH;
-			vertices[0].y = 0;
-			vertices[1].y = 0;
-			vertices[2].y = SCREEN_HEIGHT;
-			vertices[3].y = SCREEN_HEIGHT;
-			vertices[0].u = VideoBufferWidth;
-			vertices[0].v = 0;
-			vertices[1].u = VideoBufferWidth;
-			vertices[1].v = VideoBufferHeight;
-			vertices[2].u = 0;
-			vertices[2].v = 0;
-			vertices[3].u = 0;
-			vertices[3].v = VideoBufferHeight;
-			break;
 		case 3:
-			vertices[0].x = (SCREEN_WIDTH-204)/2;
-			vertices[1].x = (SCREEN_WIDTH+204)/2;
-			vertices[2].x = (SCREEN_WIDTH-204)/2;
-			vertices[3].x = (SCREEN_WIDTH+204)/2;
-			vertices[0].y = 0;
-			vertices[1].y = 0;
-			vertices[2].y = SCREEN_HEIGHT;
-			vertices[3].y = SCREEN_HEIGHT;
 			vertices[0].u = VideoBufferWidth;
 			vertices[0].v = 0;
 			vertices[1].u = VideoBufferWidth;
@@ -260,32 +232,7 @@ void configureVertices()
 			vertices[3].v = VideoBufferHeight;
 			break;
 		case 4:
-			vertices[0].x = 0;
-			vertices[1].x = SCREEN_WIDTH;
-			vertices[2].x = 0;
-			vertices[3].x = SCREEN_WIDTH;
-			vertices[0].y = 0;
-			vertices[1].y = 0;
-			vertices[2].y = SCREEN_HEIGHT;
-			vertices[3].y = SCREEN_HEIGHT;
-			vertices[3].u = 0;
-			vertices[3].v = 0;
-			vertices[2].u = VideoBufferWidth;
-			vertices[2].v = 0;
-			vertices[1].u = 0;
-			vertices[1].v = VideoBufferHeight;
-			vertices[0].u = VideoBufferWidth;
-			vertices[0].v = VideoBufferHeight;
-			break;
 		case 5:
-			vertices[0].x = (SCREEN_WIDTH-362)/2;
-			vertices[1].x = (SCREEN_WIDTH+362)/2;
-			vertices[2].x = (SCREEN_WIDTH-362)/2;
-			vertices[3].x = (SCREEN_WIDTH+362)/2;
-			vertices[0].y = 0;
-			vertices[1].y = 0;
-			vertices[2].y = SCREEN_HEIGHT;
-			vertices[3].y = SCREEN_HEIGHT;
 			vertices[3].u = 0;
 			vertices[3].v = 0;
 			vertices[2].u = VideoBufferWidth;
@@ -296,32 +243,7 @@ void configureVertices()
 			vertices[0].v = VideoBufferHeight;
 			break;
 		case 6:
-			vertices[0].x = 0;
-			vertices[1].x = SCREEN_WIDTH;
-			vertices[2].x = 0;
-			vertices[3].x = SCREEN_WIDTH;
-			vertices[0].y = 0;
-			vertices[1].y = 0;
-			vertices[2].y = SCREEN_HEIGHT;
-			vertices[3].y = SCREEN_HEIGHT;
-			vertices[3].u = VideoBufferWidth;
-			vertices[3].v = 0;
-			vertices[2].u = VideoBufferWidth;
-			vertices[2].v = VideoBufferHeight;
-			vertices[1].u = 0;
-			vertices[1].v = 0;
-			vertices[0].u = 0;
-			vertices[0].v = VideoBufferHeight;
-			break;
 		case 7:
-			vertices[0].x = (SCREEN_WIDTH-204)/2;
-			vertices[1].x = (SCREEN_WIDTH+204)/2;
-			vertices[2].x = (SCREEN_WIDTH-204)/2;
-			vertices[3].x = (SCREEN_WIDTH+204)/2;
-			vertices[0].y = 0;
-			vertices[1].y = 0;
-			vertices[2].y = SCREEN_HEIGHT;
-			vertices[3].y = SCREEN_HEIGHT;
 			vertices[3].u = VideoBufferWidth;
 			vertices[3].v = 0;
 			vertices[2].u = VideoBufferWidth;
@@ -370,15 +292,8 @@ void configureVertices()
 				vertices[3].v = VideoBufferHeight;
 			}
 			break;
+		case 1:
 		default:
-			vertices[0].x = 0;
-			vertices[1].x = SCREEN_WIDTH;
-			vertices[2].x = 0;
-			vertices[3].x = SCREEN_WIDTH;
-			vertices[0].y = 0;
-			vertices[1].y = 0;
-			vertices[2].y = SCREEN_HEIGHT;
-			vertices[3].y = SCREEN_HEIGHT;
 			vertices[0].u = 0;
 			vertices[0].v = 0;
 			vertices[1].u = VideoBufferWidth;
@@ -387,6 +302,7 @@ void configureVertices()
 			vertices[2].v = VideoBufferHeight;
 			vertices[3].u = VideoBufferWidth;
 			vertices[3].v = VideoBufferHeight;
+	}
 	}
 	sceKernelDcacheWritebackAll();
 }

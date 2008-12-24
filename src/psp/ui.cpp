@@ -24,9 +24,9 @@ unsigned int hotButtons = (PSP_CTRL_SQUARE|PSP_CTRL_CIRCLE|PSP_CTRL_CROSS);
 short screenMode=0;
 short wifiStatus=0;
 short saveIndex=0;
-short resetOrSync=0;
+short gameScreenWidth=SCREEN_WIDTH, gameScreenHeight=SCREEN_HEIGHT;
 bool enableJoyStick=true;
-char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: preV12p2 DEMO2)";
+char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_V12p2)";
 static int find_rom_count = 0;
 static int find_rom_select = 0;
 static int find_rom_top = 0;
@@ -39,7 +39,8 @@ static int ui_mainmenu_select = 0;
 static int ui_process_pos = 0;
 int InpMake(unsigned int);
 int DoInputBlank(int bDipSwitch);
-
+static unsigned int bgW=0,bgH=0,bgIndex=0;
+static bool needPreview=true;
 
 static void screenshot(const char* filename)
 {
@@ -68,7 +69,7 @@ static void screenshot(const char* filename)
                 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
                 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
         png_write_info(png_ptr, info_ptr);
-        line = freeFrameBufMem;         
+        line = (u8*)tmpBuf;         
         vram16 = GU_FRAME_ADDR(tex_frame);
         for (y = 0; y < VideoBufferHeight; y++) {
                 for (i = 0, x = 0; x < VideoBufferWidth; x++) {
@@ -95,7 +96,7 @@ static void user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
         // ignore PNG warnings
 }
 
-static void loadImage(const char* filename, unsigned int* previewWidth, unsigned int* previewHeight)
+static void loadImage(const unsigned char* imgBuf, const char* filename, unsigned int* previewWidth, unsigned int* previewHeight)
 {
 
         u16* vram16;
@@ -132,13 +133,13 @@ static void loadImage(const char* filename, unsigned int* previewWidth, unsigned
         if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) png_set_gray_1_2_4_to_8(png_ptr);
         if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
         png_set_filler(png_ptr, 0xff, PNG_FILLER_AFTER);
-        line = (u32*)(freeFrameBufMem+PSP_LINE_SIZE * SCREEN_HEIGHT * 2); 
+        line = (u32*)tmpBuf; 
         if (!line) {
                 fclose(fp);
                 png_destroy_read_struct(&png_ptr, png_infopp_NULL, png_infopp_NULL);
                 return;
         }
-        vram16 = (u16*)freeFrameBufMem;
+        vram16 = (u16*)imgBuf;
         for (y = 0; y < *previewHeight; y++) {
                 png_read_row(png_ptr, (u8*) line, png_bytep_NULL);
                 for (x = 0; x < *previewWidth; x++) {
@@ -156,7 +157,26 @@ static void loadImage(const char* filename, unsigned int* previewWidth, unsigned
         png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
         fclose(fp);
 }
-
+void processScreenMode()
+{
+	switch(screenMode)
+	{
+		case 3:
+		case 7:
+			gameScreenWidth=204;			
+			break;
+		case 1:
+		case 5:
+			gameScreenWidth=362;			
+			break;		
+		case 2:
+		case 4:
+		case 6:
+		default:
+			gameScreenWidth=SCREEN_WIDTH;			
+			break;
+	}
+}
 
 int DrvInitCallback()
 {
@@ -164,11 +184,6 @@ int DrvInitCallback()
 }
 
 
-static unsigned short set_ui_main_menu_item_color(int i)
-{
-	if (ui_mainmenu_select == i) return UI_BGCOLOR;	
-	return UI_COLOR;
-}
 
 static struct {
 	int cpu, bus; 
@@ -176,18 +191,45 @@ static struct {
 
 static int cpu_speeds_select = 3;
 
+enum uiMainIndex
+{
+	SELECT_ROM=0,
+	LOAD_GAME,
+	SAVE_GAME,
+	RESET_GAME,
+	SCREEN_SHOT,
+	CONTROLLER,
+	SKIP_FRAMES,
+	SCREEN_MODE,
+	GAME_SCREEN_WIDTH,
+	GAME_SCREEN_HEIGHT,
+	CPU_SPEED,
+	JOYSTICK,
+	WIFI_GAME,
+	SYNC_GAME,
+	PREVIEW,
+	MONO_SOUND,
+	EXIT_FBA,
+	MENU_COUNT
+};
 static char *ui_main_menu[] = {
 	"Select ROM ",
-	"Load Game. Index: %1u ",
-	"Save Game. Index: %1u ",
-	"Controller: %1uP ",
+	"%1u Load Game ",
+	"%1u Save Game ",
 	"Reset Game ",
-	"Max Skip %d Frames ",
-	"Screen Mode %u ",
-	"CPU Speed %3dMHz ",
+	"Screen Shot ",
+	"Controller: %1uP ",
+	"Max Skip Frames: %d",
+	"Screen Mode: %u ",
+	"Screen Width: %3u ",
+	"Screen Height: %3u ",
+	"CPU Speed: %3dMHz ",
 	"JoyStick: %s ",
-	"Exit FinaBurn Alpha",
-	"Wifi Game: %s"
+	"Wifi Game: %s ",
+	"P2P Sync Game ",
+	"Preview: %s ",
+	"Mono Sound: %s ",
+	"Exit FinaBurn Alpha"	
 };
 
 static void update_status_str(char *batt_str)
@@ -220,53 +262,67 @@ static void update_status_str(char *batt_str)
 void draw_ui_main()
 {
 	char buf[320];
-	drawRect(GU_FRAME_ADDR(work_frame), 0, 0, 480, 272, UI_BGCOLOR);
+	if(bgIndex!=1)
+	{
+		if(access("bg1.png",0)==0)
+		{
+			loadImage(bgBuf,"bg1.png", &bgW, &bgH);
+			bgIndex=1;				
+		}
+	}
+	if(bgIndex!=1)
+	{
+		drawRect(GU_FRAME_ADDR(work_frame), 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, UI_BGCOLOR);
+	}else
+	{
+		drawImage(GU_FRAME_ADDR(work_frame), 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 
+			(unsigned short*)bgBuf, bgW, bgH);
+	}
+	
 	drawString(LBVer, GU_FRAME_ADDR(work_frame), 10, 10, UI_COLOR);
 	update_status_str(buf);
 	drawString(buf, GU_FRAME_ADDR(work_frame), 470 - getDrawStringLength(buf), 10, UI_COLOR);
     drawRect(GU_FRAME_ADDR(work_frame), 8, 28, 464, 1, UI_COLOR);
     
-    drawRect(GU_FRAME_ADDR(work_frame), 10, 40+ui_mainmenu_select*18, 460, 18, UI_COLOR);
-    
-    for(int i=0; i<11; i++)  {
-	    unsigned short fc = set_ui_main_menu_item_color(i);
-	    
+        
+    for(int i=0; i<MENU_COUNT; i++)  {
+	    	    
 	    switch ( i ) {
 	    
-	    case 1:
+	    case LOAD_GAME:
 	    	sprintf( buf, ui_main_menu[i],saveIndex );
 			break;
-		case 2:
+		case SAVE_GAME:
 	    	sprintf( buf, ui_main_menu[i],saveIndex );
 			break;
-	    case 3:
+	    case CONTROLLER:
 	    	if(currentInp)
 	    		sprintf( buf, ui_main_menu[i],currentInp );
 	    	else
 	    		strcpy(buf,"Controller: ALL");
 			break;
-		case 4:
-			if(resetOrSync)
-	    		strcpy( buf, "Sync Game" );
-	    	else
-	    		strcpy( buf, "Reset Game" );
-	    	break;
-	    case 5:
+	    case SKIP_FRAMES:
 	    	sprintf( buf, ui_main_menu[i],gameSpeedCtrl );
 			break;
-		case 6:
+		case SCREEN_MODE:
 	    	sprintf( buf, ui_main_menu[i],screenMode );
+			break;
+		case GAME_SCREEN_WIDTH:
+	    	sprintf( buf, ui_main_menu[i],gameScreenWidth );
+			break;
+		case GAME_SCREEN_HEIGHT:
+	    	sprintf( buf, ui_main_menu[i],gameScreenHeight );
 			break;		
-	    case 7:
+	    case CPU_SPEED:
 	    	sprintf( buf, ui_main_menu[i], cpu_speeds[cpu_speeds_select].cpu );
 			break;
-		case 8:
+		case JOYSTICK:
 			if(enableJoyStick)
 	    		sprintf( buf, ui_main_menu[i], "ENABLED" );
 	    	else
 	    		sprintf( buf, ui_main_menu[i], "DISABLED" );
 			break;
-		case 10:
+		case WIFI_GAME:
 			switch(wifiStatus)
 			{
 				case 1:
@@ -283,21 +339,34 @@ void draw_ui_main()
 					break;
 			}
 			break;
+		case PREVIEW:
+			if(needPreview)
+				sprintf( buf, ui_main_menu[i], "ON" );
+			else
+				sprintf( buf, ui_main_menu[i], "OFF" );
+			break;
+		case MONO_SOUND:
+			if(monoSound==1)
+				sprintf( buf, ui_main_menu[i], "ON" );
+			else
+				sprintf( buf, ui_main_menu[i], "OFF" );
+			break;
 	    default:
 	    	sprintf( buf, ui_main_menu[i]);
     	}
     	drawString(buf, 
 	    			GU_FRAME_ADDR(work_frame), 
-	    			180,
-	    			44 + i * 18, fc);
+	    			80+240*(i/10),
+	    			44 + (i%10) * 18, UI_COLOR);
 	}
+	drawRect(GU_FRAME_ADDR(work_frame), 2+240*(ui_mainmenu_select/10), 40+(ui_mainmenu_select%10)*18, 236, 18, UI_COLOR,0x40);
 	
-    //drawRect(GU_FRAME_ADDR(work_frame), 8, 230, 464, 1, UI_COLOR);
+    drawRect(GU_FRAME_ADDR(work_frame), 8, 230, 464, 1, UI_COLOR);
     drawString("FB Alpha contains parts of MAME & Final Burn. (C) 2004, Team FB Alpha.", GU_FRAME_ADDR(work_frame), 10, 238, UI_COLOR);
     drawString("FinalBurn Alpha for PSP (C) 2008, OopsWare and LBICELYNE", GU_FRAME_ADDR(work_frame), 10, 255, UI_COLOR);
 	
 	//Draw preview
-	if(ui_mainmenu_select==1&&nBurnDrvSelect < nBurnDrvCount)
+	if(ui_mainmenu_select==LOAD_GAME&&needPreview&&nBurnDrvSelect < nBurnDrvCount)
 	{
 	    strcpy(buf,szAppCachePath);
 		strcat(buf,BurnDrvGetTextA(DRV_NAME));
@@ -307,9 +376,9 @@ void draw_ui_main()
 		if(access(buf,0)==0)
 		{
 			unsigned int imgW,imgH;
-			loadImage(buf, &imgW, &imgH);
+			loadImage(previewBuf,buf, &imgW, &imgH);
 			drawImage(GU_FRAME_ADDR(work_frame), 80, 90, 320, 180, 
-			(unsigned short*)freeFrameBufMem, imgW, imgH, PSP_LINE_SIZE);
+			(unsigned short*)previewBuf, imgW, imgH);
 		}
 	}
 	
@@ -319,7 +388,22 @@ void draw_ui_browse(bool rebuiltlist)
 {
 	unsigned int bds = nBurnDrvSelect;
 	char buf[1024];
-	drawRect(GU_FRAME_ADDR(work_frame), 0, 0, 480, 272, UI_BGCOLOR);
+	if(bgIndex!=2)
+	{
+		if(access("bg2.png",0)==0)
+		{
+			loadImage(bgBuf,"bg2.png", &bgW, &bgH);
+			bgIndex=2;				
+		}
+	}
+	if(bgIndex!=2)
+	{
+		drawRect(GU_FRAME_ADDR(work_frame), 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, UI_BGCOLOR);
+	}else
+	{
+		drawImage(GU_FRAME_ADDR(work_frame), 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 
+			(unsigned short*)bgBuf, bgW, bgH);
+	}
 
 	find_rom_count = findRomsInDir( rebuiltlist );
 
@@ -331,17 +415,8 @@ void draw_ui_browse(bool rebuiltlist)
 	
 	for(int i=0; i<find_rom_list_cnt; i++) {
 		char *p = getRomsFileName(i+find_rom_top);
-		unsigned short fc, bc;
 		
-		if ((i+find_rom_top) == find_rom_select) {
-			bc = UI_COLOR;
-			fc = UI_BGCOLOR;
-		} else {
-			bc = UI_BGCOLOR;
-			fc = UI_COLOR;
-		}
 		
-		drawRect(GU_FRAME_ADDR(work_frame), 10, 40+i*18, 140, 18, bc);
 		if (p) {
 			switch( getRomsFileStat(i+find_rom_top) ) {
 			case -2: // unsupport
@@ -352,10 +427,12 @@ void draw_ui_browse(bool rebuiltlist)
 				//drawString("<DIR>", GU_FRAME_ADDR(work_frame), 194, 44 + i*18, fc);
 				break;
 			default:
-				drawString(p, GU_FRAME_ADDR(work_frame), 12, 44+i*18, fc, 180);
+				drawString(p, GU_FRAME_ADDR(work_frame), 12, 44+i*18, UI_COLOR, 180);
 			}
 		}
-		
+		if ((i+find_rom_top) == find_rom_select) {
+			drawRect(GU_FRAME_ADDR(work_frame), 10, 40+i*18, 140, 18, UI_COLOR, 0x40);
+		}
 		if ( find_rom_count > find_rom_list_cnt ) {
 			drawRect(GU_FRAME_ADDR(work_frame), 154, 40, 5, 18 * find_rom_list_cnt, R8G8B8_to_B5G6R5(0x807060));
 		
@@ -388,7 +465,7 @@ void draw_ui_browse(bool rebuiltlist)
     drawString(buf, GU_FRAME_ADDR(work_frame), 10, 255, UI_COLOR, 460);
    
 
-    if ( nBurnDrvSelect < nBurnDrvCount ) {
+    if (needPreview&&nBurnDrvSelect < nBurnDrvCount ) {
 	    strcpy(buf,szAppCachePath);
 		strcat(buf,BurnDrvGetTextA(DRV_NAME));
 		strcat(buf,".png");
@@ -408,9 +485,9 @@ void draw_ui_browse(bool rebuiltlist)
 		if(i<10)
 		{
 			unsigned int imgW,imgH;
-			loadImage(buf, &imgW, &imgH);
+			loadImage(previewBuf,buf, &imgW, &imgH);
 			drawImage(GU_FRAME_ADDR(work_frame), 160, 40, 320, 180, 
-			(unsigned short*)freeFrameBufMem, imgW, imgH, PSP_LINE_SIZE);
+			(unsigned short*)previewBuf, imgW, imgH);
 			
 		}
     }
@@ -447,13 +524,13 @@ static void process_key( int key, int down, int repeat )
 		switch( key ) {
 		case PSP_CTRL_UP:
 			if (ui_mainmenu_select <= 0)
-				ui_mainmenu_select = 10;
+				ui_mainmenu_select = MENU_COUNT-1;
 			else
 				ui_mainmenu_select--;
 			draw_ui_main();
 			break;
 		case PSP_CTRL_DOWN:
-			if (ui_mainmenu_select >=10 )
+			if (ui_mainmenu_select >=MENU_COUNT-1 )
 				ui_mainmenu_select = 0;
 			else
 				ui_mainmenu_select++;
@@ -462,14 +539,14 @@ static void process_key( int key, int down, int repeat )
 
 		case PSP_CTRL_LEFT:
 			switch(ui_mainmenu_select) {
-			case 1:
-			case 2:
+			case LOAD_GAME:
+			case SAVE_GAME:
 				saveIndex--;
 				if(saveIndex<0)
 					saveIndex=9;
 				draw_ui_main();
 				break;
-			case 3:
+			case CONTROLLER:
 				currentInp--;
 				if(currentInp<0)
 					currentInp=4;
@@ -477,11 +554,7 @@ static void process_key( int key, int down, int repeat )
 					DoInputBlank(0);
 				draw_ui_main();
 				break;
-			case 4:
-				resetOrSync=1-resetOrSync;
-				draw_ui_main();
-				break;
-			case 5:
+			case SKIP_FRAMES:
 				gameSpeedCtrl--;
 				if ( gameSpeedCtrl<0 ) 
 				{
@@ -489,47 +562,75 @@ static void process_key( int key, int down, int repeat )
 				}
 				draw_ui_main();
 				break;
-			case 6:				
+			case SCREEN_MODE:				
 				screenMode--;
 				if ( screenMode < 0 ) {
 					screenMode=8;
 				}	
 				if(nPrevGame!=~0U)
 					DoInputBlank(0);
+				processScreenMode();
 				draw_ui_main();					
-				
-				
 				break;
-			case 7:
+			case GAME_SCREEN_WIDTH:				
+				gameScreenWidth=gameScreenWidth-2;
+				if ( gameScreenWidth < 2 ) {
+					gameScreenWidth=SCREEN_WIDTH;
+				}	
+				draw_ui_main();					
+				break;
+			case GAME_SCREEN_HEIGHT:				
+				gameScreenHeight=gameScreenHeight-2;
+				if ( gameScreenHeight < 2 ) {
+					gameScreenHeight=SCREEN_HEIGHT;
+				}	
+				draw_ui_main();					
+				break;
+			case CPU_SPEED:
 				if ( cpu_speeds_select > 0 ) {
 					cpu_speeds_select--;
 					draw_ui_main();
 				}
 				break;
-			case 8:
+			case JOYSTICK:
 				enableJoyStick=!enableJoyStick;
 				draw_ui_main();
 				break;
-			case 10:
+			case WIFI_GAME:
 				wifiStatus--;
-				if(wifiStatus<1)
+				if(wifiStatus<0)
 				{
 					wifiStatus=3;
 				}
+				draw_ui_main();
+				break;
+			case PREVIEW:
+				needPreview=!needPreview;
+				draw_ui_main();
+				break;
+			case MONO_SOUND:
+				monoSound=!monoSound;
+				draw_ui_main();
+				break;
+			default:
+				if(ui_mainmenu_select>=10)
+					ui_mainmenu_select=ui_mainmenu_select-10;
+				else
+					ui_mainmenu_select=ui_mainmenu_select+10;
 				draw_ui_main();
 				break;
 			}
 			break;
 		case PSP_CTRL_RIGHT:
 			switch(ui_mainmenu_select) {
-			case 1:
-			case 2:
+			case LOAD_GAME:
+			case SAVE_GAME:
 				saveIndex++;
 				if(saveIndex>9)
 					saveIndex=0;
 				draw_ui_main();
 				break;
-			case 3:
+			case CONTROLLER:
 				currentInp++;
 				if(currentInp>4)
 					currentInp=0;
@@ -537,11 +638,7 @@ static void process_key( int key, int down, int repeat )
 					DoInputBlank(0);
 				draw_ui_main();
 				break;
-			case 4:
-				resetOrSync=1-resetOrSync;
-				draw_ui_main();
-				break;
-			case 5:
+			case SKIP_FRAMES:
 				gameSpeedCtrl++;
 				if ( gameSpeedCtrl > 8) 
 				{
@@ -549,7 +646,7 @@ static void process_key( int key, int down, int repeat )
 				}
 				draw_ui_main();
 				break;
-			case 6:				
+			case SCREEN_MODE:				
 				screenMode++;
 				if ( screenMode>8 ) {
 					screenMode=0;
@@ -557,25 +654,55 @@ static void process_key( int key, int down, int repeat )
 					
 				if(nPrevGame!=~0U)
 					DoInputBlank(0);
+				processScreenMode();
 				draw_ui_main();					
 								
 				break;
-			case 7:
+			case GAME_SCREEN_WIDTH:				
+				gameScreenWidth=gameScreenWidth+2;
+				if ( gameScreenWidth > SCREEN_WIDTH ) {
+					gameScreenWidth=2;
+				}	
+				draw_ui_main();					
+				break;
+			case GAME_SCREEN_HEIGHT:				
+				gameScreenHeight=gameScreenHeight+2;
+				if ( gameScreenHeight > SCREEN_HEIGHT ) {
+					gameScreenHeight=2;
+				}	
+				draw_ui_main();					
+				break;
+			case CPU_SPEED:
 				if ( cpu_speeds_select < 3 ) {
 					cpu_speeds_select++;
 					draw_ui_main();
 				}
 				break;
-			case 8:
+			case JOYSTICK:
 				enableJoyStick=!enableJoyStick;
 				draw_ui_main();
 				break;
-			case 10:
+			case WIFI_GAME:
 				wifiStatus++;
 				if(wifiStatus>3)
 				{
-					wifiStatus=1;
+					wifiStatus=0;
 				}
+				draw_ui_main();
+				break;
+			case PREVIEW:
+				needPreview=!needPreview;
+				draw_ui_main();
+				break;
+			case MONO_SOUND:
+				monoSound=!monoSound;
+				draw_ui_main();
+				break;
+			default:
+				if(ui_mainmenu_select>=10)
+					ui_mainmenu_select=ui_mainmenu_select-10;
+				else
+					ui_mainmenu_select=ui_mainmenu_select+10;
 				draw_ui_main();
 				break;
 			}
@@ -583,13 +710,13 @@ static void process_key( int key, int down, int repeat )
 			
 		case PSP_CTRL_CIRCLE:
 			switch( ui_mainmenu_select ) {
-			case 0:
+			case SELECT_ROM:
 				setGameStage(2);
 				strcpy(ui_current_path, szAppRomPath);
 				//ui_current_path[strlen(ui_current_path)-1] = 0;
 				draw_ui_browse(true);
 				break;
-			case 1:
+			case LOAD_GAME:
 				if(nPrevGame != ~0U&&wifiStatus!=2)
 				{
 					strcpy(ui_current_path,szAppCachePath);
@@ -608,7 +735,7 @@ static void process_key( int key, int down, int repeat )
 					}
 				}
 				break;
-			case 2:
+			case SAVE_GAME:
 				if(nPrevGame != ~0U&&wifiStatus!=2)
 				{
 					strcpy(ui_current_path,szAppCachePath);
@@ -632,28 +759,41 @@ static void process_key( int key, int down, int repeat )
 					
 				}
 				break;
-			case 4:
+			case RESET_GAME:
 				if(nPrevGame != ~0U)
 				{					
-					if(resetOrSync)
-					{
-						return_to_game();
-						sendSyncGame();
-					}else
-					{
 						scePowerSetClockFrequency(
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].bus );
 						resetGame();
 						if(wifiStatus==3)
-							wifiSend(WIFI_CMD_RESET);
-					}
-	
-					
+							wifiSend(WIFI_CMD_RESET);					
 				}
 				break;
-			case 9:	// Exit
+			case SCREEN_SHOT:
+				if(nPrevGame != ~0U)
+				{		
+						strcpy(ui_current_path,szAppCachePath);
+						strcat(ui_current_path,BurnDrvGetTextA(DRV_NAME));
+						strcat(ui_current_path,".png");
+						screenshot(ui_current_path);
+						scePowerSetClockFrequency(
+									cpu_speeds[cpu_speeds_select].cpu, 
+									cpu_speeds[cpu_speeds_select].cpu, 
+									cpu_speeds[cpu_speeds_select].bus );
+						setGameStage(0);
+						sound_continue();
+				}
+				break;
+			case SYNC_GAME:
+				if(nPrevGame != ~0U)
+				{					
+						return_to_game();
+						sendSyncGame();
+				}
+				break;
+			case EXIT_FBA:	// Exit
 				bGameRunning = 0;
 				break;
 				
@@ -680,6 +820,27 @@ static void process_key( int key, int down, int repeat )
 			if ((find_rom_top + find_rom_list_cnt) <= find_rom_select) find_rom_top++;
 			draw_ui_browse(false);
 			break;
+		case PSP_CTRL_LTRIGGER:
+			find_rom_top=find_rom_top-find_rom_list_cnt;
+			find_rom_select=find_rom_select-find_rom_list_cnt;
+			if (find_rom_top < 0)
+			{
+				 find_rom_top=0;
+				 find_rom_select=0;
+			}
+			draw_ui_browse(false);
+			break;
+		case PSP_CTRL_RTRIGGER:
+			find_rom_top=find_rom_top+find_rom_list_cnt;
+			find_rom_select=find_rom_select+find_rom_list_cnt;
+			if (find_rom_select >= find_rom_count)
+			{
+				 find_rom_top=find_rom_count- find_rom_list_cnt;
+				 find_rom_select=find_rom_count-1;
+			}
+			draw_ui_browse(false);
+			break;
+			
 		case PSP_CTRL_CIRCLE:
 			switch( getRomsFileStat(find_rom_select) ) {
 			case -1:	// directry
@@ -773,7 +934,7 @@ static void process_key( int key, int down, int repeat )
 int do_ui_key(unsigned int key)
 {
 	// mask keys
-	key &= PSP_CTRL_UP | PSP_CTRL_DOWN | PSP_CTRL_LEFT | PSP_CTRL_RIGHT | PSP_CTRL_CIRCLE | PSP_CTRL_CROSS;
+	key &= PSP_CTRL_UP | PSP_CTRL_DOWN | PSP_CTRL_LEFT | PSP_CTRL_RIGHT | PSP_CTRL_LTRIGGER | PSP_CTRL_RTRIGGER | PSP_CTRL_CIRCLE | PSP_CTRL_CROSS ;
 	static int prvkey = 0;
 	static int repeat = 0;
 	static int repeat_time = 0;
@@ -785,7 +946,7 @@ int do_ui_key(unsigned int key)
 		process_key( def, def & key, 0 );
 		if (def & key) {
 			// auto repeat up / down only
-			repeat = def & (PSP_CTRL_UP | PSP_CTRL_DOWN);
+			repeat = def & (PSP_CTRL_UP | PSP_CTRL_DOWN | PSP_CTRL_LEFT | PSP_CTRL_RIGHT | PSP_CTRL_LTRIGGER | PSP_CTRL_RTRIGGER);
 		} else repeat = 0;
 		prvkey = key;
 	} else {
@@ -801,8 +962,11 @@ int do_ui_key(unsigned int key)
 
 void ui_update_progress(float size, char * txt)
 {
-	drawRect( GU_FRAME_ADDR(work_frame), 10, 238, 460, 30, UI_BGCOLOR );
-	
+	if(bgIndex!=2)
+		drawRect( GU_FRAME_ADDR(work_frame), 10, 238, 460, 30, UI_BGCOLOR );
+	else
+		drawImage(GU_FRAME_ADDR(work_frame), 10, 238, 460, 30, 
+			(unsigned short*)(bgBuf+238*PSP_LINE_SIZE*2+10*2), 460, 30);
 	drawRect( GU_FRAME_ADDR(work_frame), 10, 238, 460, 12, R8G8B8_to_B5G6R5(0x807060) );
 	drawRect( GU_FRAME_ADDR(work_frame), 10, 238, ui_process_pos, 12, R8G8B8_to_B5G6R5(0xffc090) );
 
@@ -822,7 +986,6 @@ void ui_update_progress(float size, char * txt)
 void ui_update_progress2(float size, const char * txt)
 {
 	static int ui_process_pos2 = 0;
-
 	int sz = (int)(460.0 * size + 0.5);
 	if ( txt ) ui_process_pos2 = sz;
 	else ui_process_pos2 += sz;
@@ -830,7 +993,11 @@ void ui_update_progress2(float size, const char * txt)
 	drawRect( GU_FRAME_ADDR(work_frame), 10, 245, ui_process_pos2, 3, R8G8B8_to_B5G6R5(0xf06050) );
 	
 	if ( txt ) {
-		drawRect( GU_FRAME_ADDR(work_frame), 10, 255, 460, 13, UI_BGCOLOR );
+		if(bgIndex!=2)	
+			drawRect( GU_FRAME_ADDR(work_frame), 10, 255, 460, 13, UI_BGCOLOR );
+		else
+			drawImage(GU_FRAME_ADDR(work_frame), 10,  255, 460, 13, 
+			(unsigned short*)(bgBuf+255*PSP_LINE_SIZE*2+10*2), 460, 13);
 		drawString(txt, GU_FRAME_ADDR(work_frame), 10, 255, UI_COLOR, 460);	
 	}
 

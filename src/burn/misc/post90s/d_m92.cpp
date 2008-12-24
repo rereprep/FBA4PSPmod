@@ -336,6 +336,31 @@ static struct BurnRomInfo hookuRomDesc[] = {
 STD_ROM_PICK(hooku);
 STD_ROM_FN(hooku);
 
+static struct BurnRomInfo nbbatmanRomDesc[] = {
+	{ "a1-h0-a.34",		0x040000, 0x24a9b794, BRF_ESS | BRF_PRG },	// CPU 0, V33
+	{ "a1-l0-a.31",		0x040000, 0x846d7716, BRF_ESS | BRF_PRG },
+	{ "a1-h1-.33",		0x040000, 0x3ce2aab5, BRF_ESS | BRF_PRG },
+	{ "a1-l1-.32",		0x040000, 0x116d9bcc, BRF_ESS | BRF_PRG },
+
+	{ "a1-sh0-.14",		0x010000, 0xb7fae3e6, BRF_ESS | BRF_PRG },	// CPU 1, V30
+	{ "a1-sl0-.17",		0x010000, 0xb26d54fc, BRF_ESS | BRF_PRG },
+
+	{ "lh534k0c.9",		0x080000, 0x314a0c6d, BRF_GRA }, 			// Tiles
+	{ "lh534k0e.10",	0x080000, 0xdc31675b, BRF_GRA },
+	{ "lh534k0f.11",	0x080000, 0xe15d8bfb, BRF_GRA },
+	{ "lh534k0g.12",	0x080000, 0x888d71a3, BRF_GRA },
+
+	{ "lh538393.42",	0x100000, 0x26cdd224, BRF_GRA },        	// Sprites
+	{ "lh538394.43",	0x100000, 0x4bbe94fa, BRF_GRA },
+	{ "lh538395.44",	0x100000, 0x2a533b5e, BRF_GRA },
+	{ "lh538396.45",	0x100000, 0x863a66fa, BRF_GRA },
+
+	{ "lh534k0k.8",	0x080000, 0x735e6380, BRF_SND }, 			// Sound
+};
+
+STD_ROM_PICK(nbbatman);
+STD_ROM_FN(nbbatman);
+
 static struct BurnRomInfo hookjRomDesc[] = {
 	{ "h-h0-g.3h",		0x040000, 0x5964c886, BRF_ESS | BRF_PRG },	// CPU 0, V33
 	{ "h-l0-g.5h",		0x040000, 0x7f7433f2, BRF_ESS | BRF_PRG },
@@ -1092,6 +1117,7 @@ static int hookInit()
 	return 0;
 }
 
+
 static int hookExit()
 {
 	BurnYM2151Exit();
@@ -1811,6 +1837,7 @@ struct BurnDriverD BurnDrvHooku = {
 	320, 240, 4, 3
 };
 
+
 struct BurnDriverD BurnDrvHookj = {
 	"hookj", "hook", NULL, "1992",
 	"Hook (Japan)\0", "Preliminary driver", "Irem", "Miscellaneous",
@@ -1847,7 +1874,81 @@ static int MemIndex2()
 	MemEnd		= Next;
 	return 0;
 }
+static int nbbatmanInit()
+{
+	int nRet;
 
+	Mem = NULL;
+	MemIndex2();
+	int nLen = MemEnd - (unsigned char *)0;
+	if ((Mem = (unsigned char *)malloc(nLen)) == NULL) return 1;
+	memset(Mem, 0, nLen);										// blank all memory
+	MemIndex2();
+
+	nRet = BurnLoadRom(RomV33 + 0x000001, 0, 2); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(RomV33 + 0x000000, 1, 2); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(RomV33 + 0x080001, 2, 2); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(RomV33 + 0x080000, 3, 2); if (nRet != 0) return 1;
+
+	nRet = BurnLoadRom(RomV30 + 0x000001, 4, 2); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(RomV30 + 0x000000, 5, 2); if (nRet != 0) return 1;
+
+	// load and decode tile
+	unsigned char *tmp = (unsigned char *) malloc (0x100000);
+	if ( tmp == 0 ) return 1;
+	memset(tmp, 0, 0x100000);
+
+	loadDecodeGfx01(tmp,  6, 0, 0x080000);
+	loadDecodeGfx01(tmp,  7, 1, 0x080000);
+	loadDecodeGfx01(tmp,  8, 2, 0x080000);
+	loadDecodeGfx01(tmp,  9, 3, 0x080000);
+
+	loadDecodeGfx02(tmp, 10, 0, 0x100000);
+	loadDecodeGfx02(tmp, 11, 1, 0x100000);
+	loadDecodeGfx02(tmp, 12, 2, 0x100000);
+	loadDecodeGfx02(tmp, 13, 3, 0x100000);
+
+	free(tmp);
+
+	{
+		unsigned int cpu_types[] = { 0, 8 };
+		VezInit(2, &cpu_types[0]);
+
+	    VezOpen(0);
+
+		VezMapArea(0x00000, 0x9ffff, 0, RomV33 + 0x00000);	// CPU 0 ROM
+		VezMapArea(0x00000, 0x9ffff, 2, RomV33 + 0x00000);
+
+		VezMapArea(0xa0000, 0xbffff, 0, RomV33 + 0xa0000);	// rom bank
+		VezMapArea(0xa0000, 0xbffff, 2, RomV33 + 0xa0000);
+
+		VezMapArea(0xc0000, 0xcffff, 0, RomV33 + 0x00000);	// Mirror, Used by In The Hunt as protection
+		VezMapArea(0xc0000, 0xcffff, 2, RomV33 + 0x00000);
+
+		VezMapArea(0xd0000, 0xdffff, 0, RamVideo);
+		VezMapArea(0xd0000, 0xdffff, 1, RamVideo);
+
+		VezMapArea(0xe0000, 0xeffff, 0, RamV33);			// system ram
+		VezMapArea(0xe0000, 0xeffff, 1, RamV33);
+
+		VezMapArea(0xf8000, 0xf87ff, 0, RamSpr);			// sprites ram
+		VezMapArea(0xf8000, 0xf87ff, 1, RamSpr);
+
+		VezSetReadHandler(m92ReadByte);
+		VezSetWriteHandler(m92WriteByte);
+		VezSetReadPort(m92ReadPort);
+		VezSetWritePort(m92WritePort);
+	}
+
+	m92_irq_vectorbase = 0x80;
+	PalBank	= 0;
+
+	BurnYM2151Init(3579545, 80.0);		// 3.5795 MHz
+	YM2151SetIrqHandler(0, &m92YM2151IRQHandler);
+
+	DrvDoReset();
+	return 0;
+}
 static int inthuntInit()
 {
 	int nRet;
@@ -2005,7 +2106,15 @@ struct BurnDriverD BurnDrvKaiteids = {
 	inthuntInit, hookExit, inthuntFrame, NULL, DrvScan, 0, NULL, NULL, NULL, &bRecalcPalette,
 	320, 240, 4, 3
 };
-
+struct BurnDriverD BurnDrvNbbatman = {
+	"nbbatman", NULL, NULL, "1993",
+	"Ninjia Baseball Batman (US)\0", "Preliminary driver", "Irem America", "Miscellaneous",
+	NULL, NULL, NULL, NULL,
+	/*BDF_GAME_WORKING |*/ BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_MISC_POST90S,
+	NULL, nbbatmanRomInfo, nbbatmanRomName, hookInputInfo, hookDIPInfo,
+	nbbatmanInit, hookExit, hookFrame, NULL, DrvScan, 0, NULL, NULL, NULL, &bRecalcPalette,
+	320, 240, 4, 3
+};
 
 static int rtypeleoExit()
 {

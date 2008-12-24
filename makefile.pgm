@@ -44,9 +44,9 @@ alldir	= burn burn/pgm generated psp zlib \
 
 incdir	= -I. -I$(PSPSDK)/include $(foreach dir,$(alldir),-I$(srcdir)$(dir)) -I$(objdir)generated
 
-lib		=  -lm -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
+lib		=   -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
 			-lpspnet -lpspnet_adhoc -lpspnet_adhocctl -lpspwlan -lpsputility \
-			-lpspuser -lpspkernel -lpsppower -lpspaudio -lpsprtc -lpng -lg
+			-lpspuser -lpspkernel -lpsppower -lpspaudio -lpsprtc -lpng -lg -lm
 
 		
 drvobj	= d_pgm.o 

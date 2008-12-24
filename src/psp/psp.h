@@ -27,7 +27,7 @@ struct Vertex
 
 
 /* ui.cpp */
-#define UI_COLOR	R8G8B8_to_B5G6R5(0xffc090)
+#define UI_COLOR	R8G8B8_to_B5G6R5(0xffffff)
 #define UI_BGCOLOR	R8G8B8_to_B5G6R5(0x102030)
 
 extern char ui_current_path[];
@@ -43,6 +43,7 @@ extern short gameSpeedCtrl;
 extern unsigned int hotButtons ;
 extern short screenMode;
 extern short wifiStatus;
+extern short gameScreenWidth, gameScreenHeight;
 /* roms.cpp */
 
 int findRomsInDir(bool force);
@@ -55,7 +56,7 @@ extern void * show_frame;
 extern void * draw_frame;
 extern void * work_frame;
 extern void * tex_frame;
-extern unsigned char* freeFrameBufMem;
+extern unsigned char *bgBuf,*previewBuf,*tmpBuf;
 void init_gui();
 void exit_gui();
 void update_gui();
