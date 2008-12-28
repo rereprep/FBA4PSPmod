@@ -1043,13 +1043,6 @@ static int hookInit()
 	irem_cpu_decrypt(0,hook_decryption_table,tmp,RomV30,0x20000 );
 
 
-	free(tmp);
-	// load and decode tile
-	tmp = (unsigned char *) malloc (0x100000);
-	if ( tmp == 0 )
-	{
-		return 1;
-	}
 	memset(tmp, 0, 0x100000);
 
 	loadDecodeGfx01(tmp,  6, 0, 0x040000);
@@ -1851,7 +1844,7 @@ struct BurnDriverD BurnDrvHookj = {
 static int MemIndex2()
 {
 	unsigned char *Next; Next = Mem;
-	RomV33 		= Next; Next += 0x0C0000;			// V33
+	RomV33 		= Next; Next += 0x180000;			// V33
 	RomV30		= Next; Next += 0x100000;			// V30
 	RomGfx01	= Next; Next += 0x400000;			// char
 	RomGfx02	= Next; Next += 0x800000;			// spr
@@ -1887,17 +1880,23 @@ static int nbbatmanInit()
 
 	nRet = BurnLoadRom(RomV33 + 0x000001, 0, 2); if (nRet != 0) return 1;
 	nRet = BurnLoadRom(RomV33 + 0x000000, 1, 2); if (nRet != 0) return 1;
-	nRet = BurnLoadRom(RomV33 + 0x080001, 2, 2); if (nRet != 0) return 1;
-	nRet = BurnLoadRom(RomV33 + 0x080000, 3, 2); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(RomV33 + 0x100001, 2, 2); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(RomV33 + 0x100000, 3, 2); if (nRet != 0) return 1;
 
-	nRet = BurnLoadRom(RomV30 + 0x000001, 4, 2); if (nRet != 0) return 1;
-	nRet = BurnLoadRom(RomV30 + 0x000000, 5, 2); if (nRet != 0) return 1;
-
-	// load and decode tile
 	unsigned char *tmp = (unsigned char *) malloc (0x100000);
-	if ( tmp == 0 ) return 1;
+	if ( tmp == 0 )
+	{
+		return 1;
+	}
 	memset(tmp, 0, 0x100000);
 
+	nRet = BurnLoadRom(tmp + 0x000001, 4, 2); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(tmp + 0x000000, 5, 2); if (nRet != 0) return 1;
+
+	//irem_cpu_decrypt(RomV30, 0x20000, hook_decryption_table );
+	irem_cpu_decrypt(0,leagueman_decryption_table,tmp,RomV30,0x20000 );
+
+	memset(tmp, 0, 0x100000);
 	loadDecodeGfx01(tmp,  6, 0, 0x080000);
 	loadDecodeGfx01(tmp,  7, 1, 0x080000);
 	loadDecodeGfx01(tmp,  8, 2, 0x080000);
@@ -1916,15 +1915,21 @@ static int nbbatmanInit()
 
 	    VezOpen(0);
 
-		VezMapArea(0x00000, 0x9ffff, 0, RomV33 + 0x00000);	// CPU 0 ROM
-		VezMapArea(0x00000, 0x9ffff, 2, RomV33 + 0x00000);
+		VezMapArea(0x00000, 0x7ffff, 0, RomV33 + 0x00000);	// CPU 0 ROM
+		VezMapArea(0x00000, 0x7ffff, 2, RomV33 + 0x00000);
+		
+		VezMapArea(0x80000, 0x9ffff, 0, RomV33 + 0x100000);	// CPU 0 ROM
+		VezMapArea(0x80000, 0x9ffff, 2, RomV33 + 0x100000);
 
-		VezMapArea(0xa0000, 0xbffff, 0, RomV33 + 0xa0000);	// rom bank
-		VezMapArea(0xa0000, 0xbffff, 2, RomV33 + 0xa0000);
+
+		VezMapArea(0xa0000, 0xbffff, 0, RomV33 + 0x100000);	// rom bank
+		VezMapArea(0xa0000, 0xbffff, 2, RomV33 + 0x100000);
+
 
 		VezMapArea(0xc0000, 0xcffff, 0, RomV33 + 0x00000);	// Mirror, Used by In The Hunt as protection
 		VezMapArea(0xc0000, 0xcffff, 2, RomV33 + 0x00000);
-
+		
+		
 		VezMapArea(0xd0000, 0xdffff, 0, RamVideo);
 		VezMapArea(0xd0000, 0xdffff, 1, RamVideo);
 
@@ -1938,6 +1943,21 @@ static int nbbatmanInit()
 		VezSetWriteHandler(m92WriteByte);
 		VezSetReadPort(m92ReadPort);
 		VezSetWritePort(m92WritePort);
+		
+		VezOpen(1);
+
+		VezMapArea(0x00000, 0x1ffff, 0, RomV30 + 0x00000);	// CPU 1 ROM
+		VezMapArea(0x00000, 0x1ffff, 2, RomV30 + 0x20000, RomV30 + 0x00000);
+
+		VezMapArea(0xa0000, 0xa3fff, 0, RamV30);			// system ram
+		VezMapArea(0xa0000, 0xa3fff, 1, RamV30);
+
+		// V30 Startup vector
+		VezMapArea(0xff800, 0xfffff, 0, RomV30 + 0x1f800);
+		VezMapArea(0xff800, 0xfffff, 2, RomV30 + 0x3f800, RomV30 + 0x1f800);
+
+		VezSetReadHandler(m92SndReadByte);
+		VezSetWriteHandler(m92SndWriteByte);
 	}
 
 	m92_irq_vectorbase = 0x80;
@@ -2076,7 +2096,55 @@ static int inthuntFrame()
 
 	return 0;
 }
+static int nbbatmanFrame()
+{
+	if (DrvReset) DrvDoReset();
 
+	if (bRecalcPalette) {
+		for (int i=0; i<0x800;i++)
+			RamCurPal[i] = CalcCol(i<<1);
+		bRecalcPalette = 0;
+	}
+
+	DrvInput[0] = 0x00;
+	DrvInput[1] = 0x00;
+	DrvInput[2] = 0x00;
+	DrvInput[3] = 0x00;
+	DrvInput[4] = 0x00;
+
+	for (int i = 0; i < 8; i++) {
+		DrvInput[0] |= (DrvJoy1[i] & 1) << i;
+		DrvInput[1] |= (DrvJoy2[i] & 1) << i;
+		DrvInput[2] |= (DrvJoy3[i] & 1) << i;
+		DrvInput[3] |= (DrvJoy4[i] & 1) << i;
+		DrvInput[4] |= (DrvButton[i] & 1) << i;
+	}
+	VezOpen(0);
+
+	for (int i=150000-1; i>=0; i--) {
+
+		VezRun(9000000 / 60 / 150000);
+
+		if ( m92_sprite_buffer_busy == 0 ) {
+			m92_sprite_buffer_busy = 0x80;
+			memcpy(RamSprCpy, RamSpr, 0x800);
+			VezSetIRQLine(m92_irq_vectorbase + 4, VEZ_IRQSTATUS_ACK);
+			VezRun( m92_sprite_buffer_timer );
+		}
+
+		if (i == m92_raster_irq_position)
+			VezSetIRQLine(m92_irq_vectorbase + 8, VEZ_IRQSTATUS_ACK); // IRQ 2
+		else
+		if (i == 145900) {
+			VezSetIRQLine(m92_irq_vectorbase + 0, VEZ_IRQSTATUS_ACK); // IRQ 0
+
+		}
+	}
+
+	if (pBurnDraw) DrvDraw();
+
+	return 0;
+}
 struct BurnDriverD BurnDrvInthunt = {
 	"inthunt", NULL, NULL, "1993",
 	"In The Hunt (World)\0", "Preliminary driver", "Irem", "Miscellaneous",
@@ -2106,15 +2174,7 @@ struct BurnDriverD BurnDrvKaiteids = {
 	inthuntInit, hookExit, inthuntFrame, NULL, DrvScan, 0, NULL, NULL, NULL, &bRecalcPalette,
 	320, 240, 4, 3
 };
-struct BurnDriverD BurnDrvNbbatman = {
-	"nbbatman", NULL, NULL, "1993",
-	"Ninjia Baseball Batman (US)\0", "Preliminary driver", "Irem America", "Miscellaneous",
-	NULL, NULL, NULL, NULL,
-	/*BDF_GAME_WORKING |*/ BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_MISC_POST90S,
-	NULL, nbbatmanRomInfo, nbbatmanRomName, hookInputInfo, hookDIPInfo,
-	nbbatmanInit, hookExit, hookFrame, NULL, DrvScan, 0, NULL, NULL, NULL, &bRecalcPalette,
-	320, 240, 4, 3
-};
+
 
 static int rtypeleoExit()
 {
@@ -2292,5 +2352,15 @@ struct BurnDriverD BurnDrvRtypelej = {
 	BDF_CLONE | BDF_16BIT_ONLY, 2, HARDWARE_MISC_POST90S,
 	NULL, rtypelejRomInfo, rtypelejRomName, inthuntInputInfo, inthuntDIPInfo,
 	rtypeleoInit, rtypeleoExit, rtypeleoFrame, NULL, DrvScan, 0, NULL, NULL, NULL, &bRecalcPalette,
+	320, 240, 4, 3
+};
+
+struct BurnDriverD BurnDrvNbbatman = {
+	"nbbatman", NULL, NULL, "1993",
+	"Ninjia Baseball Batman (US)\0", "Preliminary driver", "Irem America", "Miscellaneous",
+	NULL, NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_MISC_POST90S,
+	NULL, nbbatmanRomInfo, nbbatmanRomName, hookInputInfo, hookDIPInfo,
+	nbbatmanInit, hookExit, nbbatmanFrame, NULL, DrvScan, 0, NULL, NULL, NULL, &bRecalcPalette,
 	320, 240, 4, 3
 };
