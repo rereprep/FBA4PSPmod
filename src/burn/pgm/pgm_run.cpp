@@ -56,6 +56,7 @@ static int pgmMemIndex()
 	unsigned char *Next; Next = Mem;
 	PGM68KBIOS	= Next; Next += 0x0020000;		// 68000 BIOS
 	PGM68KROM	= Next; Next += nPGM68KROMLen;	// 68000 PRG (max 0x400000)
+	PGMARMROM	= Next; Next += 0x4000;			// ARM protection ASIC - internal rom
 	USER0		= Next; Next += 0x0200000;		// User0 ROM/RAM space (for protection roms, etc)
 
 	RamStart	= Next;
@@ -96,6 +97,7 @@ static int pgmGetRoms(bool bLoad)
 	struct BurnRomInfo pi;
 
 	unsigned char *PGM68KROMLoad = PGM68KROM;
+	unsigned char *PGMUSER0Load = USER0;
 	unsigned char *PGMTileROMLoad = PGMTileROM + 0x400000;
 	unsigned char *PGMSPRColROMLoad = PGMSPRColROM;
 	unsigned char *PGMSPRMaskROMLoad = PGMSPRMaskROM;
@@ -239,6 +241,35 @@ static int pgmGetRoms(bool bLoad)
 				nPGMSNDROMLen += ri.nLen;
 			}
 #endif
+			continue;
+		}
+		
+		if ((ri.nType & BRF_PRG) && (ri.nType & 7) == 6)
+		{
+			if (bLoad) {
+				BurnDrvGetRomInfo(&pi, i+1);
+
+				if (ri.nLen == 0x80000 && pi.nLen == 0x80000)
+				{
+					BurnLoadRom(PGMUSER0Load + 0, i + 0, 2);
+					BurnLoadRom(PGMUSER0Load + 1, i + 1, 2);
+					PGMUSER0Load += pi.nLen;
+					i += 1;
+				}
+				else
+				{
+					BurnLoadRom(PGMUSER0Load, i, 1);
+				}
+				PGMUSER0Load += ri.nLen;				
+			}
+			continue;
+		}
+		
+		if ((ri.nType & BRF_PRG) && (ri.nType & 7) == 7)
+		{
+			if (bLoad) {
+				BurnLoadRom(PGMARMROM, i, 1);			
+			}
 			continue;
 		}
 	}

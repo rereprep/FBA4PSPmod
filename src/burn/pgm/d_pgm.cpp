@@ -1377,7 +1377,7 @@ static struct BurnRomInfo martmastRomDesc[] = {
 	{ "martial_masters_v102_usa.asic", 0x4000,  0xa6c0828c, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
 //	{ "martial_masters_v101_china.asic",0x4000, 0xb3e25b7d, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
 
-	{ "v102_16m.u10",  	0x200000, 0x18b745e6, 8 | BRF_ESS | BRF_PRG }, // External ARM rom
+	{ "v102_16m.u10",  	0x200000, 0x18b745e6, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
 	{ "t1000.u3",	  	  0x800000, 0xbbf879b5, 2 | BRF_GRA },		 // 32x32 BG Tiles
 
@@ -1420,9 +1420,9 @@ struct BurnDriverD BurnDrvMartmast = {
 static struct BurnRomInfo kov2RomDesc[] = {
 	{ "igs_u18.rom",  	  0x400000, 0x86205879, 1 | BRF_ESS | BRF_PRG }, // 68000
 
-	{ "kov2_v100_hongkong.asic",0x4000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
+	{ "sango2.rom",		0x4000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
 
-	{ "igs_u19.rom",  	  0x200000, 0xedd59922, 8 | BRF_ESS | BRF_PRG }, // External ARM rom
+	{ "igs_u19.rom",  	  0x200000, 0xedd59922, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
 	{ "t1200.rom",	  	  0x800000, 0xd7e26609, 2 | BRF_GRA },		 // 32x32 BG Tiles
 
@@ -1452,7 +1452,7 @@ struct BurnDriverD BurnDrvKov2 = {
 	"kov2", NULL, "pgm", "2000",
 	"Knights of Valour 2\0", "Needs second CPU emulated (ARM7)", "IGS", "PGM",
 	NULL, NULL, NULL, NULL,
-	BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
+	BDF_GAME_WORKING |BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
 	NULL, kov2RomInfo, kov2RomName, pgmInputInfo, pgmDIPInfo,
 	kov2Init,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448,224,4,3
@@ -1466,7 +1466,7 @@ static struct BurnRomInfo kov2106RomDesc[] = {
 
 	{ "kov2_v100_hongkong.asic",0x4000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
 
-	{ "u19.102",	  	  0x200000, 0x462e2980, 8 | BRF_ESS | BRF_PRG }, // External ARM rom
+	{ "u19.102",	  	  0x200000, 0x462e2980, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
 	{ "t1200.rom",	  	0x800000, 0xd7e26609, 2 | BRF_GRA },		 // 32x32 BG Tiles
 
@@ -1489,7 +1489,7 @@ struct BurnDriverD BurnDrvKov2106 = {
 	"kov2106", "kov2", "pgm", "2000",
 	"Knights of Valour 2 (V106)\0", "Needs second CPU emulated (ARM7)", "IGS", "PGM",
 	NULL, NULL, NULL, NULL,
-	BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
 	NULL, kov2106RomInfo, kov2106RomName, pgmInputInfo, pgmDIPInfo,
 	kov2Init,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448,224,4,3
@@ -1503,7 +1503,7 @@ static struct BurnRomInfo kov2pRomDesc[] = {
 
 	{ "kov2p.asic",		    0x004000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
 
-	{ "v200-16.rom",  	  0x200000, 0x16a0c11f, 8 | BRF_ESS | BRF_PRG }, // External ARM rom
+	{ "v200-16.rom",  	  0x200000, 0x16a0c11f, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
 	{ "t1200.rom",	  	  0x800000, 0xd7e26609, 2 | BRF_GRA },		 // 32x32 BG Tiles
 
@@ -1526,7 +1526,7 @@ struct BurnDriverD BurnDrvKov2p = {
 	"kov2p", "kov2", "pgm", "2000",
 	"Knights of Valour 2 Plus - Nine Dragons (VM204XX)\0", "Needs second CPU emulated (ARM7)", "IGS", "PGM",
 	NULL, NULL, NULL, NULL,
-	BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
 	NULL, kov2pRomInfo, kov2pRomName, pgmInputInfo, pgmDIPInfo,
 	kov2Init,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448,224,4,3
@@ -1540,7 +1540,7 @@ static struct BurnRomInfo ddp2RomDesc[] = {
 
 	{ "ddp2_igs027a.bin",     0x004000, 0,		7 | BRF_NODUMP | BRF_PRG }, // protection rom (not used atm)
 
-	{ "v100.u23", 	 	  0x020000, 0x06c3dd29, 8 | BRF_ESS | BRF_PRG }, // External ARM rom
+	{ "v100.u23", 	 	  0x020000, 0x06c3dd29, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
 	{ "t1300.u21",	  	0x800000, 0xe748f0cb, 2 | BRF_GRA },		 // 32x32 BG Tiles
 
@@ -1585,7 +1585,7 @@ static struct BurnRomInfo dmnfrntRomDesc[] = {
 
 	{ "dmnfrnt_igs027a.bin",  0x004000,   0,  	7 | BRF_NODUMP | BRF_PRG }, // protection rom (not used atm)
 
-	{ "v101_32m.u26",  	  0x400000, 0x93965281, 8 | BRF_ESS | BRF_PRG }, // External ARM rom
+	{ "v101_32m.u26",  	  0x400000, 0x93965281, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
 	{ "t04501.u29",	  	  0x800000, 0x900eaaac, 2 | BRF_GRA },		 // 32x32 BG Tiles
 
@@ -1627,7 +1627,7 @@ static struct BurnRomInfo dmnfrntaRomDesc[] = {
 
 	{ "dmnfrnt_igs027a.bin",  0x004000,   0,  	7 | BRF_NODUMP | BRF_PRG }, // protection rom (not used atm)
 
-	{ "v105_32m.u26",  	  0x400000, 0xd200ee63, 8 | BRF_ESS | BRF_PRG }, // External ARM rom
+	{ "v105_32m.u26",  	  0x400000, 0xd200ee63, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
 	{ "t04501.u29",	  	  0x800000, 0x900eaaac, 2 | BRF_GRA },		 // 32x32 BG Tiles
 
@@ -1660,7 +1660,7 @@ struct BurnDriverD BurnDrvDmnfrnta = {
 static struct BurnRomInfo thegladRomDesc[] = {
 	{ "u6.rom",	  	    0x080000, 0x14c85212, 1 | BRF_ESS | BRF_PRG }, // 68000
 
-	{ "u2.rom",  	  	  0x200000, 0xc7bcf2ae, 8 | BRF_ESS | BRF_PRG},  // External ARM rom
+	{ "u2.rom",  	  	  0x200000, 0xc7bcf2ae, 6 | BRF_ESS | BRF_PRG},  // External ARM rom
 
 	{ "t04601.u33",	  	0x800000, 0x2da3be8e, 2 | BRF_GRA },		 // 32x32 BG Tiles
 
