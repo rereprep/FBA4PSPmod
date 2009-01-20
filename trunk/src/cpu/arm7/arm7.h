@@ -32,12 +32,26 @@
 
 #ifndef __ARM7_H__
 #define __ARM7_H__
+#define ARM7_MEM_SHIFT	24
+#define ARM7_MEM_MASK	((1 << ARM7_MEM_SHIFT) - 1)
+//#include "cpuintrf.h"
 
-#include "cpuintrf.h"
-
+#include "arm7core.h"   //include arm7 core
 /****************************************************************************************************
  *  PUBLIC FUNCTIONS
  ***************************************************************************************************/
-extern void arm7_get_info(UINT32 state, cpuinfo *info);
+//extern void arm7_get_info(UINT32 state, cpuinfo *info);
+#ifdef __cplusplus
+extern "C" {
+#endif
+void arm7_reset(void);
+int arm7_execute(int cycles);
+void arm7_set_irq_line(int irqline, int state);
+int arm7MapArea(unsigned int nStart, unsigned int nEnd, int nMode, unsigned char *Mem);
 
+void arm7SetReadHandler(unsigned int (*)(unsigned int));
+void arm7SetWriteHandler(void (*)(unsigned int, unsigned int));
+#ifdef __cplusplus
+}
+#endif
 #endif /* __ARM7_H__ */

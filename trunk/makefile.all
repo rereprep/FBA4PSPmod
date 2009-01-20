@@ -98,10 +98,6 @@ depobj	:= 	$(drvobj) \
 	   	dac.o ics2115.o msm5205.o msm6295.o rf5c68.o segapcm.o sn76496.o upd7759.o ymf278b.o ymz280b.o \
 	   	burn_ym3526.o\
 	   	x1010.o \
-	   	\
-	   	c68k.o \
-	   	\
-	   	cz80.o \
 	   	sh2.o \
 	   	vez.o nec.o \
 		m6800.o m6800_intf.o m6809.o m6809_intf.o hd6309.o hd6309_intf.o\

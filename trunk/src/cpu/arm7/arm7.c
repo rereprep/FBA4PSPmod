@@ -34,12 +34,24 @@
        See the notes in the arm7core.c file itself regarding issues/limitations of the arm7 core.
     **
 *****************************************************************************/
+typedef signed char INT8;
+typedef unsigned char UINT8;
+typedef signed short INT16;
+typedef unsigned short UINT16;
+typedef signed int INT32;
+typedef unsigned int UINT32;
+typedef long long INT64;
+typedef unsigned long long UINT64;
+typedef unsigned int offs_t;
+#define INLINE inline static
+#define NULL 0
+
 #include "arm7.h"
-#include "debugger.h"
-#include "arm7core.h"   //include arm7 core
+//#include "debugger.h"
+
 
 /* Example for showing how Co-Proc functions work */
-#define TEST_COPROC_FUNCS 1
+#define TEST_COPROC_FUNCS 0
 
 /* prototypes */
 #if TEST_COPROC_FUNCS
@@ -74,8 +86,89 @@ typedef struct
 } ARM7_REGS;
 
 static ARM7_REGS arm7;
-static int ARM7_ICOUNT;
+int ARM7_ICOUNT;
+unsigned int program_read_dword_32le(unsigned int a)
+{
+	unsigned int p = ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
+	if ( p )
+		return *(unsigned int*)(p + a);
+	else
+		return ARM7.ReadHandler(a);
+}
 
+unsigned short program_read_word_32le(unsigned int a)
+{
+	unsigned int p = ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
+	if ( p )
+		return *(unsigned short *)(p + a);
+	else
+		return ARM7.ReadHandler(a);
+}
+unsigned char program_read_byte_32le(unsigned int a)
+{
+	unsigned int p = ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
+	if ( p )
+		return *(unsigned char *)(p + a);
+	else
+		return ARM7.ReadHandler(a);
+}
+void program_write_dword_32le(unsigned int a, unsigned int d)
+{
+	
+	unsigned int p =ARM7.ppMemWrite[ a >> ARM7_MEM_SHIFT ];
+
+	if ( p )
+		*(unsigned int *)(p + a) = d;
+	else
+		ARM7.WriteHandler(a, d);
+}
+void program_write_word_32le(unsigned int a, unsigned short d)
+{
+	unsigned int p = ARM7.ppMemWrite[ a >> ARM7_MEM_SHIFT ];
+	if ( p )
+		*(unsigned short *)(p + a) = d;
+	else
+		ARM7.WriteHandler(a, d);
+}
+void program_write_byte_32le(unsigned int a, unsigned char d)
+{
+	unsigned int p = ARM7.ppMemWrite[ a >> ARM7_MEM_SHIFT ];
+	if ( p )
+		*(unsigned char *)(p + a) = d;
+	else
+		ARM7.WriteHandler(a, d);
+}
+
+unsigned int cpu_readop32(unsigned int a)
+{
+	unsigned char * p = (unsigned int *)ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
+	unsigned char *test;
+	if ( p )
+	{
+		test= (p + a);
+		return test[3]<<24|test[2]<<16|test[1]<<8|test[0];
+	}else
+	{
+		*(unsigned int*)0=1; //trap here
+		return 0;
+	}
+}
+
+unsigned short cpu_readop16(unsigned int a)
+{
+	unsigned char * p = (unsigned short *)ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
+	unsigned char *test;
+	if ( p )
+	{
+		test= (p + a);
+		return test[1]<<8|test[0];
+	}
+	else
+	{
+		*(unsigned int*)0=1;
+		return 0;
+	}
+}
 /* include the arm7 core */
 #include "arm7core.c"
 
@@ -85,7 +178,7 @@ static int ARM7_ICOUNT;
 static void arm7_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
     // must call core
-    arm7_core_init("arm7", index);
+    //arm7_core_init("arm7", index);
 
     ARM7.irq_callback = irqcallback;
 
@@ -99,7 +192,7 @@ static void arm7_init(int index, int clock, const void *config, int (*irqcallbac
 #endif
 }
 
-static void arm7_reset(void)
+void arm7_reset(void)
 {
     // must call core reset
     arm7_core_reset();
@@ -110,14 +203,14 @@ static void arm7_exit(void)
     /* nothing to do here */
 }
 
-static int arm7_execute(int cycles)
+int arm7_execute(int cycles)
 {
 /* include the arm7 core execute code */
 #include "arm7exec.c"
 }
 
 
-static void set_irq_line(int irqline, int state)
+void arm7_set_irq_line(int irqline, int state)
 {
     // must call core
     arm7_core_set_irq_line(irqline,state);
@@ -152,253 +245,41 @@ static offs_t arm7_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8
 }
 
 
-/**************************************************************************
- * Generic set_info
- **************************************************************************/
-
-static void arm7_set_info(UINT32 state, cpuinfo *info)
+// fba interface
+int arm7MapArea(unsigned int nStart, unsigned int nEnd, int nMode, unsigned char *Mem)
 {
-    switch (state)
-    {
-        /* --- the following bits of info are set as 64-bit signed integers --- */
+	int s = nStart >> ARM7_MEM_SHIFT;
+	int e = (nEnd + ARM7_MEM_MASK)>>ARM7_MEM_SHIFT;
+	int i;
+	for (i= s; i < e; i++) {
+		switch (nMode) {
+			case 0:
+				ARM7.ppMemRead[i] = (unsigned int)Mem - nStart;
+				break;
+			case 1:
+				ARM7.ppMemWrite[i] = (unsigned int)Mem - nStart;
+				break;
+			case 2:
+				ARM7.ppMemFetch[i] = (unsigned int)Mem - nStart;
+				ARM7.ppMemFetchData[i] = (unsigned int)Mem - nStart;
+				break;
+		}
+	}
 
-        /* interrupt lines/exceptions */
-        case CPUINFO_INT_INPUT_STATE + ARM7_IRQ_LINE:                   set_irq_line(ARM7_IRQ_LINE, info->i); break;
-        case CPUINFO_INT_INPUT_STATE + ARM7_FIRQ_LINE:                  set_irq_line(ARM7_FIRQ_LINE, info->i); break;
-        case CPUINFO_INT_INPUT_STATE + ARM7_ABORT_EXCEPTION:            set_irq_line(ARM7_ABORT_EXCEPTION, info->i); break;
-        case CPUINFO_INT_INPUT_STATE + ARM7_ABORT_PREFETCH_EXCEPTION:   set_irq_line(ARM7_ABORT_PREFETCH_EXCEPTION, info->i); break;
-        case CPUINFO_INT_INPUT_STATE + ARM7_UNDEFINE_EXCEPTION:         set_irq_line(ARM7_UNDEFINE_EXCEPTION, info->i); break;
-
-        /* registers shared by all operating modes */
-        case CPUINFO_INT_REGISTER + ARM7_R0:            ARM7REG( 0) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R1:            ARM7REG( 1) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R2:            ARM7REG( 2) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R3:            ARM7REG( 3) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R4:            ARM7REG( 4) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R5:            ARM7REG( 5) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R6:            ARM7REG( 6) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R7:            ARM7REG( 7) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R8:            ARM7REG( 8) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R9:            ARM7REG( 9) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R10:           ARM7REG(10) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R11:           ARM7REG(11) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R12:           ARM7REG(12) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R13:           ARM7REG(13) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R14:           ARM7REG(14) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_R15:           ARM7REG(15) = info->i;                  break;
-        case CPUINFO_INT_REGISTER + ARM7_CPSR:          SET_CPSR(info->i);                      break;
-
-        case CPUINFO_INT_PC:
-        case CPUINFO_INT_REGISTER + ARM7_PC:            R15 = info->i;                          break;
-        case CPUINFO_INT_SP:                            SetRegister(13,info->i);                break;
-
-        /* FIRQ Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_FR8:           ARM7REG(eR8_FIQ)  = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_FR9:           ARM7REG(eR9_FIQ)  = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_FR10:          ARM7REG(eR10_FIQ) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_FR11:          ARM7REG(eR11_FIQ) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_FR12:          ARM7REG(eR12_FIQ) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_FR13:          ARM7REG(eR13_FIQ) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_FR14:          ARM7REG(eR14_FIQ) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_FSPSR:         ARM7REG(eSPSR_FIQ) = info->i;           break;
-
-        /* IRQ Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_IR13:          ARM7REG(eR13_IRQ) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_IR14:          ARM7REG(eR14_IRQ) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_ISPSR:         ARM7REG(eSPSR_IRQ) = info->i;           break;
-
-        /* Supervisor Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_SR13:          ARM7REG(eR13_SVC) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_SR14:          ARM7REG(eR14_SVC) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_SSPSR:         ARM7REG(eSPSR_SVC) = info->i;           break;
-
-        /* Abort Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_AR13:          ARM7REG(eR13_ABT) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_AR14:          ARM7REG(eR14_ABT) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_ASPSR:         ARM7REG(eSPSR_ABT) = info->i;           break;
-
-        /* Undefined Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_UR13:          ARM7REG(eR13_UND) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_UR14:          ARM7REG(eR14_UND) = info->i;            break;
-        case CPUINFO_INT_REGISTER + ARM7_USPSR:         ARM7REG(eSPSR_UND) = info->i;           break;
-    }
+	return 0;
 }
 
 
-
-/**************************************************************************
- * Generic get_info
- **************************************************************************/
-
-void arm7_get_info(UINT32 state, cpuinfo *info)
+void arm7SetReadHandler(unsigned int (*pHandler)(unsigned int))
 {
-    switch (state)
-    {
-        /* --- the following bits of info are returned as 64-bit signed integers --- */
-
-        /* cpu implementation data */
-        case CPUINFO_INT_CONTEXT_SIZE:                  info->i = sizeof(ARM7);                 break;
-        case CPUINFO_INT_INPUT_LINES:                   info->i = ARM7_NUM_LINES;               break;
-        case CPUINFO_INT_DEFAULT_IRQ_VECTOR:            info->i = 0;                            break;
-        case CPUINFO_INT_ENDIANNESS:                    info->i = CPU_IS_LE;                    break;
-        case CPUINFO_INT_CLOCK_MULTIPLIER:              info->i = 1;                            break;
-        case CPUINFO_INT_CLOCK_DIVIDER:                 info->i = 1;                            break;
-        case CPUINFO_INT_MIN_INSTRUCTION_BYTES:         info->i = 2;                            break;
-        case CPUINFO_INT_MAX_INSTRUCTION_BYTES:         info->i = 4;                            break;
-        case CPUINFO_INT_MIN_CYCLES:                    info->i = 3;                            break;
-        case CPUINFO_INT_MAX_CYCLES:                    info->i = 4;                            break;
-
-        case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;                   break;
-        case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;                   break;
-        case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;                    break;
-        case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:    info->i = 0;                    break;
-        case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:    info->i = 0;                    break;
-        case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:    info->i = 0;                    break;
-        case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:      info->i = 0;                    break;
-        case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:      info->i = 0;                    break;
-        case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:      info->i = 0;                    break;
-
-        /* interrupt lines/exceptions */
-        case CPUINFO_INT_INPUT_STATE + ARM7_IRQ_LINE:                   info->i = ARM7.pendingIrq; break;
-        case CPUINFO_INT_INPUT_STATE + ARM7_FIRQ_LINE:                  info->i = ARM7.pendingFiq; break;
-        case CPUINFO_INT_INPUT_STATE + ARM7_ABORT_EXCEPTION:            info->i = ARM7.pendingAbtD; break;
-        case CPUINFO_INT_INPUT_STATE + ARM7_ABORT_PREFETCH_EXCEPTION:   info->i = ARM7.pendingAbtP; break;
-        case CPUINFO_INT_INPUT_STATE + ARM7_UNDEFINE_EXCEPTION:         info->i = ARM7.pendingUnd; break;
-
-        /* registers shared by all operating modes */
-        case CPUINFO_INT_REGISTER + ARM7_R0:    info->i = ARM7REG( 0);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R1:    info->i = ARM7REG( 1);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R2:    info->i = ARM7REG( 2);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R3:    info->i = ARM7REG( 3);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R4:    info->i = ARM7REG( 4);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R5:    info->i = ARM7REG( 5);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R6:    info->i = ARM7REG( 6);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R7:    info->i = ARM7REG( 7);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R8:    info->i = ARM7REG( 8);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R9:    info->i = ARM7REG( 9);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R10:   info->i = ARM7REG(10);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R11:   info->i = ARM7REG(11);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R12:   info->i = ARM7REG(12);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R13:   info->i = ARM7REG(13);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R14:   info->i = ARM7REG(14);                          break;
-        case CPUINFO_INT_REGISTER + ARM7_R15:   info->i = ARM7REG(15);                          break;
-
-        case CPUINFO_INT_PREVIOUSPC:            info->i = 0;    /* not implemented */           break;
-        case CPUINFO_INT_PC:
-        case CPUINFO_INT_REGISTER + ARM7_PC:    info->i = R15;                                  break;
-        case CPUINFO_INT_SP:                    info->i = GetRegister(13);                      break;
-
-        /* FIRQ Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_FR8:   info->i = ARM7REG(eR8_FIQ);                     break;
-        case CPUINFO_INT_REGISTER + ARM7_FR9:   info->i = ARM7REG(eR9_FIQ);                     break;
-        case CPUINFO_INT_REGISTER + ARM7_FR10:  info->i = ARM7REG(eR10_FIQ);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_FR11:  info->i = ARM7REG(eR11_FIQ);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_FR12:  info->i = ARM7REG(eR12_FIQ);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_FR13:  info->i = ARM7REG(eR13_FIQ);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_FR14:  info->i = ARM7REG(eR14_FIQ);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_FSPSR: info->i = ARM7REG(eSPSR_FIQ);                   break;
-
-        /* IRQ Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_IR13:  info->i = ARM7REG(eR13_IRQ);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_IR14:  info->i = ARM7REG(eR14_IRQ);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_ISPSR: info->i = ARM7REG(eSPSR_IRQ);                   break;
-
-        /* Supervisor Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_SR13:  info->i = ARM7REG(eR13_SVC);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_SR14:  info->i = ARM7REG(eR14_SVC);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_SSPSR: info->i = ARM7REG(eSPSR_SVC);                   break;
-
-        /* Abort Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_AR13:  info->i = ARM7REG(eR13_ABT);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_AR14:  info->i = ARM7REG(eR14_ABT);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_ASPSR: info->i = ARM7REG(eSPSR_ABT);                   break;
-
-        /* Undefined Mode Shadowed Registers */
-        case CPUINFO_INT_REGISTER + ARM7_UR13:  info->i = ARM7REG(eR13_UND);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_UR14:  info->i = ARM7REG(eR14_UND);                    break;
-        case CPUINFO_INT_REGISTER + ARM7_USPSR: info->i = ARM7REG(eSPSR_UND);                   break;
-
-        /* --- the following bits of info are returned as pointers to data or functions --- */
-        case CPUINFO_PTR_SET_INFO:              info->setinfo = arm7_set_info;                  break;
-        case CPUINFO_PTR_GET_CONTEXT:           info->getcontext = arm7_get_context;            break;
-        case CPUINFO_PTR_SET_CONTEXT:           info->setcontext = arm7_set_context;            break;
-        case CPUINFO_PTR_INIT:                  info->init = arm7_init;                         break;
-        case CPUINFO_PTR_RESET:                 info->reset = arm7_reset;                       break;
-        case CPUINFO_PTR_EXIT:                  info->exit = arm7_exit;                         break;
-        case CPUINFO_PTR_EXECUTE:               info->execute = arm7_execute;                   break;
-        case CPUINFO_PTR_BURN:                  info->burn = NULL;                              break;
-        case CPUINFO_PTR_DISASSEMBLE:           info->disassemble = arm7_dasm;                  break;
-        case CPUINFO_PTR_INSTRUCTION_COUNTER:   info->icount = &ARM7_ICOUNT;                    break;
-
-        /* --- the following bits of info are returned as NULL-terminated strings --- */
-        case CPUINFO_STR_NAME:                  strcpy(info->s, "ARM7");                        break;
-        case CPUINFO_STR_CORE_FAMILY:           strcpy(info->s, "Acorn Risc Machine");          break;
-        case CPUINFO_STR_CORE_VERSION:          strcpy(info->s, "1.3");                         break;
-        case CPUINFO_STR_CORE_FILE:             strcpy(info->s, __FILE__);                      break;
-        case CPUINFO_STR_CORE_CREDITS:          strcpy(info->s, "Copyright Steve Ellenoff, sellenoff@hotmail.com"); break;
-
-        case CPUINFO_STR_FLAGS:
-            sprintf(info->s, "%c%c%c%c%c%c%c %s",
-                    (ARM7REG(eCPSR) & N_MASK) ? 'N' : '-',
-                    (ARM7REG(eCPSR) & Z_MASK) ? 'Z' : '-',
-                    (ARM7REG(eCPSR) & C_MASK) ? 'C' : '-',
-                    (ARM7REG(eCPSR) & V_MASK) ? 'V' : '-',
-                    (ARM7REG(eCPSR) & I_MASK) ? 'I' : '-',
-                    (ARM7REG(eCPSR) & F_MASK) ? 'F' : '-',
-                    (ARM7REG(eCPSR) & T_MASK) ? 'T' : '-',
-                    GetModeText(ARM7REG(eCPSR)));
-        break;
-
-        /* registers shared by all operating modes */
-        case CPUINFO_STR_REGISTER + ARM7_PC:    sprintf(info->s, "PC  :%08x", R15);            break;
-        case CPUINFO_STR_REGISTER + ARM7_R0:    sprintf(info->s, "R0  :%08x", ARM7REG( 0));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R1:    sprintf(info->s, "R1  :%08x", ARM7REG( 1));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R2:    sprintf(info->s, "R2  :%08x", ARM7REG( 2));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R3:    sprintf(info->s, "R3  :%08x", ARM7REG( 3));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R4:    sprintf(info->s, "R4  :%08x", ARM7REG( 4));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R5:    sprintf(info->s, "R5  :%08x", ARM7REG( 5));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R6:    sprintf(info->s, "R6  :%08x", ARM7REG( 6));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R7:    sprintf(info->s, "R7  :%08x", ARM7REG( 7));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R8:    sprintf(info->s, "R8  :%08x", ARM7REG( 8));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R9:    sprintf(info->s, "R9  :%08x", ARM7REG( 9));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R10:   sprintf(info->s, "R10 :%08x", ARM7REG(10));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R11:   sprintf(info->s, "R11 :%08x", ARM7REG(11));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R12:   sprintf(info->s, "R12 :%08x", ARM7REG(12));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R13:   sprintf(info->s, "R13 :%08x", ARM7REG(13));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R14:   sprintf(info->s, "R14 :%08x", ARM7REG(14));    break;
-        case CPUINFO_STR_REGISTER + ARM7_R15:   sprintf(info->s, "R15 :%08x", ARM7REG(15));    break;
-
-        /* FIRQ Mode Shadowed Registers */
-        case CPUINFO_STR_REGISTER + ARM7_FR8:   sprintf(info->s, "FR8 :%08x", ARM7REG(eR8_FIQ)  ); break;
-        case CPUINFO_STR_REGISTER + ARM7_FR9:   sprintf(info->s, "FR9 :%08x", ARM7REG(eR9_FIQ)  ); break;
-        case CPUINFO_STR_REGISTER + ARM7_FR10:  sprintf(info->s, "FR10:%08x", ARM7REG(eR10_FIQ) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_FR11:  sprintf(info->s, "FR11:%08x", ARM7REG(eR11_FIQ) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_FR12:  sprintf(info->s, "FR12:%08x", ARM7REG(eR12_FIQ) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_FR13:  sprintf(info->s, "FR13:%08x", ARM7REG(eR13_FIQ) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_FR14:  sprintf(info->s, "FR14:%08x", ARM7REG(eR14_FIQ) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_FSPSR: sprintf(info->s, "FR16:%08x", ARM7REG(eSPSR_FIQ)); break;
-
-        /* IRQ Mode Shadowed Registers */
-        case CPUINFO_STR_REGISTER + ARM7_IR13:  sprintf(info->s, "IR13:%08x", ARM7REG(eR13_IRQ) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_IR14:  sprintf(info->s, "IR14:%08x", ARM7REG(eR14_IRQ) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_ISPSR: sprintf(info->s, "IR16:%08x", ARM7REG(eSPSR_IRQ)); break;
-
-        /* Supervisor Mode Shadowed Registers */
-        case CPUINFO_STR_REGISTER + ARM7_SR13:  sprintf(info->s, "SR13:%08x", ARM7REG(eR13_SVC) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_SR14:  sprintf(info->s, "SR14:%08x", ARM7REG(eR14_SVC) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_SSPSR: sprintf(info->s, "SR16:%08x", ARM7REG(eSPSR_SVC)); break;
-
-        /* Abort Mode Shadowed Registers */
-        case CPUINFO_STR_REGISTER + ARM7_AR13:  sprintf(info->s, "AR13:%08x", ARM7REG(eR13_ABT) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_AR14:  sprintf(info->s, "AR14:%08x", ARM7REG(eR14_ABT) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_ASPSR: sprintf(info->s, "AR16:%08x", ARM7REG(eSPSR_ABT)); break;
-
-        /* Undefined Mode Shadowed Registers */
-        case CPUINFO_STR_REGISTER + ARM7_UR13:  sprintf(info->s, "UR13:%08x", ARM7REG(eR13_UND) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_UR14:  sprintf(info->s, "UR14:%08x", ARM7REG(eR14_UND) ); break;
-        case CPUINFO_STR_REGISTER + ARM7_USPSR: sprintf(info->s, "UR16:%08x", ARM7REG(eSPSR_UND)); break;
-    }
+	ARM7.ReadHandler = pHandler;
 }
+
+void arm7SetWriteHandler(void (*pHandler)(unsigned int, unsigned int))
+{
+	ARM7.WriteHandler = pHandler;
+}
+
 
 /* TEST COPROC CALLBACK HANDLERS - Used for example on how to implement only */
 #if TEST_COPROC_FUNCS

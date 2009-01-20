@@ -1420,7 +1420,7 @@ struct BurnDriverD BurnDrvMartmast = {
 static struct BurnRomInfo kov2RomDesc[] = {
 	{ "igs_u18.rom",  	  0x400000, 0x86205879, 1 | BRF_ESS | BRF_PRG }, // 68000
 
-	{ "sango2.rom",		0x4000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
+	{ "kov2_v100_hongkong.asic",		0x4000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
 
 	{ "igs_u19.rom",  	  0x200000, 0xedd59922, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
@@ -1445,7 +1445,7 @@ int kov2Init()
 {
 	pPgmInitCallback = pgm_kov2_decrypt;
 
-	return pgmInit();
+	return pgmKov2Init();
 }
 
 struct BurnDriverD BurnDrvKov2 = {
@@ -1454,7 +1454,7 @@ struct BurnDriverD BurnDrvKov2 = {
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING |BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
 	NULL, kov2RomInfo, kov2RomName, pgmInputInfo, pgmDIPInfo,
-	kov2Init,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	kov2Init,pgmExit,kov2Frame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448,224,4,3
 };
 

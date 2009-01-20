@@ -78,14 +78,15 @@
 *****************************************************************************/
 
 #include <stdarg.h>
-#include "deprecat.h"
+#include <string.h>
+//#include "deprecat.h"
 
 #define ARM7_DEBUG_CORE 0
 
 #if 0
 #define LOG(x) mame_printf_debug x
 #else
-#define LOG(x) logerror x
+#define LOG(x)
 #endif
 
 /* Prototypes */
@@ -118,9 +119,9 @@ INLINE UINT8 arm7_cpu_read8(offs_t addr);
 
 /* Static Vars */
 // Note: for multi-cpu implementation, this approach won't work w/o modification
-WRITE32_HANDLER((*arm7_coproc_do_callback));    // holder for the co processor Data Operations Callback func.
-READ32_HANDLER((*arm7_coproc_rt_r_callback));   // holder for the co processor Register Transfer Read Callback func.
-WRITE32_HANDLER((*arm7_coproc_rt_w_callback));  // holder for the co processor Register Transfer Write Callback Callback func.
+//WRITE32_HANDLER((*arm7_coproc_do_callback));    // holder for the co processor Data Operations Callback func.
+//READ32_HANDLER((*arm7_coproc_rt_r_callback));   // holder for the co processor Register Transfer Read Callback func.
+//WRITE32_HANDLER((*arm7_coproc_rt_w_callback));  // holder for the co processor Register Transfer Write Callback Callback func.
 // holder for the co processor Data Transfer Read & Write Callback funcs
 void (*arm7_coproc_dt_r_callback)(UINT32 insn, UINT32 *prn, UINT32 (*read32)(UINT32 addr));
 void (*arm7_coproc_dt_w_callback)(UINT32 insn, UINT32 *prn, void (*write32)(UINT32 addr, UINT32 data));
@@ -508,6 +509,7 @@ static int storeDec(UINT32 pat, UINT32 rbv)
  ***************************************************************************/
 
 // CPU INIT
+/*
 static void arm7_core_init(const char *cpuname, int index)
 {
     state_save_register_item_array(cpuname, index, ARM7.sArmRegister);
@@ -518,15 +520,13 @@ static void arm7_core_init(const char *cpuname, int index)
     state_save_register_item(cpuname, index, ARM7.pendingUnd);
     state_save_register_item(cpuname, index, ARM7.pendingSwi);
 }
-
+*/
 // CPU RESET
 static void arm7_core_reset(void)
 {
-    int (*save_irqcallback)(int) = ARM7.irq_callback;
-
-    memset(&ARM7, 0, sizeof(ARM7));
-    ARM7.irq_callback = save_irqcallback;
-
+    
+    memset(&ARM7, 0, (int)&ARM7.ppMemRead-(int)&ARM7);
+    
     /* start up in SVC mode with interrupts disabled. */
     SwitchMode(eARM7_MODE_SVC);
     SET_CPSR(GET_CPSR | I_MASK | F_MASK | 0x10);
@@ -675,10 +675,11 @@ static void arm7_core_set_irq_line(int irqline, int state)
 static void HandleCoProcDO(UINT32 insn)
 {
     // This instruction simply instructs the co-processor to do something, no data is returned to ARM7 core
-    if (arm7_coproc_do_callback)
+/*(    if (arm7_coproc_do_callback)
         arm7_coproc_do_callback(Machine, insn, 0, 0);    // simply pass entire opcode to callback - since data format is actually dependent on co-proc implementation
     else
         LOG(("%08x: Co-Processor Data Operation executed, but no callback defined!\n", R15));
+*/
 }
 
 // Co-Processor Register Transfer - To/From Arm to Co-Proc
@@ -688,7 +689,7 @@ static void HandleCoProcRT(UINT32 insn)
     /* xxxx 1110 oooL nnnn dddd cccc ppp1 mmmm */
 
     // Load (MRC) data from Co-Proc to ARM7 register
-    if (insn & 0x00100000)       // Bit 20 = Load or Store
+/*    if (insn & 0x00100000)       // Bit 20 = Load or Store
     {
         if (arm7_coproc_rt_r_callback)
         {
@@ -706,6 +707,7 @@ static void HandleCoProcRT(UINT32 insn)
         else
             LOG(("%08x: Co-Processor Register Transfer executed, but no RT Write callback defined!\n", R15));
     }
+*/
 }
 
 /* Data Transfer - To/From Arm to Co-Proc

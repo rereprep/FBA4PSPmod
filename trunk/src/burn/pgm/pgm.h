@@ -1,6 +1,6 @@
 #include "burnint.h"
 #include "ics2115.h"
-
+#include "arm7.h"
 //#define PGM_MUTE
 #define PGM_LOW_MEMORY
 
@@ -15,8 +15,10 @@ extern unsigned char PgmInput[];
 extern unsigned char PgmReset;
 
 extern int pgmInit();
+extern int pgmKov2Init();
 extern int pgmExit();
 extern int pgmFrame();
+extern int kov2Frame();
 extern int pgmDraw();
 extern int pgmScan(int nAction, int *pnMin);
 

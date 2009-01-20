@@ -62,10 +62,6 @@ depobj	:= 	$(drvobj) \
 	   	burn_ym2151.o burn_ym2203.o burn_ym2608.o burn_ym2610.o burn_ym2612.o \
 	   	ay8910.o ym2151.o fm.o fmopl.o ymdeltat.o \
 	   	msm6295.o ymz280b.o \
-	   	\
-	   	c68k.o \
-	   	\
-	   	cz80.o \
 	   	m6800.o m6800_intf.o m6809.o m6809_intf.o hd6309.o hd6309_intf.o \
 	   	cave.o cave_tile.o cave_sprite.o cave_palette.o \
 	   	\

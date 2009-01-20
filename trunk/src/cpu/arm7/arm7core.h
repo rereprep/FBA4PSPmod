@@ -33,7 +33,7 @@
 #ifndef __ARM7CORE_H__
 #define __ARM7CORE_H__
 
-#include "cpuintrf.h"
+//#include "cpuintrf.h"
 
 /****************************************************************************************************
  *  INTERRUPT LINES/EXCEPTIONS
@@ -67,7 +67,13 @@ enum
     UINT8 pendingAbtP;                  \
     UINT8 pendingUnd;                   \
     UINT8 pendingSwi;                   \
-    int (*irq_callback)(int);
+    unsigned int ppMemRead[256]; \
+	unsigned int ppMemWrite[256]; \
+	unsigned int ppMemFetch[256]; \
+	unsigned int ppMemFetchData[256]; \
+	unsigned int (*ReadHandler)(unsigned int a); \
+	void ( *WriteHandler)(unsigned int a, unsigned int d); \
+	int (*irq_callback)(int);
 
 
 /****************************************************************************************************
@@ -394,9 +400,9 @@ enum
 #define SET_REGISTER(reg, val)  SetRegister(reg, val)
 #define ARM7_CHECKIRQ           arm7_check_irq_state()
 
-extern WRITE32_HANDLER((*arm7_coproc_do_callback));
-extern READ32_HANDLER((*arm7_coproc_rt_r_callback));
-extern WRITE32_HANDLER((*arm7_coproc_rt_w_callback));
+//extern WRITE32_HANDLER((*arm7_coproc_do_callback));
+//extern READ32_HANDLER((*arm7_coproc_rt_r_callback));
+//extern WRITE32_HANDLER((*arm7_coproc_rt_w_callback));
 extern void (*arm7_coproc_dt_r_callback)(UINT32 insn, UINT32* prn, UINT32 (*read32)(UINT32 addr));
 extern void (*arm7_coproc_dt_w_callback)(UINT32 insn, UINT32* prn, void (*write32)(UINT32 addr, UINT32 data));
 
@@ -408,5 +414,5 @@ extern char *(*arm7_dasm_cop_dt_callback)(char *pBuf, UINT32 opcode, char *pCond
 extern char *(*arm7_dasm_cop_rt_callback)(char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
 extern char *(*arm7_dasm_cop_do_callback)(char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
 #endif
-
+#define change_pc(x)
 #endif /* __ARM7CORE_H__ */

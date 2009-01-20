@@ -176,7 +176,7 @@ GAME_RUNNING:
 		nTicksCountInSec=ctk - ptk;
 		if ( nTicksCountInSec>= 1000000 ) {
 			ptk += 1000000;
-			sprintf( fps, "%2d FPS, nCurrentFrame:%X",  nframes,nCurrentFrame);
+			sprintf( fps, "%2d FPS, debugValue:0x%X,0x%X",  nframes,debugValue[0],debugValue[1]);
 			nframes = 0;
 			nTicksCountInSec=0;
 		}

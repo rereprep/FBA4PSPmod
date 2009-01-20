@@ -153,7 +153,7 @@ typedef struct cz80_t
 	{
 		unsigned char r8[8];
 		union16 r16[4];
-#ifndef __cplusplus
+/*#ifndef __cplusplus*/
 		struct
 		{
 			union16 BC;
@@ -161,7 +161,7 @@ typedef struct cz80_t
 			union16 HL;
 			union16 AF;
 		};
-#endif
+/*#endif*/
 	};
 
 	union16 IX;
@@ -216,7 +216,7 @@ typedef struct cz80_t
 /*************************/
 /* Publics Z80 functions */
 /*************************/
-
+/*
 void Cz80_InitFlags();
 
 void Cz80_Init(cz80_struc*);
@@ -232,7 +232,7 @@ unsigned int Cz80_Get_BC(cz80_struc*);
 unsigned int Cz80_Get_HL(cz80_struc*);
 
 unsigned int Cz80_Get_PC(cz80_struc*);
-
+*/
 #ifdef __cplusplus
 };
 #endif

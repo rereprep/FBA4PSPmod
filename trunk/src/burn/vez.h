@@ -1,7 +1,7 @@
 // Nec V20/V30/V33 interface
 
 #include "necintrf.h"
-
+#define FASTCALL 1
 struct VezContext {
 	nec_Regs reg;
 	

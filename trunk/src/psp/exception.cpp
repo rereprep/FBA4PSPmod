@@ -14,6 +14,7 @@ extern SceModule module_info;
 //extern int _ftext;
 char* panicMsg=0;
 extern char LBVer[];
+extern unsigned int debugValue[2];
 static const char *codeTxt[32] =
 {
     "Interrupt", "TLB modification", "TLB load/inst fetch", "TLB store",
@@ -56,6 +57,7 @@ void ExceptionHandler(PspDebugRegBlock * regs)
     pspDebugScreenPrintf("Cause     - %08X\n", (int)regs->cause);
     pspDebugScreenPrintf("Status    - %08X\n", (int)regs->status);
     pspDebugScreenPrintf("BadVAddr  - %08X\n", (int)regs->badvaddr);
+    pspDebugScreenPrintf("debugValue:0x%X,0x%X\n", debugValue[0],debugValue[1]);
     if(uniCacheHead)
     	pspDebugScreenPrintf("Used Mem:%u KB, Free Mem:%u KB\n",  getUsedMemSize(),getFreeMemSize());
     if(panicMsg!=0)
@@ -87,6 +89,7 @@ void ExceptionHandler(PspDebugRegBlock * regs)
                 //fwrite(testo, 1, strlen(testo), log);
                 testo+=sprintf(testo, "BadVAddr  - %08X\n", (int)regs->badvaddr);
                 //fwrite(testo, 1, strlen(testo), log);
+               	testo+=sprintf(testo, "debugValue:0x%X,0x%X\n", debugValue[0],debugValue[1]);
                	if(uniCacheHead)
                		testo+=sprintf(testo, "Used Mem:%u KB, Free Mem:%u KB\n", getUsedMemSize(),getFreeMemSize());
                	if(panicMsg!=0)
