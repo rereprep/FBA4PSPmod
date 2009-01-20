@@ -149,7 +149,7 @@ extern c68k_struc C68K;
 
 // 68K core function declaration
 /////////////////////////////////
-
+/*
 void C68k_Init(c68k_struc *cpu);
 
 void C68k_Exit();
@@ -176,7 +176,7 @@ void C68k_Set_WriteW(c68k_struc *cpu, void (*Func)(unsigned int address, unsigne
 
 void C68k_Set_IRQ_Callback(c68k_struc *cpu, int (*Func)(int irqline));
 void C68k_Set_Reset_Callback(c68k_struc *cpu, void (*Func)(void));
-
+*/
 #ifdef __cplusplus
 }
 #endif

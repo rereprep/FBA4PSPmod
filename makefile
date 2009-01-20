@@ -70,36 +70,36 @@ cps3: FORCE
 
 clean: FORCE
 	-@rm -f -r obj/PSP/psp
-	-@rm -f -r obj/PSP/burn
-	-@rm -f -r obj/PSP/generated
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
 
 alltarget : FORCE
 	-@rm -f -r obj/PSP/psp
-	-@rm -f -r obj/PSP/burn
-	-@rm -f -r obj/PSP/generated
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.pgm
 	-@rm -f -r obj/PSP/psp
-	-@rm -f -r obj/PSP/burn
-	-@rm -f -r obj/PSP/generated
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.cave
 	-@rm -f -r obj/PSP/psp
-	-@rm -f -r obj/PSP/burn
-	-@rm -f -r obj/PSP/generated
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.cps3
 	-@rm -f -r obj/PSP/psp
-	-@rm -f -r obj/PSP/burn
-	-@rm -f -r obj/PSP/generated
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.sega
 	-@rm -f -r obj/PSP/psp
-	-@rm -f -r obj/PSP/burn
-	-@rm -f -r obj/PSP/generated
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.small
 	-@rm -f -r obj/PSP/psp		
-	-@rm -f -r obj/PSP/burn
-	-@rm -f -r obj/PSP/generated
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.mid
 	-@rm -f -r obj/PSP/psp
-	-@rm -f -r obj/PSP/burn
-	-@rm -f -r obj/PSP/generated
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.all
 FORCE:

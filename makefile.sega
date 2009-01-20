@@ -65,7 +65,6 @@ depobj	:= 	$(drvobj) \
 	   	dac.o rf5c68.o segapcm.o sn76496.o upd7759.o \
 	   	burn_ym3526.o\
 	   	\
-	   	c68k.o cz80.o \
 	   	adler32.o compress.o crc32.o deflate.o inffast.o inflate.o inftrees.o trees.o uncompr.o zutil.o \
 	   	\
 	   	main.o drv.o input.o state.o statec.o unzip.o zipfn.o bzip.o font.o \

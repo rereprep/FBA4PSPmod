@@ -82,56 +82,16 @@ static void C68k_ResetCallback(void)
 	C68KC^tF[X֐
 ******************************************************************************/
 
-/*--------------------------------------------------------
-	CPU?
---------------------------------------------------------*/
 
 static int bC68KInit = 0;
 
-void C68k_Init(c68k_struc *CPU)
-{
-	//CPU->Interrupt_CallBack = C68k_InterruptCallback;
-	//CPU->Reset_CallBack = C68k_ResetCallback;
-	if ( !bC68KInit ) {
-		C68k_Exec(NULL, 0);
-		bC68KInit = 1;
-	}
-
-}
-void C68k_Exit()
-{
-	if(JumpTable!=NULL)
-	{
-		free(JumpTable);
-		JumpTable=NULL;
-		bC68KInit = 0;
-	}
-}
-/*--------------------------------------------------------
-	CPU?Zbg
---------------------------------------------------------*/
-
-void C68k_Reset(c68k_struc *CPU)
-{
-	UINT32 PC;
-
-	memset(CPU, 0, (UINT32)&CPU->BasePC - (UINT32)CPU);
-
-	CPU->flag_I = 7;
-	CPU->flag_S = C68K_SR_S;
-
-	CPU->A[7]  = READ_PCREL_32(0);
-	PC = READ_PCREL_32(4);
-
-	C68k_Set_Reg(CPU, C68K_PC, PC);
-}
 
 
 /*--------------------------------------------------------
 	CPUs
 --------------------------------------------------------*/
 
-INT32 C68k_Exec(c68k_struc *CPU, INT32 cycles)
+inline static INT32 C68k_Exec(c68k_struc *CPU, INT32 cycles)
 {
 	if (CPU)
 	{
@@ -178,7 +138,7 @@ C68k_Exec_Next:
 	荞ݏ
 --------------------------------------------------------*/
 
-void C68k_Set_IRQ(c68k_struc *CPU, INT32 line, INT32 state)
+inline static void C68k_Set_IRQ(c68k_struc *CPU, INT32 line, INT32 state)
 {
 	CPU->IRQState = state;
 	if (state == CLEAR_LINE)
@@ -197,7 +157,7 @@ void C68k_Set_IRQ(c68k_struc *CPU, INT32 line, INT32 state)
 	WX^擾
 --------------------------------------------------------*/
 
-UINT32 C68k_Get_Reg(c68k_struc *CPU, INT32 regnum)
+inline static UINT32 C68k_Get_Reg(c68k_struc *CPU, INT32 regnum)
 {
 	switch (regnum)
 	{
@@ -230,7 +190,7 @@ UINT32 C68k_Get_Reg(c68k_struc *CPU, INT32 regnum)
 	WX^ݒ
 --------------------------------------------------------*/
 
-void C68k_Set_Reg(c68k_struc *CPU, INT32 regnum, UINT32 val)
+inline static void C68k_Set_Reg(c68k_struc *CPU, INT32 regnum, UINT32 val)
 {
 	switch (regnum)
 	{
@@ -295,34 +255,34 @@ void C68k_Set_Fetch(c68k_struc *CPU, UINT32 low_adr, UINT32 high_adr, UINT32 fet
 	胁[h/Cg֐ݒ
 --------------------------------------------------------*/
 
-void C68k_Set_ReadB(c68k_struc *CPU, UINT8 (*Func)(UINT32 address))
+inline static void C68k_Set_ReadB(c68k_struc *CPU, UINT8 (*Func)(UINT32 address))
 {
 	CPU->Read_Byte = Func;
 	CPU->Read_Byte_PC_Relative = Func;
 }
 
-void C68k_Set_ReadW(c68k_struc *CPU, UINT16 (*Func)(UINT32 address))
+inline static void C68k_Set_ReadW(c68k_struc *CPU, UINT16 (*Func)(UINT32 address))
 {
 	CPU->Read_Word = Func;
 	CPU->Read_Word_PC_Relative = Func;
 }
 
-void C68k_Set_ReadB_PC_Relative(c68k_struc *CPU, UINT8 (*Func)(UINT32 address))
+inline static void C68k_Set_ReadB_PC_Relative(c68k_struc *CPU, UINT8 (*Func)(UINT32 address))
 {
 	CPU->Read_Byte_PC_Relative = Func;
 }
 
-void C68k_Set_ReadW_PC_Relative(c68k_struc *CPU, UINT16 (*Func)(UINT32 address))
+inline static void C68k_Set_ReadW_PC_Relative(c68k_struc *CPU, UINT16 (*Func)(UINT32 address))
 {
 	CPU->Read_Word_PC_Relative = Func;
 }
 
-void C68k_Set_WriteB(c68k_struc *CPU, void (*Func)(UINT32 address, UINT8 data))
+inline static void C68k_Set_WriteB(c68k_struc *CPU, void (*Func)(UINT32 address, UINT8 data))
 {
 	CPU->Write_Byte = Func;
 }
 
-void C68k_Set_WriteW(c68k_struc *CPU, void (*Func)(UINT32 address, UINT16 data))
+inline static void C68k_Set_WriteW(c68k_struc *CPU, void (*Func)(UINT32 address, UINT16 data))
 {
 	CPU->Write_Word = Func;
 }
@@ -332,12 +292,54 @@ void C68k_Set_WriteW(c68k_struc *CPU, void (*Func)(UINT32 address, UINT16 data))
 	R胁[obN֐ݒ
 --------------------------------------------------------*/
 
-void C68k_Set_IRQ_Callback(c68k_struc *CPU, INT32 (*Func)(INT32 irqline))
+inline static void C68k_Set_IRQ_Callback(c68k_struc *CPU, INT32 (*Func)(INT32 irqline))
 {
 	CPU->Interrupt_CallBack = Func;
 }
 
-void C68k_Set_Reset_Callback(c68k_struc *CPU, void (*Func)(void))
+inline static void C68k_Set_Reset_Callback(c68k_struc *CPU, void (*Func)(void))
 {
 	CPU->Reset_CallBack = Func;
+}
+
+
+/*--------------------------------------------------------
+	CPU?
+--------------------------------------------------------*/
+inline static void C68k_Init(c68k_struc *CPU)
+{
+	//CPU->Interrupt_CallBack = C68k_InterruptCallback;
+	//CPU->Reset_CallBack = C68k_ResetCallback;
+	if ( !bC68KInit ) {
+		C68k_Exec(NULL, 0);
+		bC68KInit = 1;
+	}
+
+}
+inline static void C68k_Exit()
+{
+	if(JumpTable!=NULL)
+	{
+		free(JumpTable);
+		JumpTable=NULL;
+		bC68KInit = 0;
+	}
+}
+/*--------------------------------------------------------
+	CPU?Zbg
+--------------------------------------------------------*/
+
+inline static void C68k_Reset(c68k_struc *CPU)
+{
+	UINT32 PC;
+
+	memset(CPU, 0, (UINT32)&CPU->BasePC - (UINT32)CPU);
+
+	CPU->flag_I = 7;
+	CPU->flag_S = C68K_SR_S;
+
+	CPU->A[7]  = READ_PCREL_32(0);
+	PC = READ_PCREL_32(4);
+
+	C68k_Set_Reg(CPU, C68K_PC, PC);
 }

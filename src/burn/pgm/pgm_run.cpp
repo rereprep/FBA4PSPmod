@@ -19,7 +19,7 @@ int nPGMSNDROMLen = 0;
 
 unsigned int *RamBg, *RamTx, *RamCurPal;
 unsigned short *RamRs, *RamPal, *RamVReg, *RamSpr;
-static unsigned char *RamZ80, *Ram68K;
+static unsigned char *RamZ80, *Ram68K, *RamArm1, *RamArm2, *RamArm3, *RamArmShared, *RamArmLatch;
 
 static unsigned char *Mem = NULL, *MemEnd = NULL;
 static unsigned char *RamStart, *RamEnd;
@@ -50,15 +50,18 @@ unsigned long nPGMSNDROMOffset;
 //unsigned char * uniCacheHead = NULL;
 //unsigned int PgmCacheOffset = 0;
 
-
 static int pgmMemIndex()
 {
 	unsigned char *Next; Next = Mem;
 	PGM68KBIOS	= Next; Next += 0x0020000;		// 68000 BIOS
 	PGM68KROM	= Next; Next += nPGM68KROMLen;	// 68000 PRG (max 0x400000)
-	PGMARMROM	= Next; Next += 0x4000;			// ARM protection ASIC - internal rom
-	USER0		= Next; Next += 0x0200000;		// User0 ROM/RAM space (for protection roms, etc)
-
+	PGMARMROM	= Next;							//Not used
+	USER0		= Next; 
+	if( strstr(BurnDrvGetTextA(DRV_NAME), "olds")||strstr(BurnDrvGetTextA(DRV_NAME), "killbld"))
+	{
+		Next += 0x0200000;		// User0 ROM/RAM space (for protection roms, etc)
+	}
+	
 	RamStart	= Next;
 	
 	Ram68K		= Next; Next += 0x0020000;						// 128K Main RAM
@@ -78,6 +81,38 @@ static int pgmMemIndex()
 	MemEnd		= Next;
 	return 0;
 }
+static int kov2MemIndex()
+{
+	unsigned char *Next; Next = Mem;
+	PGM68KBIOS	= Next; Next += 0x0020000;		// 68000 BIOS
+	PGM68KROM	= Next; Next += nPGM68KROMLen;	// 68000 PRG (max 0x400000)
+	PGMARMROM	= Next; Next += 0x4000;			// ARM protection ASIC - internal rom
+	USER0		= Next; Next += 0x0200000;		// User0 ROM/RAM space (for protection roms, etc)
+
+	RamStart	= Next;
+	
+	Ram68K		= Next; Next += 0x0020000;						// 128K Main RAM
+	RamBg		= (unsigned int *) Next; Next += 0x0004000;
+	RamTx		= (unsigned int *) Next; Next += 0x0002000;
+	RamRs		= (unsigned short *) Next; Next += 0x0000800;	// Row Scroll
+	RamPal		= (unsigned short *) Next; Next += 0x0001200;	// Palette R5G5B5
+	RamVReg		= (unsigned short *) Next; Next += 0x0010000;	// Video Regs inc. Zoom Table
+	RamZ80		= Next; Next += 0x0010000;
+	RamArm1		= Next; Next += 0x0000400;
+	RamArm2		= Next; Next += 0x0010000;
+	RamArm3		= Next; Next += 0x0000400;
+	RamArmShared= Next; Next += 0x0010000;
+	RamArmLatch = Next; Next += 0x0000004;
+	RamEnd		= Next;
+	
+	RamSpr		= (unsigned short *) Ram68K;	// first 0xa00 of main ram = sprites, seems to be buffered, DMA? 
+	RamCurPal	= (unsigned int *) Next; Next += 0x001200 * sizeof(unsigned int);
+	
+	spriteCacheArray = (SpriteCacheIndex *) Next; Next += sizeof(SpriteCacheIndex)*SPRITE_CACHE_SIZE;
+	MemEnd		= Next;
+	return 0;
+}
+
 static void loadAndWriteRomToCache(int i,unsigned int romLength)
 {
 	static int j;
@@ -370,8 +405,122 @@ inline static unsigned int CalcCol(unsigned short nColour)
 	       ((nColour & 0x7c00) >> 10);
 #endif
 }
-
+extern unsigned int debugValue[2];
 /* memory handler */
+unsigned int arm7_latch_arm_r32(unsigned int /*address*/)
+{
+	return *(unsigned int*)RamArmLatch;
+}
+
+
+#ifdef PGMARM7SPEEDHACK
+static TIMER_CALLBACK( arm_irq )
+{
+	generic_pulse_irq_line(machine->cpu[2], ARM7_FIRQ_LINE);
+}
+#endif
+extern int arm7_icount;
+//static emu_timer *   arm_comms_timer;
+void arm7_latch_arm_w32(unsigned int address, unsigned int value)
+{
+	if(address!=0x38000000)
+	{
+		return;
+	}
+	*(unsigned int*)RamArmLatch=value;
+
+#ifdef PGMARM7SPEEDHACK
+//  cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(100));
+	if (data!=0xaa) cpu_spinuntil_trigger(space->cpu, 1000);
+	cpuexec_trigger(space->machine, 1002);
+#else
+arm7_icount=0;
+//	cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(100));
+//	cpu_spinuntil_time(space->cpu, cpu_clocks_to_attotime(space->cpu, 100));
+#endif
+}
+
+unsigned char __fastcall arm7_latch_68k_r8(unsigned int address)
+{
+	//if(address&1)
+		return (*(unsigned int*)RamArmLatch);
+	//else
+	//	return (*(unsigned int*)RamArmLatch)>>8;
+}
+unsigned short __fastcall arm7_latch_68k_r16(unsigned int address)
+{
+	return *(unsigned int*)(RamArmLatch);
+}
+
+void __fastcall arm7_latch_68k_w16(unsigned int address, unsigned short value)
+{
+	//*(unsigned short*)(RamArmLatch+2)=value;
+	*(unsigned int*)(RamArmLatch)=value;
+
+#ifdef PGMARM7SPEEDHACK
+	cpuexec_trigger(space->machine, 1000);
+	timer_set(space->machine, ATTOTIME_IN_USEC(50), NULL, 0, arm_irq); // i don't know how long..
+	cpu_spinuntil_trigger(space->cpu, 1002);
+#else
+	arm7_set_irq_line(ARM7_FIRQ_LINE,1);
+	arm7_execute(2000);
+//	cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(200));
+//	cpu_spinuntil_time(space->cpu, cpu_clocks_to_attotime(space->machine->cpu[2], 200)); // give the arm time to respond (just boosting the interleave doesn't help
+#endif
+}
+void __fastcall arm7_latch_68k_w8(unsigned int address, unsigned char value)
+{
+	//if(address&1)
+		(*(unsigned int*)RamArmLatch)=value;
+	//else
+	//{
+		//(*(unsigned int*)RamArmLatch)=((*(unsigned int*)RamArmLatch)&0xffff00ff)|(value<<8);
+		
+	//}
+
+#ifdef PGMARM7SPEEDHACK
+	cpuexec_trigger(space->machine, 1000);
+	timer_set(space->machine, ATTOTIME_IN_USEC(50), NULL, 0, arm_irq); // i don't know how long..
+	cpu_spinuntil_trigger(space->cpu, 1002);
+#else
+	arm7_set_irq_line(ARM7_FIRQ_LINE,1);
+	arm7_execute(2000);
+//	cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(200));
+//	cpu_spinuntil_time(space->cpu, cpu_clocks_to_attotime(space->machine->cpu[2], 200)); // give the arm time to respond (just boosting the interleave doesn't help
+#endif
+}
+unsigned int __fastcall arm7_ram_68k_r32(unsigned int address)
+{
+	debugValue[0]++;debugValue[1]=address;
+	return *(unsigned int*)(RamArmShared+(address&0xffff));
+}
+unsigned short __fastcall arm7_ram_68k_r16(unsigned int address)
+{
+	debugValue[0]++;debugValue[1]=address;
+	address=(address&0xffff)^2;
+	return RamArmShared[address+1]<<8|RamArmShared[address];
+}
+unsigned char __fastcall arm7_ram_68k_r8(unsigned int address)
+{
+	debugValue[0]++;debugValue[1]=address;
+	return *(RamArmShared+((address&0xffff)^3));
+}
+void __fastcall arm7_ram_68k_w32(unsigned int address, unsigned int value)
+{
+
+	*(unsigned int*)(RamArmShared+(address&0xffff))=value;
+}
+void __fastcall arm7_ram_68k_w16(unsigned int address, unsigned short value)
+{
+	address=(address&0xffff)^2;
+	RamArmShared[address+1]=value>>8;
+	RamArmShared[address]=value;
+}
+void __fastcall arm7_ram_68k_w8(unsigned int address, unsigned char value)
+{
+
+	*(RamArmShared+((address&0xffff)^3))=value;
+}
 
 unsigned char __fastcall PgmReadByte(unsigned int sekAddress)
 {
@@ -607,6 +756,8 @@ void __fastcall PgmZ80PortWrite(unsigned short p, unsigned char v)
 	}
 }
 
+
+
 int PgmDoReset()
 {
 	SekOpen(0);
@@ -618,7 +769,8 @@ int PgmDoReset()
 #ifndef PGM_MUTE
 	ZetReset();
 	ics2115_reset();
-#endif	
+#endif
+	arm7_reset();	
 	return 0;
 }
 
@@ -807,7 +959,192 @@ int pgmInit()
 	
 	return 0;
 }
+int pgmKov2Init()
+{
+	spriteCacheArrayFreeP=0;
+	Mem = NULL;
+	pgmGetRoms(false);
 
+	kov2MemIndex();
+	int nLen = MemEnd - (unsigned char *)0;
+	if ((Mem = (unsigned char *)malloc(nLen)) == NULL) return 1;
+	memset(Mem, 0, nLen);
+	kov2MemIndex();
+
+	bPgmUseCache = true;
+	
+	if (bPgmUseCache) {
+
+		
+		extern char szAppCachePath[];
+		
+		strcpy(filePathName, szAppCachePath);
+		strcat(filePathName, BurnDrvGetTextA(DRV_NAME));
+		strcat(filePathName, "_LB");
+		bPgmCreateCache = false;
+		cacheFile = sceIoOpen( filePathName, PSP_O_RDONLY, 0777);
+		if (cacheFile<0)
+		{
+			bPgmCreateCache = true;
+			cacheFile = sceIoOpen( filePathName, PSP_O_WRONLY|PSP_O_CREAT, 0777 );
+		}else if(sceIoLseek(cacheFile,0,SEEK_END)!=(nPGMTileROMLen+nPGMSPRColROMLen+nPGMSPRMaskROMLen+nPGMSNDROMLen))
+		{
+			bPgmCreateCache = true;
+			sceIoClose(cacheFile);
+			cacheFile = sceIoOpen( filePathName, PSP_O_WRONLY|PSP_O_TRUNC, 0777 );
+		}
+		if(bPgmCreateCache)
+		{
+			if ((uniCacheHead = (unsigned char *)malloc(0x0A00000)) == NULL) return 1;
+			memset(uniCacheHead, 0, 0x0A00000);
+		}
+	} else {
+			
+#ifndef PGM_LOW_MEMORY
+	PGMTileROMExp   = (unsigned char*)malloc((nPGMTileROMLen / 5) * 8);	// Expanded 8x8 Text Tiles and 32x32 BG Tiles
+#endif		
+		PGMTileROM      = (unsigned char*)malloc(nPGMTileROMLen);			// 8x8 Text Tiles + 32x32 BG Tiles	
+		PGMSPRColROM	= (unsigned char*)malloc(nPGMSPRColROMLen);
+		PGMSPRMaskROM	= (unsigned char*)malloc(nPGMSPRMaskROMLen);
+		memset(PGMTileROM, 0, nPGMTileROMLen);
+		memset(PGMSPRColROM, 0, nPGMSPRColROMLen);
+		memset(PGMSPRMaskROM, 0, nPGMSPRMaskROMLen);
+	}
+
+#ifndef PGM_MUTE
+	//ICSSNDROM		= (unsigned char*)malloc(nPGMSNDROMLen);
+#endif
+	pgmGetRoms(true);
+	
+	if (bPgmUseCache) {
+		if ( bPgmCreateCache ) {
+			free(uniCacheHead);
+			uniCacheHead=NULL;
+			sceIoClose( cacheFile );
+			cacheFile = sceIoOpen( filePathName,PSP_O_RDONLY, 0777);
+		}
+	}
+	
+	// load bios roms
+	BurnLoadRom(PGM68KBIOS,		0x00080, 1);	// 68k bios
+	//BurnLoadRom(PGMTileROM,		0x00081, 1);	// Bios Text and Tiles
+#ifndef PGM_MUTE
+	//BurnLoadRom(ICSSNDROM,		0x00082, 1);	// Bios Intro Sounds
+#endif
+		
+	if (bPgmUseCache) {
+		//Init cacheIndex
+		initCacheStructure(0.95);
+
+	}
+#ifndef PGM_LOW_MEMORY
+	// expand gfx1 into gfx2
+	expand_gfx_2();
+#endif
+
+//	printf("Main %08x  Tile %08x  Col %08x  Mask %08x\n", nLen, nPGMTileROMLen, nPGMSPRColROMLen, nPGMSPRMaskROMLen );
+
+
+	if (pPgmInitCallback) {
+		pPgmInitCallback();
+	}
+
+	{
+		SekInit(0, 0x68000);										// Allocate 68000
+	    SekOpen(0);
+
+		// Map 68000 memory:
+		SekMapMemory(PGM68KBIOS,	0x000000, 0x01FFFF, SM_ROM);				// 68000 BIOS
+
+		SekMapMemory(PGM68KROM,	0x100000, 0x4EFFFF, SM_ROM);				// 68000 ROM
+
+		SekMapMemory(Ram68K,		0x800000, 0x81FFFF, SM_RAM);				// Main Ram
+		SekMapMemory(Ram68K,		0x820000, 0x83FFFF, SM_RAM);				// Mirrors... 
+		SekMapMemory(Ram68K,		0x840000, 0x85FFFF, SM_RAM);
+		SekMapMemory(Ram68K,		0x860000, 0x87FFFF, SM_RAM);
+		SekMapMemory(Ram68K,		0x880000, 0x89FFFF, SM_RAM);
+		SekMapMemory(Ram68K,		0x8A0000, 0x8BFFFF, SM_RAM);
+		SekMapMemory(Ram68K,		0x8C0000, 0x8DFFFF, SM_RAM);
+		SekMapMemory(Ram68K,		0x8E0000, 0x8FFFFF, SM_RAM);
+		
+
+		SekMapMemory((unsigned char *)RamBg,	0x900000, 0x903FFF, SM_RAM);
+		SekMapMemory((unsigned char *)RamTx,	0x904000, 0x905FFF, SM_RAM);
+		SekMapMemory((unsigned char *)RamRs,	0x907000, 0x9077FF, SM_RAM);
+		SekMapMemory((unsigned char *)RamPal,	0xA00000, 0xA011FF, SM_ROM);
+		SekMapMemory((unsigned char *)RamVReg,	0xB00000, 0xB0FFFF, SM_RAM);
+		SekMapMemory((unsigned char *)RamArmShared,	0xd00000, 0xd0ffff, SM_RAM);
+		
+		SekMapHandler(1,						0xA00000, 0xA011FF, SM_WRITE); 
+		SekMapHandler(2,						0xC10000, 0xC1FFFF, SM_READ | SM_WRITE); /* Z80 Program */
+		SekMapHandler(3,						0xd10000, 0xd10001, SM_READ | SM_WRITE); /* ARM7 Latch */
+		//SekMapHandler(4,						0xd00000, 0xd0ffff, SM_READ | SM_WRITE); /* ARM7 Shared RAM */
+		
+		
+		SekSetReadWordHandler(0, PgmReadWord);
+		SekSetReadByteHandler(0, PgmReadByte);
+		SekSetWriteWordHandler(0, PgmWriteWord);
+//		SekSetWriteByteHandler(0, PgmWriteByte);
+		
+		SekSetWriteWordHandler(1, PgmPalWriteWord);
+		
+		SekSetReadWordHandler(2, PgmZ80ReadWord);
+//		SekSetReadByteHandler(2, PgmZ80ReadByte);
+		SekSetWriteWordHandler(2, PgmZ80WriteWord);
+//		SekSetWriteByteHandler(2, PgmZ80WriteByte);
+		
+		SekSetReadWordHandler(3, arm7_latch_68k_r16);
+		SekSetReadByteHandler(3, arm7_latch_68k_r8);
+		SekSetWriteWordHandler(3, arm7_latch_68k_w16);
+		SekSetWriteByteHandler(3, arm7_latch_68k_w8);
+/*
+		SekSetReadWordHandler(4, arm7_ram_68k_r16);
+		SekSetReadByteHandler(4, arm7_ram_68k_r8);
+		SekSetWriteWordHandler(4, arm7_ram_68k_w16);
+		SekSetWriteByteHandler(4, arm7_ram_68k_w8);
+		SekSetReadLongHandler(4, arm7_ram_68k_r32);
+		SekSetWriteLongHandler(4, arm7_ram_68k_w32);
+	*/	
+		SekClose();
+	}
+	
+#ifndef PGM_MUTE
+	{
+		ZetInit(1);
+		ZetOpen(0);
+		
+		ZetMapArea(0x0000, 0xFFFF, 0, RamZ80);
+		ZetMapArea(0x0000, 0xFFFF, 1, RamZ80);
+		ZetMapArea(0x0000, 0xFFFF, 2, RamZ80);
+		
+		ZetMemEnd();
+		
+		ZetSetInHandler(PgmZ80PortRead);
+		ZetSetOutHandler(PgmZ80PortWrite);
+		
+		ZetClose();
+	}
+	
+	ics2115_init();
+#endif
+	{
+		arm7MapArea(0x00000000, 0x00003fff,0,PGMARMROM);
+		arm7MapArea(0x08000000, 0x083fffff,0,USER0);
+		arm7MapArea(0x10000000, 0x100003ff,0,RamArm1);
+		arm7MapArea(0x10000000, 0x100003ff,1,RamArm1);
+		arm7MapArea(0x18000000, 0x1800ffff,0,RamArm2);
+		arm7MapArea(0x18000000, 0x1800ffff,1,RamArm2);
+		arm7MapArea(0x48000000, 0x4800ffff,0,RamArmShared);
+		arm7MapArea(0x48000000, 0x4800ffff,1,RamArmShared);
+		arm7MapArea(0x50000000, 0x500003ff,0,RamArm3);
+		arm7MapArea(0x50000000, 0x500003ff,1,RamArm3);
+		arm7SetReadHandler(arm7_latch_arm_r32);
+		arm7SetWriteHandler(arm7_latch_arm_w32);
+	}
+	PgmDoReset();
+	
+	return 0;
+}
 int pgmExit()
 {
 	SekExit();
@@ -938,6 +1275,87 @@ int pgmFrame()
 	return 0;
 }
 
+#undef PGM_INTER_LEAVE
+#define	PGM_INTER_LEAVE	2000
+
+#undef M68K_CYCS_PER_INTER
+#undef Z80_CYCS_PER_INTER
+#define M68K_CYCS_PER_INTER	(M68K_CYCS_PER_FRAME / PGM_INTER_LEAVE)
+#define Z80_CYCS_PER_INTER	(Z80_CYCS_PER_FRAME  / PGM_INTER_LEAVE)
+int kov2Frame()
+{
+	if (PgmReset) 
+		PgmDoReset();
+	
+	if (nPgmPalRecalc) {
+		for (int i=0;i<(0x1200/2);i++)
+			RamCurPal[i] = CalcCol(RamPal[i]);
+		nPgmPalRecalc = 0;
+	}
+
+	// Compile digital inputs
+	PgmInput[0] = 0x0000;
+	PgmInput[1] = 0x0000;
+	PgmInput[2] = 0x0000;
+	PgmInput[3] = 0x0000;
+	PgmInput[4] = 0x0000;
+	PgmInput[5] = 0x0000;
+	for (int i = 0; i < 8; i++) {
+		PgmInput[0] |= (PgmJoy1[i] & 1) << i;
+		PgmInput[1] |= (PgmJoy2[i] & 1) << i;
+		PgmInput[2] |= (PgmJoy3[i] & 1) << i;
+		PgmInput[3] |= (PgmJoy4[i] & 1) << i;
+		PgmInput[4] |= (PgmBtn1[i] & 1) << i;
+		PgmInput[5] |= (PgmBtn2[i] & 1) << i;
+	}	
+
+	int nCyclesDone[2] = {0, 0};
+	int nCyclesNext[2] = {0, 0};
+
+	SekNewFrame();
+#ifndef PGM_MUTE
+	ZetNewFrame();
+#endif
+	//SekOpen(0);
+	//ZetOpen(0);
+
+	for(int i=0; i<PGM_INTER_LEAVE; i++) {
+		nCyclesNext[0] += M68K_CYCS_PER_INTER;
+		nCyclesNext[1] += Z80_CYCS_PER_INTER;
+		arm7_execute(M68K_CYCS_PER_INTER);
+		nCyclesDone[0] += SekRun( nCyclesNext[0] - nCyclesDone[0] );
+		
+#ifndef PGM_MUTE
+		if ( nPgmZ80Work ) {
+			nCyclesDone[1] += ZetRun( nCyclesNext[1] - nCyclesDone[1] );
+		} else
+			nCyclesDone[1] += nCyclesNext[1] - nCyclesDone[1];
+#endif
+	}
+
+	if ( bGameDrgw2 ) {
+		SekSetIRQLine(6, SEK_IRQSTATUS_AUTO);
+		SekRun(nCyclesNext[0] - nCyclesDone[0]);
+		SekSetIRQLine(4, SEK_IRQSTATUS_AUTO);
+		SekRun(nCyclesNext[0] - nCyclesDone[0]);
+	} else {
+		SekSetIRQLine(6, SEK_IRQSTATUS_AUTO);
+	}
+
+#ifndef PGM_MUTE
+	ics2115_frame();
+#endif
+
+	//SekClose();
+	//ZetClose();
+#ifndef PGM_MUTE
+	ics2115_update(nBurnSoundLen);
+#endif
+
+	if (pBurnDraw) pgmDraw();
+	
+	return 0;
+}
 int pgmScan(int nAction,int *pnMin)
 {
 	struct BurnArea ba;

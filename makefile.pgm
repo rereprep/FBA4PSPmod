@@ -40,7 +40,7 @@ objdir	= obj/PSP/
 srcdir	= src/
 
 alldir	= burn burn/pgm generated psp zlib \
-		 cpu cpu/c68k cpu/cz80
+		 cpu cpu/c68k cpu/cz80 cpu/arm7
 
 incdir	= -I. -I$(PSPSDK)/include $(foreach dir,$(alldir),-I$(srcdir)$(dir)) -I$(objdir)generated
 
@@ -58,9 +58,7 @@ depobj	:= 	$(drvobj) \
 	   	sek.o zet.o eeprom_93cxx.o \
 	   	burn_sound.o burn_sound_c.o \
 	   	ics2115.o \
-	   	c68k.o \
-	   	\
-	   	cz80.o \
+	   	arm7.o\
 	   	\
 	   	pgm_crypt.o pgm_draw.o pgm_prot.o pgm_run.o \
 	   	\
@@ -144,10 +142,10 @@ ASFLAGS	= -O3 -G0
 
 LDFLAGS	= -static -L. -L$(PSPSDK)/lib
 
-DEF	:= -DSUB_VERSION=\"PGM\" -DPSP_FW_VERSION=$(PSP_FW_VERSION) -DFILENAME=$(NAME) \
+DEF	:= -DSHOW_FPS -DSUB_VERSION=\"PGM\" -DPSP_FW_VERSION=$(PSP_FW_VERSION) -DFILENAME=$(NAME) \
 	-DBUILD_PSP -DUSE_SPEEDHACKS -DNEOGEO_HACKS \
 	-DPBPNAME='"$(TARGET)"' -DVERSION_MAJOR=$(VERSION_MAJOR) -DVERSION_MINOR=$(VERSION_MINOR)
-
+	
 #	-DFASTCALL
 
 #ifdef DEBUG

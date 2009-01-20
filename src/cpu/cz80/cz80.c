@@ -15,14 +15,14 @@
 /******************************/
 /* Compiler dependant defines */
 /******************************/
-
+/*
 #define UINT8	unsigned char
 #define INT8	signed char
 #define UINT16	unsigned short
 #define INT16	signed short
 #define UINT32	unsigned int
 #define INT32	signed int
-
+*/
 #include "cz80.h"
 
 #define CF					0x01
@@ -161,7 +161,7 @@ static UINT8 SZHVC_sub[2*256*256];
 	CZ80C郃^tF[X֐
 ******************************************************************************/
 
-void Cz80_InitFlags()
+inline static void Cz80_InitFlags()
 {
 	UINT32 i, j, p;
 #if CZ80_BIG_FLAGS_ARRAY
@@ -243,7 +243,7 @@ void Cz80_InitFlags()
 #endif
 }
 
-void Cz80_Init(cz80_struc *CPU)
+inline static void Cz80_Init(cz80_struc *CPU)
 {
 	memset(CPU, 0, sizeof(cz80_struc));
 
@@ -267,7 +267,7 @@ void Cz80_Init(cz80_struc *CPU)
 	CPUs
 --------------------------------------------------------*/
 
-INT32 Cz80_Exec(cz80_struc* CPU)
+inline static INT32 Cz80_Exec(cz80_struc* CPU)
 {
 
 #if CZ80_USE_JUMPTABLE
@@ -388,22 +388,22 @@ Cz80_Exec_Really_End:
 }
 
 
-UINT32 Cz80_Get_BC(cz80_struc *CPU)
+inline static UINT32 Cz80_Get_BC(cz80_struc *CPU)
 {
     return zBC;
 }
 
-UINT32 Cz80_Get_HL(cz80_struc *CPU)
+inline static UINT32 Cz80_Get_HL(cz80_struc *CPU)
 {
     return zHL;
 } 
 
-UINT32 Cz80_Get_PC(cz80_struc *CPU)
+inline static UINT32 Cz80_Get_PC(cz80_struc *CPU)
 {
     return CPU->PC - CPU->BasePC;
 }
 
-void Cz80_Set_PC(cz80_struc *CPU, UINT32 val)
+inline static void Cz80_Set_PC(cz80_struc *CPU, UINT32 val)
 {
 	// don't not use this while CZ80 is executting !!!
     CPU->BasePC = (UINT32) CPU->FetchData[val >> CZ80_FETCH_SFT];
@@ -411,7 +411,7 @@ void Cz80_Set_PC(cz80_struc *CPU, UINT32 val)
     CPU->PC = val + CPU->BasePC;
 }
 
-void Cz80_Reset(cz80_struc *CPU)
+inline static void Cz80_Reset(cz80_struc *CPU)
 {
 	memset(CPU, 0, (INT32)&CPU->nCyclesTotal - (INT32)CPU);
 
@@ -424,7 +424,7 @@ void Cz80_Reset(cz80_struc *CPU)
 	zF2 = ZF;
 }
 
-INT32 Cz80_Set_NMI(cz80_struc *CPU)
+inline static INT32 Cz80_Set_NMI(cz80_struc *CPU)
 {
     zIFF1 = 0;
 	PUSH_16( CPU->PC - CPU->BasePC );

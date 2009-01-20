@@ -1,6 +1,10 @@
 // Z80 (Zed Eight-Ty) Interface
 #include "burnint.h"
 
+#ifdef EMU_CZ80
+ #include "cz80.c"
+#endif
+
 #ifdef EMU_DOZE
  static DozeContext * ZetCPUContext = NULL;
 #endif // EMU_DOZE

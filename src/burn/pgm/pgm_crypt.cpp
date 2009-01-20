@@ -471,7 +471,8 @@ static const unsigned char kov2_tab[256] = {
 void pgm_kov2_decrypt()
 {
 	unsigned short *src = (unsigned short *)USER0;
-
+	
+		
 	for(int i=0; i<0x200000/2; i++) {
     	unsigned short x = src[i];
 
