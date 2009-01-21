@@ -50,6 +50,7 @@ unsigned long nPGMSNDROMOffset;
 //unsigned char * uniCacheHead = NULL;
 //unsigned int PgmCacheOffset = 0;
 
+
 static int pgmMemIndex()
 {
 	unsigned char *Next; Next = Mem;
@@ -406,6 +407,7 @@ inline static unsigned int CalcCol(unsigned short nColour)
 #endif
 }
 extern unsigned int debugValue[2];
+
 /* memory handler */
 unsigned int arm7_latch_arm_r32(unsigned int /*address*/)
 {
@@ -413,12 +415,10 @@ unsigned int arm7_latch_arm_r32(unsigned int /*address*/)
 }
 
 
-#ifdef PGMARM7SPEEDHACK
-static TIMER_CALLBACK( arm_irq )
-{
-	generic_pulse_irq_line(machine->cpu[2], ARM7_FIRQ_LINE);
-}
-#endif
+
+#define PGMARM7SPEEDHACK 1
+#define ARM_IRQ_DELAY 1000
+bool spin68k=false,spinArm=false,armIrq=false;
 extern int arm7_icount;
 //static emu_timer *   arm_comms_timer;
 void arm7_latch_arm_w32(unsigned int address, unsigned int value)
@@ -431,10 +431,14 @@ void arm7_latch_arm_w32(unsigned int address, unsigned int value)
 
 #ifdef PGMARM7SPEEDHACK
 //  cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(100));
-	if (data!=0xaa) cpu_spinuntil_trigger(space->cpu, 1000);
-	cpuexec_trigger(space->machine, 1002);
+	if (value!=0xaa) 
+	{
+		spinArm=true;
+		arm7_icount=0;
+	}
+	spin68k=false;
 #else
-arm7_icount=0;
+//arm7_icount=0;
 //	cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(100));
 //	cpu_spinuntil_time(space->cpu, cpu_clocks_to_attotime(space->cpu, 100));
 #endif
@@ -458,12 +462,14 @@ void __fastcall arm7_latch_68k_w16(unsigned int address, unsigned short value)
 	*(unsigned int*)(RamArmLatch)=value;
 
 #ifdef PGMARM7SPEEDHACK
-	cpuexec_trigger(space->machine, 1000);
-	timer_set(space->machine, ATTOTIME_IN_USEC(50), NULL, 0, arm_irq); // i don't know how long..
-	cpu_spinuntil_trigger(space->cpu, 1002);
+	spinArm=false;
+	armIrq=true; 
+	spin68k=true;
+	SekRunEnd();
 #else
 	arm7_set_irq_line(ARM7_FIRQ_LINE,1);
-	arm7_execute(2000);
+	//arm7_execute(4000);
+
 //	cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(200));
 //	cpu_spinuntil_time(space->cpu, cpu_clocks_to_attotime(space->machine->cpu[2], 200)); // give the arm time to respond (just boosting the interleave doesn't help
 #endif
@@ -479,12 +485,14 @@ void __fastcall arm7_latch_68k_w8(unsigned int address, unsigned char value)
 	//}
 
 #ifdef PGMARM7SPEEDHACK
-	cpuexec_trigger(space->machine, 1000);
-	timer_set(space->machine, ATTOTIME_IN_USEC(50), NULL, 0, arm_irq); // i don't know how long..
-	cpu_spinuntil_trigger(space->cpu, 1002);
+	spinArm=false;
+	armIrq=true; 
+	spin68k=true;
+	SekRunEnd();
 #else
 	arm7_set_irq_line(ARM7_FIRQ_LINE,1);
-	arm7_execute(2000);
+	//arm7_execute(4000);
+
 //	cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(200));
 //	cpu_spinuntil_time(space->cpu, cpu_clocks_to_attotime(space->machine->cpu[2], 200)); // give the arm time to respond (just boosting the interleave doesn't help
 #endif
@@ -770,7 +778,8 @@ int PgmDoReset()
 	ZetReset();
 	ics2115_reset();
 #endif
-	arm7_reset();	
+	arm7_reset();
+	spin68k=false;spinArm=false;armIrq=false;	
 	return 0;
 }
 
@@ -1066,6 +1075,7 @@ int pgmKov2Init()
 		SekMapMemory(Ram68K,		0x8A0000, 0x8BFFFF, SM_RAM);
 		SekMapMemory(Ram68K,		0x8C0000, 0x8DFFFF, SM_RAM);
 		SekMapMemory(Ram68K,		0x8E0000, 0x8FFFFF, SM_RAM);
+		SekMapMemory(Ram68K,		0x0E0000, 0x0FFFFF, SM_RAM);
 		
 
 		SekMapMemory((unsigned char *)RamBg,	0x900000, 0x903FFF, SM_RAM);
@@ -1196,7 +1206,7 @@ int pgmExit()
 #define M68K_CYCS_PER_FRAME	(20000000 / 60)
 #define Z80_CYCS_PER_FRAME	( 8468000 / 60)
 
-#define	PGM_INTER_LEAVE	2
+#define	PGM_INTER_LEAVE	1
 
 #define M68K_CYCS_PER_INTER	(M68K_CYCS_PER_FRAME / PGM_INTER_LEAVE)
 #define Z80_CYCS_PER_INTER	(Z80_CYCS_PER_FRAME  / PGM_INTER_LEAVE)
@@ -1276,11 +1286,11 @@ int pgmFrame()
 }
 
 #undef PGM_INTER_LEAVE
-#define	PGM_INTER_LEAVE	2000
+#define	PGM_INTER_LEAVE	333
 
 #undef M68K_CYCS_PER_INTER
 #undef Z80_CYCS_PER_INTER
-#define M68K_CYCS_PER_INTER	(M68K_CYCS_PER_FRAME / PGM_INTER_LEAVE)
+#define M68K_CYCS_PER_INTER (M68K_CYCS_PER_FRAME / PGM_INTER_LEAVE)
 #define Z80_CYCS_PER_INTER	(Z80_CYCS_PER_FRAME  / PGM_INTER_LEAVE)
 int kov2Frame()
 {
@@ -1309,8 +1319,8 @@ int kov2Frame()
 		PgmInput[5] |= (PgmBtn2[i] & 1) << i;
 	}	
 
-	int nCyclesDone[2] = {0, 0};
-	int nCyclesNext[2] = {0, 0};
+	int nCyclesDone[3] = {0, 0, 0};
+	int nCyclesNext[3] = {0, 0, 0};
 
 	SekNewFrame();
 #ifndef PGM_MUTE
@@ -1318,12 +1328,27 @@ int kov2Frame()
 #endif
 	//SekOpen(0);
 	//ZetOpen(0);
-
 	for(int i=0; i<PGM_INTER_LEAVE; i++) {
-		nCyclesNext[0] += M68K_CYCS_PER_INTER;
+		
 		nCyclesNext[1] += Z80_CYCS_PER_INTER;
-		arm7_execute(M68K_CYCS_PER_INTER);
-		nCyclesDone[0] += SekRun( nCyclesNext[0] - nCyclesDone[0] );
+		if(!spin68k)
+		{
+			nCyclesNext[0] += M68K_CYCS_PER_INTER;
+			nCyclesDone[0] +=SekRun( nCyclesNext[0] - nCyclesDone[0] );
+		}
+		if(!spinArm)
+		{
+			
+			if(armIrq)
+			{
+				armIrq=false;
+				arm7_execute(ARM_IRQ_DELAY);
+				arm7_set_irq_line(ARM7_FIRQ_LINE,1);
+				arm7_execute(M68K_CYCS_PER_INTER-ARM_IRQ_DELAY);
+			}else
+			arm7_execute(M68K_CYCS_PER_INTER);
+		}
+
 		
 #ifndef PGM_MUTE
 		if ( nPgmZ80Work ) {
@@ -1333,14 +1358,9 @@ int kov2Frame()
 #endif
 	}
 
-	if ( bGameDrgw2 ) {
+	
 		SekSetIRQLine(6, SEK_IRQSTATUS_AUTO);
-		SekRun(nCyclesNext[0] - nCyclesDone[0]);
-		SekSetIRQLine(4, SEK_IRQSTATUS_AUTO);
-		SekRun(nCyclesNext[0] - nCyclesDone[0]);
-	} else {
-		SekSetIRQLine(6, SEK_IRQSTATUS_AUTO);
-	}
+
 
 #ifndef PGM_MUTE
 	ics2115_frame();
@@ -1356,6 +1376,7 @@ int kov2Frame()
 	
 	return 0;
 }
+#undef PGM_MUTE
 int pgmScan(int nAction,int *pnMin)
 {
 	struct BurnArea ba;
