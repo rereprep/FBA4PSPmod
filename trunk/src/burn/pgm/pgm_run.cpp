@@ -88,7 +88,7 @@ static int kov2MemIndex()
 	PGM68KBIOS	= Next; Next += 0x0020000;		// 68000 BIOS
 	PGM68KROM	= Next; Next += nPGM68KROMLen;	// 68000 PRG (max 0x400000)
 	PGMARMROM	= Next; Next += 0x4000;			// ARM protection ASIC - internal rom
-	USER0		= Next; Next += 0x0200000;		// User0 ROM/RAM space (for protection roms, etc)
+	USER0		= Next; Next += 0x0400000;		// User0 ROM/RAM space (for protection roms, etc)
 
 	RamStart	= Next;
 	
@@ -431,7 +431,7 @@ void arm7_latch_arm_w32(unsigned int address, unsigned int value)
 
 #ifdef PGMARM7SPEEDHACK
 //  cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(100));
-	if (value!=0xaa) 
+	//if (value!=0xaa) 
 	{
 		spinArm=true;
 		arm7_icount=0;
@@ -1319,8 +1319,8 @@ int kov2Frame()
 		PgmInput[5] |= (PgmBtn2[i] & 1) << i;
 	}	
 
-	int nCyclesDone[3] = {0, 0, 0};
-	int nCyclesNext[3] = {0, 0, 0};
+	int nCyclesDone[2] = {0, 0};
+	int nCyclesNext[2] = {0, 0};
 
 	SekNewFrame();
 #ifndef PGM_MUTE
@@ -1336,6 +1336,7 @@ int kov2Frame()
 			nCyclesNext[0] += M68K_CYCS_PER_INTER;
 			nCyclesDone[0] +=SekRun( nCyclesNext[0] - nCyclesDone[0] );
 		}
+	
 		if(!spinArm)
 		{
 			
