@@ -41,7 +41,8 @@
 /* This implementation uses an improved switch() for hopefully faster opcode fetches compared to my last version
 .. though there's still room for improvement. */
 
-{   
+{            extern unsigned int debugValue[2];
+
     UINT32 pc;
     UINT32 insn;
 
@@ -60,6 +61,7 @@
 
             pc = R15;
 
+            debugValue[0]=pc;
             insn = cpu_readop16(pc & (~1));
             ARM7_ICOUNT -= (3 - thumbCycles[insn >> 8]);
             switch ((insn & THUMB_INSN_TYPE) >> THUMB_INSN_TYPE_SHIFT)
@@ -1170,6 +1172,7 @@
 
             /* load 32 bit instruction */
             pc = R15;
+            debugValue[1]=pc;
             insn = cpu_readop32(pc);
 
             /* process condition codes for this instruction */

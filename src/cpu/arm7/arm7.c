@@ -142,11 +142,11 @@ void program_write_byte_32le(unsigned int a, unsigned char d)
 unsigned int cpu_readop32(unsigned int a)
 {
 	unsigned char * p = (unsigned int *)ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
-	unsigned char *test;
+	unsigned int *test;
 	if ( p )
 	{
 		test= (p + a);
-		return test[3]<<24|test[2]<<16|test[1]<<8|test[0];
+		return *test;
 	}else
 	{
 		*(unsigned int*)0=1; //trap here
@@ -157,11 +157,11 @@ unsigned int cpu_readop32(unsigned int a)
 unsigned short cpu_readop16(unsigned int a)
 {
 	unsigned char * p = (unsigned short *)ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
-	unsigned char *test;
+	unsigned short *test;
 	if ( p )
 	{
 		test= (p + a);
-		return test[1]<<8|test[0];
+		return *test;
 	}
 	else
 	{

@@ -1491,7 +1491,7 @@ struct BurnDriverD BurnDrvKov2106 = {
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
 	NULL, kov2106RomInfo, kov2106RomName, pgmInputInfo, pgmDIPInfo,
-	kov2Init,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	kov2Init,pgmExit,kov2Frame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448,224,4,3
 };
 
@@ -1528,7 +1528,7 @@ struct BurnDriverD BurnDrvKov2p = {
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
 	NULL, kov2pRomInfo, kov2pRomName, pgmInputInfo, pgmDIPInfo,
-	kov2Init,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	kov2Init,pgmExit,kov2Frame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448,224,4,3
 };
 
