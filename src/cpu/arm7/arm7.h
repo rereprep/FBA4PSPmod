@@ -48,6 +48,7 @@ void arm7_reset(void);
 int arm7_execute(int cycles);
 void arm7_set_irq_line(int irqline, int state);
 int arm7MapArea(unsigned int nStart, unsigned int nEnd, int nMode, unsigned char *Mem);
+int ArmScan(int nAction);
 
 void arm7SetReadHandler(unsigned int (*)(unsigned int));
 void arm7SetWriteHandler(void (*)(unsigned int, unsigned int));

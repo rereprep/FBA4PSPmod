@@ -19,7 +19,8 @@ int nPGMSNDROMLen = 0;
 
 unsigned int *RamBg, *RamTx, *RamCurPal;
 unsigned short *RamRs, *RamPal, *RamVReg, *RamSpr;
-static unsigned char *RamZ80, *Ram68K, *RamArm1, *RamArm2, *RamArm3, *RamArmShared, *RamArmLatch;
+static unsigned char *RamZ80, *Ram68K, *RamArm1, *RamArm2, *RamArm3, *RamArmShared, *RamArmLatch, *CPUStatus;
+static unsigned char *spin68k,*spinArm,*armIrq;
 
 static unsigned char *Mem = NULL, *MemEnd = NULL;
 static unsigned char *RamStart, *RamEnd;
@@ -39,16 +40,13 @@ void (*pPgmInitCallback)() = NULL;
 int (*pPgmScanCallback)(int, int*) = NULL;
 
 bool bPgmUseCache = false;
+static bool bUseArm=false;
 static bool bPgmCreateCache = false;
 unsigned long nPGMTileROMOffset;
 unsigned long nPGMSPRColROMOffset;
 unsigned long nPGMSPRMaskROMOffset;
 unsigned long nPGMSNDROMOffset;
-//unsigned int * pgmSprIndex = NULL;
-//unsigned char * pgmIdxCacheTemp = NULL;
-//unsigned char * pgmDatCacheTemp = NULL;
-//unsigned char * uniCacheHead = NULL;
-//unsigned int PgmCacheOffset = 0;
+
 
 
 static int pgmMemIndex()
@@ -88,7 +86,12 @@ static int kov2MemIndex()
 	PGM68KBIOS	= Next; Next += 0x0020000;		// 68000 BIOS
 	PGM68KROM	= Next; Next += nPGM68KROMLen;	// 68000 PRG (max 0x400000)
 	PGMARMROM	= Next; Next += 0x4000;			// ARM protection ASIC - internal rom
-	USER0		= Next; Next += 0x0400000;		// User0 ROM/RAM space (for protection roms, etc)
+	USER0		= Next;
+	if( strstr(BurnDrvGetTextA(DRV_NAME), "dmnfrnt"))
+	{
+		Next += 0x0400000 ;		// User0 ROM/RAM space (for protection roms, etc)
+	}else
+		Next += 0x0200000;		// User0 ROM/RAM space (for protection roms, etc)
 
 	RamStart	= Next;
 	
@@ -104,6 +107,7 @@ static int kov2MemIndex()
 	RamArm3		= Next; Next += 0x0000400;
 	RamArmShared= Next; Next += 0x0010000;
 	RamArmLatch = Next; Next += 0x0000004;
+	CPUStatus	= Next; Next += 0x0000004;
 	RamEnd		= Next;
 	
 	RamSpr		= (unsigned short *) Ram68K;	// first 0xa00 of main ram = sprites, seems to be buffered, DMA? 
@@ -137,14 +141,15 @@ static int pgmGetRoms(bool bLoad)
 	unsigned char *PGMTileROMLoad = PGMTileROM + 0x400000;
 	unsigned char *PGMSPRColROMLoad = PGMSPRColROM;
 	unsigned char *PGMSPRMaskROMLoad = PGMSPRMaskROM;
-#ifndef PGM_MUTE
-	//unsigned char *PGMSNDROMLoad = ICSSNDROM + 0x400000;
-#endif
+	unsigned int biosRomRegionLength=0x400000;
 	cacheFileSize = 0;
 	nPGMTileROMOffset = 0xffffffff;
 	nPGMSPRColROMOffset = 0xffffffff;
 	nPGMSPRMaskROMOffset = 0xffffffff;
 	nPGMSNDROMOffset = 0xffffffff;
+	if(strstr(BurnDrvGetTextA(DRV_NAME), "kov2"))
+		biosRomRegionLength=0x800000;
+	
 	for (int i = 0; !BurnDrvGetRomName(&pRomName, i, 0); i++) {
 
 		BurnDrvGetRomInfo(&ri, i);
@@ -263,9 +268,9 @@ static int pgmGetRoms(bool bLoad)
 						
 						nPGMSNDROMOffset = cacheFileSize;
 						if ( bPgmCreateCache ) {
-							loadAndWriteRomToCache(0x00082,0x400000);							
+							loadAndWriteRomToCache(0x00082,biosRomRegionLength);							
 						}
-						cacheFileSize = cacheFileSize+0x400000;						
+						cacheFileSize = cacheFileSize+biosRomRegionLength;						
 					}
 					if(bPgmCreateCache)
 					{
@@ -312,7 +317,7 @@ static int pgmGetRoms(bool bLoad)
 
 	if (!bLoad) nPGMTileROMLen += 0x400000;
 #ifndef PGM_MUTE
-	if (!bLoad) nPGMSNDROMLen += 0x400000;
+	if (!bLoad) nPGMSNDROMLen += biosRomRegionLength;
 #endif
 
 	return 0;
@@ -418,7 +423,7 @@ unsigned int arm7_latch_arm_r32(unsigned int /*address*/)
 
 #define PGMARM7SPEEDHACK 1
 #define ARM_IRQ_DELAY 1000
-bool spin68k=false,spinArm=false,armIrq=false;
+
 extern int arm7_icount;
 //static emu_timer *   arm_comms_timer;
 void arm7_latch_arm_w32(unsigned int address, unsigned int value)
@@ -433,10 +438,10 @@ void arm7_latch_arm_w32(unsigned int address, unsigned int value)
 //  cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(100));
 	//if (value!=0xaa) 
 	{
-		spinArm=true;
+		*spinArm=1;
 		arm7_icount=0;
 	}
-	spin68k=false;
+	*spin68k=0;
 #else
 //arm7_icount=0;
 //	cpuexec_boost_interleave(space->machine, attotime_zero, ATTOTIME_IN_USEC(100));
@@ -462,9 +467,9 @@ void __fastcall arm7_latch_68k_w16(unsigned int address, unsigned short value)
 	*(unsigned int*)(RamArmLatch)=value;
 
 #ifdef PGMARM7SPEEDHACK
-	spinArm=false;
-	armIrq=true; 
-	spin68k=true;
+	*spinArm=0;
+	*armIrq=1; 
+	*spin68k=1;
 	SekRunEnd();
 #else
 	arm7_set_irq_line(ARM7_FIRQ_LINE,1);
@@ -485,9 +490,9 @@ void __fastcall arm7_latch_68k_w8(unsigned int address, unsigned char value)
 	//}
 
 #ifdef PGMARM7SPEEDHACK
-	spinArm=false;
-	armIrq=true; 
-	spin68k=true;
+	*spinArm=0;
+	*armIrq=1; 
+	*spin68k=1;
 	SekRunEnd();
 #else
 	arm7_set_irq_line(ARM7_FIRQ_LINE,1);
@@ -497,38 +502,7 @@ void __fastcall arm7_latch_68k_w8(unsigned int address, unsigned char value)
 //	cpu_spinuntil_time(space->cpu, cpu_clocks_to_attotime(space->machine->cpu[2], 200)); // give the arm time to respond (just boosting the interleave doesn't help
 #endif
 }
-unsigned int __fastcall arm7_ram_68k_r32(unsigned int address)
-{
-	debugValue[0]++;debugValue[1]=address;
-	return *(unsigned int*)(RamArmShared+(address&0xffff));
-}
-unsigned short __fastcall arm7_ram_68k_r16(unsigned int address)
-{
-	debugValue[0]++;debugValue[1]=address;
-	address=(address&0xffff)^2;
-	return RamArmShared[address+1]<<8|RamArmShared[address];
-}
-unsigned char __fastcall arm7_ram_68k_r8(unsigned int address)
-{
-	debugValue[0]++;debugValue[1]=address;
-	return *(RamArmShared+((address&0xffff)^3));
-}
-void __fastcall arm7_ram_68k_w32(unsigned int address, unsigned int value)
-{
 
-	*(unsigned int*)(RamArmShared+(address&0xffff))=value;
-}
-void __fastcall arm7_ram_68k_w16(unsigned int address, unsigned short value)
-{
-	address=(address&0xffff)^2;
-	RamArmShared[address+1]=value>>8;
-	RamArmShared[address]=value;
-}
-void __fastcall arm7_ram_68k_w8(unsigned int address, unsigned char value)
-{
-
-	*(RamArmShared+((address&0xffff)^3))=value;
-}
 
 unsigned char __fastcall PgmReadByte(unsigned int sekAddress)
 {
@@ -778,8 +752,11 @@ int PgmDoReset()
 	ZetReset();
 	ics2115_reset();
 #endif
+if(bUseArm)
+{
 	arm7_reset();
-	spin68k=false;spinArm=false;armIrq=false;	
+	*spin68k=0;*spinArm=0;*armIrq=0;
+}	
 	return 0;
 }
 
@@ -968,8 +945,11 @@ int pgmInit()
 	
 	return 0;
 }
+
 int pgmKov2Init()
 {
+	bUseArm=true;
+	
 	spriteCacheArrayFreeP=0;
 	Mem = NULL;
 	pgmGetRoms(false);
@@ -979,7 +959,9 @@ int pgmKov2Init()
 	if ((Mem = (unsigned char *)malloc(nLen)) == NULL) return 1;
 	memset(Mem, 0, nLen);
 	kov2MemIndex();
-
+	spin68k=CPUStatus;
+	spinArm=CPUStatus+1;
+	armIrq=CPUStatus+2;
 	bPgmUseCache = true;
 	
 	if (bPgmUseCache) {
@@ -1197,7 +1179,7 @@ int pgmExit()
 
 	pPgmInitCallback = NULL;
 	pPgmScanCallback = NULL;
-
+	bUseArm=false;
 	destroyUniCache();
 
 	return 0;
@@ -1331,23 +1313,23 @@ int kov2Frame()
 	for(int i=0; i<PGM_INTER_LEAVE; i++) {
 		
 		nCyclesNext[1] += Z80_CYCS_PER_INTER;
-		if(!spin68k)
+		if(*spin68k==0)
 		{
 			nCyclesNext[0] += M68K_CYCS_PER_INTER;
 			nCyclesDone[0] +=SekRun( nCyclesNext[0] - nCyclesDone[0] );
 		}
 	
-		if(!spinArm)
+		if(*spinArm==0)
 		{
 			
-			if(armIrq)
+			if(*armIrq!=0)
 			{
-				armIrq=false;
+				*armIrq=0;
 				arm7_execute(ARM_IRQ_DELAY);
 				arm7_set_irq_line(ARM7_FIRQ_LINE,1);
 				arm7_execute(M68K_CYCS_PER_INTER-ARM_IRQ_DELAY);
 			}else
-			arm7_execute(M68K_CYCS_PER_INTER);
+				arm7_execute(M68K_CYCS_PER_INTER);
 		}
 
 		
@@ -1453,6 +1435,10 @@ int pgmScan(int nAction,int *pnMin)
 #ifndef PGM_MUTE
 		ZetScan(nAction);										// Scan Z80 state
 #endif
+		if(bUseArm)
+		{
+			ArmScan(nAction);
+		}
 		// Scan critical driver variables
 		SCAN_VAR(PgmInput);
 
