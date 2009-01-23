@@ -83,7 +83,7 @@ void __fastcall pgmOnDestroy(unsigned char* addr)
 
 static void pgm_drawsprite_new_zoomed(int wide, int high, int xpos, int ypos, int palt, int boffset, int flip, unsigned int /*xzoom*/, int /*xgrow*/, unsigned int /*yzoom*/, int /*ygrow*/ )
 {
-	if ( boffset >= 0xc00000 ) return;
+	if ( boffset >= 0x1000000 ) return;
 	
 	int wideHigh= wide*high;
 	unsigned char * bdat =  getBlockSPRMask (boffset, ((wideHigh)<<1)+4);
@@ -1248,7 +1248,11 @@ static void pgm_tile_bg()
 int pgmDraw()
 {
 #ifndef BUILD_PSP
-	memset(pBurnDraw, 0, PGM_WIDTH*224*2);
+	for(int i=0;i<PGM_WIDTH*224*2/4;i++)
+	{
+		((unsigned int *)pBurnDraw)[i]=0;
+	}
+	//memset(pBurnDraw, 0, PGM_WIDTH*224*2);
 #else
 	extern void clear_gui_texture(int color, int w, int h);
 	clear_gui_texture(0, 448, 224);

@@ -47,6 +47,8 @@ typedef unsigned int offs_t;
 #define NULL 0
 
 #include "arm7.h"
+#include "state.h"
+
 //#include "debugger.h"
 
 
@@ -141,31 +143,25 @@ void program_write_byte_32le(unsigned int a, unsigned char d)
 
 unsigned int cpu_readop32(unsigned int a)
 {
-	unsigned char * p = (unsigned int *)ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
-	unsigned int *test;
+	unsigned int p= ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
 	if ( p )
 	{
-		test= (p + a);
-		return *test;
+		return *(unsigned int *)(p + a);
 	}else
 	{
-		*(unsigned int*)0=1; //trap here
 		return 0;
 	}
 }
 
 unsigned short cpu_readop16(unsigned int a)
 {
-	unsigned char * p = (unsigned short *)ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
-	unsigned short *test;
+	unsigned int p= ARM7.ppMemRead[ a >> ARM7_MEM_SHIFT ];
 	if ( p )
 	{
-		test= (p + a);
-		return *test;
+		return *(unsigned short *)(p + a);
 	}
 	else
 	{
-		*(unsigned int*)0=1;
 		return 0;
 	}
 }
@@ -279,7 +275,18 @@ void arm7SetWriteHandler(void (*pHandler)(unsigned int, unsigned int))
 {
 	ARM7.WriteHandler = pHandler;
 }
+int ArmScan(int nAction)
+{
+	if ((nAction & ACB_DRIVER_DATA) == 0) {
+		return 0;
+	}
 
+	char szText[] = "ARM #0";
+
+	ScanVar(&ARM7, (unsigned int)&(ARM7.ppMemRead)-(unsigned int)&ARM7, szText);
+
+	return 0;
+}
 
 /* TEST COPROC CALLBACK HANDLERS - Used for example on how to implement only */
 #if TEST_COPROC_FUNCS
