@@ -269,6 +269,7 @@ extern unsigned int nNeoSlotDrvNum[MAX_NEO_SLOTS];
 #define BDF_HACK				(1 << 8)
 #define BDF_HOMEBREW				(1 << 9)
 #define BDF_DEMO				(1 << 10)
+#define BDF_HISCORE_SUPPORTED			(1 << 11)
 
 // Flags for the hardware member
 // Format: 0xDDEEFFFF, where EE: Manufacturer, DD: Hardware platform, FFFF: Flags (used by driver)
@@ -290,6 +291,7 @@ extern unsigned int nNeoSlotDrvNum[MAX_NEO_SLOTS];
 #define HARDWARE_PREFIX_PSIKYO		(0x0d000000)
 #define HARDWARE_PREFIX_KANEKO16	(0x0e000000)
 #define HARDWARE_PREFIX_PACMAN		(0x0f000000)
+#define HARDWARE_PREFIX_GALAXIAN	(0x10000000)
 
 #define HARDWARE_MISC_PRE90S		(HARDWARE_PREFIX_MISC_PRE90S)
 #define HARDWARE_MISC_POST90S		(HARDWARE_PREFIX_MISC_POST90S)
@@ -380,6 +382,8 @@ extern unsigned int nNeoSlotDrvNum[MAX_NEO_SLOTS];
 #define HARDWARE_KANEKO16		(HARDWARE_PREFIX_KANEKO16)
 
 #define HARDWARE_PACMAN			(HARDWARE_PREFIX_PACMAN)
+
+#define HARDWARE_GALAXIAN		(HARDWARE_PREFIX_GALAXIAN)
 
 // flags for the jukebox member
 #define JBF_GAME_WORKING		(1 << 0)
