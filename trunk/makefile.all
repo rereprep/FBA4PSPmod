@@ -41,7 +41,7 @@ srcdir	= src/
 
 alldir	= burn burn/cave burn/pgm burn/toaplan burn/taito generated psp zlib \
 burn/misc burn/misc/post90s burn/misc/pre90s burn/cps3 cpu cpu/c68k cpu/cz80 cpu/m6502 cpu/sh2 cpu/nec cpu/z80 cpu/i8039 burn/capcom burn/neogeo \
-cpu/m6809 cpu/hd6309 cpu/m6800 burn/misc burn/misc/dec0 burn/konami burn/sega
+cpu/m6809 cpu/hd6309 cpu/m6800 burn/misc burn/misc/dec0 burn/konami burn/sega cpu/arm7
 
 incdir	= -I. -I$(PSPSDK)/include $(foreach dir,$(alldir),-I$(srcdir)$(dir)) -I$(objdir)generated
 
@@ -84,7 +84,10 @@ drvobj	= d_dodonpachi.o d_donpachi.o d_esprade.o d_feversos.o d_gaia.o d_guwange
 		d_commando.o d_contra.o d_ddragon.o d_galaga.o d_gng.o d_kangaroo.o d_lkage.o d_lwings.o \
 		d_renegade.o d_sf.o d_snk68.o d_sonson.o d_tecmo.o \
 		d_esd16.o d_funybubl.o d_nmg5.o d_suna16.o d_suprnova.o d_psikyosh.o d_unico.o d_zerozone.o \
-		d_hangon.o d_outrun.o d_sys1.o d_sys16a.o d_sys16b.o d_sys18.o d_xbrd.o d_ybrd.o
+		d_hangon.o d_outrun.o d_sys1.o d_sys16a.o d_sys16b.o d_sys18.o d_xbrd.o d_ybrd.o \
+		d_aquarium.o d_armedf.o d_blktiger.o d_blockout.o d_blueprnt.o d_crospang.o d_darkseal.o \
+    d_deniam.o d_diverboy.o d_gotcha.o d_gumbo.o d_ikki.o d_mcatadv.o d_midas.o \
+    d_mugsmash.o d_pirates.o d_skyfox.o d_taotaido.o d_tigeroad.o 
 
 
 depobj	:= 	$(drvobj) \
@@ -102,6 +105,7 @@ depobj	:= 	$(drvobj) \
 	   	vez.o nec.o \
 		m6800.o m6800_intf.o m6809.o m6809_intf.o hd6309.o hd6309_intf.o\
 		z80.o z80daisy.o i8039.o\
+		arm7.o\
 	   	cave.o cave_tile.o cave_sprite.o cave_palette.o \
 	   	cps.o cps_config.o cps_draw.o cps_mem.o cps_obj.o cps_pal.o cps_run.o \
 	   	cps2_crpt.o cps_rw.o cps_scr.o cpsr.o cpsrd.o \
@@ -130,7 +134,8 @@ depobj	:= 	$(drvobj) \
 	   	\
 	   	k052109.o k051960.o konamiic.o k007232.o \
 		\
-		  fd1089.o fd1094.o genesis_vid.o mc8123.o sys16_fd1094.o sys16_gfx.o sys16_ppi.o sys16_run.o
+		  fd1089.o fd1094.o genesis_vid.o mc8123.o sys16_fd1094.o sys16_gfx.o sys16_ppi.o sys16_run.o 
+
 autobj += $(depobj)
 
 # burn_sound_mips.o
@@ -185,7 +190,7 @@ LD		= psp-gcc
 AS		= psp-as
 FIXUP	= psp-fixup-imports
 
-CFLAGS	 = -O3 -G0 -g -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
+CFLAGS	 = -O3 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
 #	   -fomit-frame-pointer -fsigned-char \
 #	   -fstrict-aliasing -falign-functions=32 -falign-loops -falign-labels -falign-jumps \
 #	   -Wall -Wno-long-long -Wno-sign-compare -Wno-uninitialized -Wno-unused \

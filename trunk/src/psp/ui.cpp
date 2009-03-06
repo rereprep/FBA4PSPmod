@@ -14,7 +14,7 @@
 #include "UniCache.h"
 #include "burner.h"
 #include "pspadhoc.h"
-#include "pspadhoc.h"
+
 
 #define find_rom_list_cnt	10
 
@@ -26,7 +26,7 @@ short wifiStatus=0;
 short saveIndex=0;
 short gameScreenWidth=SCREEN_WIDTH, gameScreenHeight=SCREEN_HEIGHT;
 bool enableJoyStick=true;
-char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: preV12p3 DEMO2)";
+char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_V12.3.3)";
 static int find_rom_count = 0;
 static int find_rom_select = 0;
 static int find_rom_top = 0;

@@ -415,109 +415,89 @@ unsigned short dw2_d80000_r(unsigned int /*sekAddress*/)
 }
 
 
-// Killing Blade uses some kind of DMA protection device which can copy data from a data rom.  The
-//   MCU appears to have an internal ROM as if you remove the data ROM then the shared ram is filled
- //  with a constant value.
-
- //  The device can perform various decryption operations on the data it copies.  for now we're just
- //  using a dump of the shared RAM instead.  This will be improved later.
-
+// Killing Blade
 
 static int kb_cmd;
-static int reg;
+static int reg,regA;
 static int ptr;
 unsigned short *killbld_sharedprotram;
 
-
 void killbld_prot_w(unsigned int offset, unsigned short data)
 {
+	offset >>= 1;
+
+	offset&=0xf;
+
 	if(offset==0)
 		kb_cmd=data;
-	else
+	else //offset==2
 	{
 		if(kb_cmd==0)
-			reg=data;
+			regA=data;
 		else if(kb_cmd==2)
 		{
 
-			if(data==1)	// Execute cmd
+			if(data==1)	//Execute cmd
 			{
-				unsigned short cmd=killbld_sharedprotram[0x200/2];
+				UINT16 cmd=killbld_sharedprotram[0x200/2];
 
-				if(cmd==0x6d)	// Store values to asic ram
+				if(cmd==0x6d)	//Store values to asic ram
 				{
-					unsigned int p1=(killbld_sharedprotram[0x298/2] << 16) | killbld_sharedprotram[0x29a/2];
-					unsigned int p2=(killbld_sharedprotram[0x29c/2] << 16) | killbld_sharedprotram[0x29e/2];
-					static unsigned int Regs[0x10];
-					if((p2&0xFFFF)==0x9)	// Set value
+					UINT32 p1=(killbld_sharedprotram[0x298/2] << 16) | killbld_sharedprotram[0x29a/2];
+					UINT32 p2=(killbld_sharedprotram[0x29c/2] << 16) | killbld_sharedprotram[0x29e/2];
+					static UINT32 Regs[0x10];
+					if((p2&0xFFFF)==0x9)	//Set value
 					{
-						int rega=(p2>>16)&0xFFFF;
-						if(rega&0x200)
-							Regs[rega&0xFF]=p1;
+						reg=(p2>>16)&0xFFFF;
+						if(reg&0x200)
+							Regs[reg&0xFF]=p1;
 					}
-					if((p2&0xFFFF)==0x6)	// Add value
+					if((p2&0xFFFF)==0x6)	//Add value
 					{
 						int src1=(p1>>16)&0xFF;
 						int src2=(p1>>0)&0xFF;
 						int dst=(p2>>16)&0xFF;
 						Regs[dst]=Regs[src2]-Regs[src1];
 					}
-					if((p2&0xFFFF)==0x1)	// Add Imm?
+					if((p2&0xFFFF)==0x1)	//Add Imm?
 					{
-						int rega=(p2>>16)&0xFF;
+						int reg=(p2>>16)&0xFF;
 						int imm=(p1>>0)&0xFFFF;
-						Regs[rega]+=imm;
+						Regs[reg]+=imm;
 					}
-					if((p2&0xFFFF)==0xa)	// Get value
+					if((p2&0xFFFF)==0xa)	//Get value
 					{
-						int rega=(p1>>16)&0xFF;
-						killbld_sharedprotram[0x29c/2] = (Regs[rega]>>16)&0xffff;
-						killbld_sharedprotram[0x29e/2] = Regs[rega]&0xffff;
+						int reg=(p1>>16)&0xFF;
+						killbld_sharedprotram[0x29c/2] = (Regs[reg]>>16)&0xffff;
+						killbld_sharedprotram[0x29e/2] = Regs[reg]&0xffff;
 					}
 				}
-				if(cmd==0x4f)	// memcpy with encryption / scrambling
+				if(cmd==0x4f)	//memcpy with encryption / scrambling
 				{
-					unsigned short src=killbld_sharedprotram[0x290/2]>>1; // ?
-					unsigned int dst=killbld_sharedprotram[0x292/2];
-					unsigned short size=killbld_sharedprotram[0x294/2];
-					unsigned short mode=killbld_sharedprotram[0x296/2];
+					UINT16 src=killbld_sharedprotram[0x290/2]>>1; // ?
+					UINT32 dst=killbld_sharedprotram[0x292/2];
+					UINT16 size=killbld_sharedprotram[0x294/2];
+					UINT16 mode=killbld_sharedprotram[0x296/2];
 
 					mode &=0xf;  // what are the other bits?
 
 					if (mode == 1 || mode == 2 || mode == 3)
 					{
-/*
-FILE *fz;
-fz = fopen("ram.0", "wb");
-fwrite (USER0, 1, 0x2000, fz);
-fclose (fz);
-*/
-						// for now, cheat -- the scramble isn't understood, it might be state based
-						int x;
-						for (x=0;x<size;x++)
+						UINT16 *RAMDUMP = (UINT16*)USER2;
+						for (int x=0;x<size;x++)
 						{
-
-							unsigned short *RAMDUMP = (unsigned short*)USER2;
-
-							unsigned short dat;
+							UINT16 dat;
 
 							dat = RAMDUMP[dst+x];
 							killbld_sharedprotram[dst+x] = dat;
 						}
-/*
-fz = fopen("ram.1", "wb");
-fwrite (USER0, 1, 0x2000, fz);
-fclose (fz);
-*/
 					}
 					else if (mode == 5)
 					{
-						// mode 5 seems to be a straight copy
-						int x;
-						for (x=0;x<size;x++)
+						UINT16 *PROTROM = (UINT16*)USER1;
+						for (int x=0;x<size;x++)
 						{
-							unsigned short *PROTROM = (unsigned short*)USER1;
-							unsigned short dat;
+							UINT16 dat;
 							dat = PROTROM[src+x];
 
 							killbld_sharedprotram[dst+x] = dat;
@@ -525,12 +505,10 @@ fclose (fz);
 					}
 					else if (mode == 6)
 					{
-						// mode 6 seems to swap bytes and nibbles
-						int x;
-						for (x=0;x<size;x++)
+						UINT16 *PROTROM = (UINT16*)USER1;
+						for (int x=0;x<size;x++)
 						{
-							unsigned short *PROTROM = (unsigned short*)USER1;
-							unsigned short dat;
+							UINT16 dat;
 							dat = PROTROM[src+x];
 
 							dat = ((dat & 0xf000) >> 12)|
@@ -541,14 +519,10 @@ fclose (fz);
 							killbld_sharedprotram[dst+x] = dat;
 						}
 					}
-					else
-					{
-
-					}
-
+ 
 					killbld_sharedprotram[0x2600/2]=0x4e75;
 				}
-				reg++;
+				regA++;
 			}
 		}
 		else if(kb_cmd==4)
@@ -560,23 +534,37 @@ fclose (fz);
 
 unsigned short killbld_prot_r(unsigned int offset)
 {
-	if(offset==2)
-	{
-		if(kb_cmd == 1)
-			return reg & 0x7f;
+	offset = (offset >> 1) & 1;
 
-		if(kb_cmd == 5)
-			return ((0x89911400 | PgmInput[7]) >> (8 * (ptr - 1))) & 0xff; // region
+	UINT16 res;
+
+	offset&=0xf;
+	res=0;
+
+	if(offset==1)
+	{
+		if(kb_cmd==1)
+		{
+			res=regA&0x7f;
+		}
+		else if(kb_cmd==5)
+		{
+			UINT32 protvalue;
+			protvalue = 0x89911400|PgmInput[7];
+			res=(protvalue>>(8*(ptr-1)))&0xff;
+		}
 	}
 
-	return 0;
+	return res;
 }
 
 void killbldt_reset()
 {
-	kb_cmd = reg = ptr = 0;
-	killbld_sharedprotram = NULL;
+	kb_cmd = regA = ptr = 0;
+
+	memset (USER0, 0xa5, 0x4000);
 }
+
 
 
 
@@ -1015,7 +1003,7 @@ int killbldtScan(int nAction,int */*pnMin*/)
 
 	if (nAction & ACB_DRIVER_DATA) {
 		SCAN_VAR(kb_cmd);
-		SCAN_VAR(reg);
+		SCAN_VAR(regA);
 		SCAN_VAR(ptr);
 	}
 
