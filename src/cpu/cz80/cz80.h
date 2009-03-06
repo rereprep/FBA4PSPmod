@@ -229,10 +229,14 @@ int  Cz80_Set_NMI(cz80_struc*);
 
 unsigned int Cz80_Get_BC(cz80_struc*);
 
+unsigned int Cz80_Get_DE(cz80_struc*);
+
 unsigned int Cz80_Get_HL(cz80_struc*);
 
 unsigned int Cz80_Get_PC(cz80_struc*);
 */
+
+
 #ifdef __cplusplus
 };
 #endif

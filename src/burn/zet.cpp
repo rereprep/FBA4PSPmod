@@ -767,7 +767,34 @@ int ZetBc(int n)
 #endif
 
 }
+int ZetDe(int n)
+{
+#ifdef EMU_DOZE
+	if (n < 0) {
+		return Doze.de;
+	} else {
+		return ZetCPUContext[n].de;
+	}
+#endif
 
+// correct?
+
+#ifdef EMU_MAME_Z80
+	if (n < 0) {
+		return lastZetCPUContext->reg.de.w.l;
+	} else {
+		return ZetCPUContext[n].reg.de.w.l;
+	}
+#endif
+
+#ifdef EMU_CZ80
+	if (n < 0) {
+		return Cz80_Get_DE(lastZetCPUContext);
+	} else {
+		return Cz80_Get_DE(&ZetCPUContext[n]);
+	}
+#endif
+}
 int ZetHL(int n)
 {
 #ifdef EMU_DOZE

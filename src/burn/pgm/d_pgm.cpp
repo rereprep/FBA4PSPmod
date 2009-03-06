@@ -280,7 +280,53 @@ static struct BurnDIPInfo puzzli2DIPList[] = {
 	{0x2E,	0x01, 0x0F,	0x05, "World"},
 };
 
+static struct BurnDIPInfo kov2DIPList[] = {
+
+	// Defaults
+	{0x2E,	0xFF, 0xFF,	0x04, NULL},
+
+	// DIP 2
+	{0,		0xFE, 0,	6,	  "Region (fake)"},
+	{0x2E,	0x01, 0x07,	0x00, "China"},
+	{0x2E,	0x01, 0x07,	0x01, "Taiwan"},
+	{0x2E,	0x01, 0x07,	0x02, "Japan"},
+	{0x2E,	0x01, 0x07,	0x03, "Korea"},
+	{0x2E,	0x01, 0x07,	0x04, "Hong Kong"},
+	{0x2E,	0x01, 0x07,	0x05, "World"},
+};
+static struct BurnDIPInfo martmastDIPList[] = {
+
+	// Defaults
+	{0x2E,	0xFF, 0xFF,	0x05, NULL},
+
+	// DIP 2
+	{0,		0xFE, 0,	7,	  "Region (Fake)"},
+	{0x2E,	0x01, 0x07,	0x00, "China"},
+	{0x2E,	0x01, 0x07,	0x01, "Taiwan"},
+	{0x2E,	0x01, 0x07,	0x02, "China"},
+	{0x2E,	0x01, 0x07,	0x03, "Korea"},
+	{0x2E,	0x01, 0x07,	0x04, "Hong Kong"},
+	{0x2E,	0x01, 0x07,	0x05, "World"},
+	{0x2E,	0x01, 0x07,	0x06, "USA"},
+};
+
+static struct BurnDIPInfo martmascDIPList[] = {
+
+	// Defaults
+	{0x2E,	0xFF, 0xFF,	0x00, NULL},
+
+	// DIP 2
+	{0,		0xFE, 0,	7,	  "Region (Fake)"},
+	{0x2E,	0x01, 0x07,	0x00, "China"},
+	{0x2E,	0x01, 0x07,	0x01, "Taiwan"},
+	{0x2E,	0x01, 0x07,	0x02, "China"},
+	{0x2E,	0x01, 0x07,	0x03, "Korea"},
+	{0x2E,	0x01, 0x07,	0x04, "Hong Kong"},
+	{0x2E,	0x01, 0x07,	0x05, "World"},
+	{0x2E,	0x01, 0x07,	0x06, "USA"},
+};
 STDDIPINFO(pgm);
+
 
 STDDIPINFOEXT(orlegend, pgm, orlegend);
 STDDIPINFOEXT(orlegndc, pgm, orlegndc);
@@ -292,7 +338,9 @@ STDDIPINFOEXT(killbldt, pgm, killbldt);
 STDDIPINFOEXT(photoy2k, pgm, photoy2k);
 STDDIPINFOEXT(raf102j,  pgm, raf102j);
 STDDIPINFOEXT(puzzli2,  pgm, puzzli2);
-
+STDDIPINFOEXT(kov2,     pgm, kov2);
+STDDIPINFOEXT(martmast, pgm, martmast);
+STDDIPINFOEXT(martmasc, pgm, martmasc);
 
 // -----------------------------------------------------------------------------
 // BIOS
@@ -1401,17 +1449,55 @@ int martmastInit()
 {
 	pPgmInitCallback = pgm_mm_decrypt;
 
-	return pgmInit();
+	return pgmKov2Init();
 }
 
-struct BurnDriverD BurnDrvMartmast = {
+struct BurnDriver BurnDrvMartmast = {
 	"martmast", NULL, "pgm", "2001",
-	"Martial Masters (V104)\0", "Needs second CPU emulated (ARM7)", "IGS", "PGM",
-	NULL, NULL, NULL, NULL,
-	BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
-	NULL, martmastRomInfo, martmastRomName, pgmInputInfo, pgmDIPInfo,
-	martmastInit,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
-	448,224,4,3
+	"Martial Masters (USA, V104)\0", NULL, "IGS", "PGM",
+	L"Martial Masters\0\u5f62\u610f\u62f3 (USA, V104)\0", NULL, NULL, NULL,
+	BDF_GAME_WORKING , 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU, //GBF_VSFIGHT, 0,
+	NULL, martmastRomInfo, martmastRomName, pgmInputInfo, martmastDIPInfo,
+	martmastInit, pgmExit, kov2Frame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	448, 224, 4, 3
+};
+
+
+// Martial Masters / Xing Yi (China, V101)
+
+static struct BurnRomInfo martmascRomDesc[] = {
+	{ "v104_32m.u9",  	0x400000, 0xcfd9dff4, 1 | BRF_ESS | BRF_PRG },   // 68K Code
+
+	{ "t1000.u3",	  	0x800000, 0xbbf879b5, 2 | BRF_GRA },		 // Tile data
+
+	{ "a1000.u3",    	0x800000, 0x43577ac8, 3 | BRF_GRA },		 // Sprite Color Data
+	{ "a1001.u4",    	0x800000, 0xfe7a476f, 3 | BRF_GRA },
+	{ "a1002.u6",    	0x800000, 0x62e33d38, 3 | BRF_GRA },
+	{ "a1003.u8",    	0x800000, 0xb2c4945a, 3 | BRF_GRA },
+	{ "a1004.u10",   	0x400000, 0x9fd3f5fd, 3 | BRF_GRA },
+
+	{ "b1000.u9",	  	0x800000, 0xc5961f6f, 4 | BRF_GRA },		 // Sprite Masks & Color Indexes
+	{ "b1001.u11",	  	0x800000, 0x0b7e1c06, 4 | BRF_GRA },
+
+	{ "m1000.u5",    	0x800000, 0xed407ae8, 5 | BRF_SND },		 // Samples
+	{ "m1001.u7",    	0x400000, 0x662d2d48, 5 | BRF_SND },
+
+	{ "martial_masters_v101_china.asic",0x4000, 0xb3e25b7d, 7 | BRF_ESS | BRF_PRG }, // protection rom
+
+	{ "v102_16m.u10",  	0x200000, 0x18b745e6, 8 | BRF_ESS | BRF_PRG },   // External ARM rom
+};
+
+STDROMPICKEXT(martmasc, martmasc, pgm);
+STD_ROM_FN(martmasc);
+
+struct BurnDriver BurnDrvMartmasc = {
+	"martmasc", "martmast", "pgm", "2001",
+	"Martial Masters (China, V101)\0", NULL, "IGS", "PGM",
+	L"Martial Masters\0\u5f62\u610f\u62f3 (China, V101)\0", NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_CLONE , 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU, //GBF_VSFIGHT, 0,
+	NULL, martmascRomInfo, martmascRomName, pgmInputInfo, martmascDIPInfo,
+	martmastInit, pgmExit, kov2Frame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	448, 224, 4, 3
 };
 
 
@@ -1464,7 +1550,7 @@ struct BurnDriverD BurnDrvKov2 = {
 static struct BurnRomInfo kov2106RomDesc[] = {
 	{ "u18.106",	  	  0x400000, 0x40051ad9, 1 | BRF_ESS | BRF_PRG }, // 68000
 
-	{ "kov2_v100_hongkong.asic",0x4000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
+	{ "kov2_v100_hongkong.asic",0x4000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom
 
 	{ "u19.102",	  	  0x200000, 0x462e2980, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
@@ -1497,11 +1583,47 @@ struct BurnDriverD BurnDrvKov2106 = {
 
 
 // Knights of Valour 2 Plus - Nine Dragons (VM204XX)
+static void kov2pHack()
+{
+	// from nebula, these make the wrong version arm7 work?
+	unsigned char *src = USER0;
+
+	// modified to make kov2p working, by XingXing
+	src[0xDE] = 0xC0;
+	src[0xDF] = 0x46;
+	src[0x4ED8] = 0xA8;// B0
+	src[0x4EDC] = 0x9C;// A4
+	src[0x4EE0] = 0x5C;// 64
+	src[0x4EE4] = 0x94;// 9C
+	src[0x4EE8] = 0xE8;// F0
+	src[0x4EEC] = 0x6C;// 74
+	src[0x4EF0] = 0xD4;// DC
+	src[0x4EF4] = 0x50;// 58
+	src[0x4EF8] = 0x80;// 88
+	src[0x4EFC] = 0x9C;// A4
+	src[0x4F00] = 0x28;// 30
+	src[0x4F04] = 0x30;// 38
+	src[0x4F08] = 0x34;// 3C
+	src[0x4F0C] = 0x1C;// 24
+	src[0x1FFFFC] = 0x33;
+	src[0x1FFFFD] = 0x99;
+
+}
+int kov2pInit()
+{
+	pPgmInitCallback = pgm_kov2p_decrypt;
+
+	int ret=pgmKov2Init();
+	if(ret==0)
+			kov2pHack();
+	return ret;
+		
+}
 
 static struct BurnRomInfo kov2pRomDesc[] = {
 	{ "v204-32m.rom",  	  0x400000, 0x583e0650, 1 | BRF_ESS | BRF_PRG }, // 68000
 
-	{ "kov2p.asic",		    0x004000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
+	{ "kov2p.asic",		    0x004000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG }, // protection rom
 
 	{ "v200-16.rom",  	  0x200000, 0x16a0c11f, 6 | BRF_ESS | BRF_PRG }, // External ARM rom
 
@@ -1528,10 +1650,45 @@ struct BurnDriverD BurnDrvKov2p = {
 	NULL, NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE | BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
 	NULL, kov2pRomInfo, kov2pRomName, pgmInputInfo, pgmDIPInfo,
-	kov2Init,pgmExit,kov2Frame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	kov2pInit,pgmExit,kov2Frame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448,224,4,3
 };
 
+// Knights of Valour 2 Plus - Nine Dragons (VM205XX)
+
+static struct BurnRomInfo kov2p205RomDesc[] = {
+	{ "u8-27322.rom",  	0x400000, 0x3A2CC0DE, 1 | BRF_ESS | BRF_PRG },  // 68K Code
+
+	{ "t1200.rom",	  	0x800000, 0xd7e26609, 2 | BRF_GRA },		// Tile data
+
+	{ "a1200.rom",	  	0x800000, 0xceeb81d8, 3 | BRF_GRA },		// Sprite Color Data
+	{ "a1201.rom_p",	0x800000, 0x21063ca7, 3 | BRF_GRA },
+	{ "a1202.rom",	  	0x800000, 0x4bb92fae, 3 | BRF_GRA },
+	{ "a1203.rom",	  	0x800000, 0xe73cb627, 3 | BRF_GRA },
+	{ "a1204.rom_p",  	0x200000, 0x14b4b5bb, 3 | BRF_GRA },
+
+	{ "b1200.rom",	  	0x800000, 0xbed7d994, 4 | BRF_GRA },		// Sprite Masks & Color Indexes
+	{ "b1201.rom",	  	0x800000, 0xf251eb57, 4 | BRF_GRA },
+
+	{ "m1200.rom",	  	0x800000, 0xb0d88720, 5 | BRF_SND },		// Samples
+
+	{ "kov2p.asic",		0x004000, 0xe0d7679f, 7 | BRF_ESS | BRF_PRG },  // protection rom
+
+	{ "v200-16.rom",  	0x200000, 0x16a0c11f, 8 | BRF_ESS | BRF_PRG },  // External ARM rom
+};
+
+STDROMPICKEXT(kov2p205, kov2p205, pgm);
+STD_ROM_FN(kov2p205);
+
+struct BurnDriverD BurnDrvKov2p205 = {
+	"kov2p205", "kov2", "pgm", "2002",
+	"Knights of Valour 2 Plus - Nine Dragons (VM205XX)\0", "Needs second CPU emulated (ARM7)", "IGS", "PGM",
+	L"Knights of Valour 2 Plus\0\u4e09\u56fd\u6218\u7eaa 2 - \u7fa4\u96c4\u4e89\u9738 (VM205XX)\0", NULL, NULL, NULL,
+	BDF_CLONE , 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU, //GBF_SCRFIGHT, 0,
+	NULL, kov2p205RomInfo, kov2p205RomName, pgmInputInfo, pgmDIPInfo,
+	kov2pInit, pgmExit, kov2Frame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	448, 224, 4, 3
+};
 
 // Bee Storm - DoDonPachi II (V100)
 
@@ -1676,6 +1833,12 @@ static struct BurnRomInfo thegladRomDesc[] = {
 
 STDROMPICKEXT(theglad, theglad, pgm);
 STD_ROM_FN(theglad);
+static int thegladInit()
+{
+	pPgmInitCallback = pgm_theglad_decrypt;
+
+	return pgmInit();
+}
 
 struct BurnDriverD BurnDrvTheglad = {
 	"theglad", NULL, "pgm", "2001",
@@ -1683,7 +1846,7 @@ struct BurnDriverD BurnDrvTheglad = {
 	L"The Gladiator\0\u795E\u5251\u98CE\u4E91\0\u795E\u528D\u98A8\u96F2 (V100)\0", NULL, NULL, NULL,
 	BDF_16BIT_ONLY, 4, HARDWARE_IGS_PGM | HARDWARE_IGS_USE_ARM_CPU,
 	NULL, thegladRomInfo, thegladRomName, pgmInputInfo, pgmDIPInfo,
-	pgmInit,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	thegladInit,pgmExit,pgmFrame,pgmDraw,pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448,224,4,3
 };
 

@@ -1374,12 +1374,19 @@ int pgmScan(int nAction,int *pnMin)
 		ba.nAddress = 0;
 		ba.szName	= "BIOS ROM";
 		BurnAcb(&ba);
-
+				
 		ba.Data		= PGM68KROM;
 		ba.nLen		= nPGM68KROMLen;
 		ba.nAddress = 0;
 		ba.szName	= "68K ROM";
 		BurnAcb(&ba);
+		
+		ba.Data		= PGMARMROM;
+		ba.nLen		= RamStart-PGMARMROM;
+		ba.nAddress = 0;
+		ba.szName	= "ARM ROM";
+		BurnAcb(&ba);
+
 	}
 
 	if (nAction & ACB_NVRAM) {								// Scan nvram
@@ -1426,6 +1433,15 @@ int pgmScan(int nAction,int *pnMin)
 		ba.nAddress = 0;
 		ba.szName	= "Z80 RAM";
 		BurnAcb(&ba);
+		
+		if(bUseArm)
+		{
+			ba.Data		= RamArm1;
+			ba.nLen		= RamEnd-RamArm1;
+			ba.nAddress = 0;
+			ba.szName	= "ARM RAM";
+			BurnAcb(&ba);
+		}
 		
 	}
 

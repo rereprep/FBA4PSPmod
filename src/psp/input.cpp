@@ -132,6 +132,40 @@ void loadDefaultInput()
 				int value=hex2int(p[2]);
 				if(value>=0&&value<=8)
 					screenMode=value;
+			}else if(p = strstr(IniLine, "gameScreenWidth"))
+			{
+				p = strstr(p, " ");
+				if(p==0||p[1]=='\0')
+					continue;
+				do{
+					p++;
+				}while(*p==' ');
+				int value=0;
+				for(int i=0;i<3&&*p>='0'&&*p<='9';i++)
+				{
+					value=value*10+*p-'0';
+					p++;
+				}		
+				
+				if(value>0&&value<=SCREEN_WIDTH)
+					gameScreenWidth=value;
+			}else if(p = strstr(IniLine, "gameScreenHeight"))
+			{
+				p = strstr(p, " ");
+				if(p==0||p[1]=='\0')
+					continue;
+				do{
+					p++;
+				}while(*p==' ');
+				int value=0;
+				for(int i=0;i<3&&*p>='0'&&*p<='9';i++)
+				{
+					value=value*10+*p-'0';
+					p++;
+				}		
+				
+				if(value>0&&value<=SCREEN_HEIGHT)
+					gameScreenHeight=value;
 			}
 		}
 		fclose(fp);
@@ -313,6 +347,40 @@ else
 					continue;
 				int value=hex2int(p[2]);
 				monoSound=value;
+			}else if(p = strstr(IniLine, "gameScreenWidth"))
+			{
+				p = strstr(p, " ");
+				if(p==0||p[1]=='\0')
+					continue;
+				do{
+					p++;
+				}while(*p==' ');
+				int value=0;
+				for(int i=0;i<3&&*p>='0'&&*p<='9';i++)
+				{
+					value=value*10+*p-'0';
+					p++;
+				}		
+				
+				if(value>0&&value<=SCREEN_WIDTH)
+					gameScreenWidth=value;
+			}else if(p = strstr(IniLine, "gameScreenHeight"))
+			{
+				p = strstr(p, " ");
+				if(p==0||p[1]=='\0')
+					continue;
+				do{
+					p++;
+				}while(*p==' ');
+				int value=0;
+				for(int i=0;i<3&&*p>='0'&&*p<='9';i++)
+				{
+					value=value*10+*p-'0';
+					p++;
+				}		
+				
+				if(value>0&&value<=SCREEN_HEIGHT)
+					gameScreenHeight=value;
 			}
 		}
 		fclose(fp);

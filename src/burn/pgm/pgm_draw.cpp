@@ -486,38 +486,42 @@ static void pgm_drawsprites(int priority)
 
     const unsigned short * finish = RamSpr + (0xA00 / 2);
     while( pgm_sprite_source < finish ) {
-    	int xpos = pgm_sprite_source[0] & 0x07ff;
-		int ypos = pgm_sprite_source[1] & 0x03ff;
-		int xzom = (pgm_sprite_source[0] & 0x7800) >> 11;
-		int xgrow = (pgm_sprite_source[0] & 0x8000) >> 15;
-		int yzom = (pgm_sprite_source[1] & 0x7800) >> 11;
-		int ygrow = (pgm_sprite_source[1] & 0x8000) >> 15;
-		int palt = (pgm_sprite_source[2] & 0x1f00) >> 3;
-		int flip = (pgm_sprite_source[2] & 0x6000) >> 13;
-		int boff = ((pgm_sprite_source[2] & 0x007f) << 16) | (pgm_sprite_source[3] & 0xffff);
-		int wide = (pgm_sprite_source[4] & 0x7e00) >> 9;
-		int high = pgm_sprite_source[4] & 0x01ff;
-		int pri = (pgm_sprite_source[2] & 0x0080) >>  7;
-		unsigned int xzoom, yzoom;
-		unsigned short * pgm_sprite_zoomtable = & RamVReg[0x1000 / 2];
-
-		if (xgrow) {
-			xzom = 0x10-xzom; // this way it doesn't but there is a bad line when zooming after the level select?
-		}
-		if (ygrow) {
-			yzom = 0x10-yzom;
-		}
-		xzoom = (pgm_sprite_zoomtable[xzom*2]<<16)|pgm_sprite_zoomtable[xzom*2+1];
-		yzoom = (pgm_sprite_zoomtable[yzom*2]<<16)|pgm_sprite_zoomtable[yzom*2+1];
-		
-		boff *= 2;
-		if (xpos > 0x3ff) xpos -=0x800;
-		if (ypos > 0x1ff) ypos -=0x400;
-
-		if (high == 0) break; /* is this right? */
-		if ((priority == 1) && (pri == 0)) break;
-		pgm_drawsprite_new_zoomed(wide, high, xpos, ypos, palt, boff, flip, xzoom,xgrow, yzoom,ygrow);
-		pgm_sprite_source += 5;
+    	int pri = (pgm_sprite_source[2] & 0x0080) >>  7;
+    	if ((priority == 1) && (pri == 0)) break;
+    	int high = pgm_sprite_source[4] & 0x01ff;
+    	if (high == 0) break; /* is this right? */
+    	
+    			
+	    int xpos = pgm_sprite_source[0] & 0x07ff;
+			int ypos = pgm_sprite_source[1] & 0x03ff;
+			int xzom = (pgm_sprite_source[0] & 0x7800) >> 11;
+			int xgrow = (pgm_sprite_source[0] & 0x8000) >> 15;
+			int yzom = (pgm_sprite_source[1] & 0x7800) >> 11;
+			int ygrow = (pgm_sprite_source[1] & 0x8000) >> 15;
+			int palt = (pgm_sprite_source[2] & 0x1f00) >> 3;
+			int flip = (pgm_sprite_source[2] & 0x6000) >> 13;
+			int boff = ((pgm_sprite_source[2] & 0x007f) << 16) | (pgm_sprite_source[3] & 0xffff);
+			int wide = (pgm_sprite_source[4] & 0x7e00) >> 9;
+			
+			
+			unsigned int xzoom, yzoom;
+			unsigned short * pgm_sprite_zoomtable = & RamVReg[0x1000 / 2];
+	
+			if (xgrow) {
+				xzom = 0x10-xzom; // this way it doesn't but there is a bad line when zooming after the level select?
+			}
+			if (ygrow) {
+				yzom = 0x10-yzom;
+			}
+			xzoom = (pgm_sprite_zoomtable[xzom*2]<<16)|pgm_sprite_zoomtable[xzom*2+1];
+			yzoom = (pgm_sprite_zoomtable[yzom*2]<<16)|pgm_sprite_zoomtable[yzom*2+1];
+			
+			boff *= 2;
+			if (xpos > 0x3ff) xpos -=0x800;
+			if (ypos > 0x1ff) ypos -=0x400;
+	
+			pgm_drawsprite_new_zoomed(wide, high, xpos, ypos, palt, boff, flip, xzoom,xgrow, yzoom,ygrow);
+			pgm_sprite_source += 5;
     }
     
 }

@@ -393,6 +393,11 @@ inline static UINT32 Cz80_Get_BC(cz80_struc *CPU)
     return zBC;
 }
 
+inline static UINT32 Cz80_Get_DE(cz80_struc *CPU)
+{
+    return zDE;
+} 
+
 inline static UINT32 Cz80_Get_HL(cz80_struc *CPU)
 {
     return zHL;

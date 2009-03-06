@@ -91,7 +91,9 @@ extern void pgm_dfront_decrypt();
 extern void pgm_ddp2_decrypt();
 extern void pgm_mm_decrypt();
 extern void pgm_kov2_decrypt();
+extern void pgm_kov2p_decrypt();
 extern void pgm_puzzli2_decrypt();
+extern void pgm_theglad_decrypt();
 
 struct BoffsetHead
 {

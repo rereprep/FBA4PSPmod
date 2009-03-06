@@ -7,7 +7,6 @@
 #define SCREEN_HEIGHT	272
 
 #define GU_FRAME_ADDR(frame)		(unsigned short *)((unsigned int)frame | 0x44000000)
-//#define GU_FRAME_ADDR(frame)		(unsigned short *)((unsigned int)frame | 0x4000000)
 
 /* main.cpp */
 
