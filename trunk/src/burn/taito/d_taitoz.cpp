@@ -1848,15 +1848,15 @@ STD_ROM_PICK(Contcrua);
 STD_ROM_FN(Contcrua);
 
 static struct BurnRomInfo DblaxleRomDesc[] = {
-	{ "c78-41.3",      0x020000, 0xcf297fe4, BRF_ESS | BRF_PRG | TAITO_68KROM1_BYTESWAP },
-	{ "c78-43.5",      0x020000, 0x38a8bad6, BRF_ESS | BRF_PRG | TAITO_68KROM1_BYTESWAP },
-	{ "c78-42.4",      0x020000, 0x4124ab2b, BRF_ESS | BRF_PRG | TAITO_68KROM1_BYTESWAP },
-	{ "c78-44.6",      0x020000, 0x50a55b6e, BRF_ESS | BRF_PRG | TAITO_68KROM1_BYTESWAP },
+	{ "c78-41-1.2",    0x020000, 0xcf297fe4, BRF_ESS | BRF_PRG | TAITO_68KROM1_BYTESWAP },
+	{ "c78-43-1.4",    0x020000, 0x38a8bad6, BRF_ESS | BRF_PRG | TAITO_68KROM1_BYTESWAP },
+	{ "c78-42-1.3",    0x020000, 0x4124ab2b, BRF_ESS | BRF_PRG | TAITO_68KROM1_BYTESWAP },
+	{ "c78-44-1.5",    0x020000, 0x50a55b6e, BRF_ESS | BRF_PRG | TAITO_68KROM1_BYTESWAP },
 	
 	{ "c78-30-1.35",   0x020000, 0x026aac18, BRF_ESS | BRF_PRG | TAITO_68KROM2_BYTESWAP },
 	{ "c78-31-1.36",   0x020000, 0x67ce23e8, BRF_ESS | BRF_PRG | TAITO_68KROM2_BYTESWAP },
 	
-	{ "ic42",          0x020000, 0xf2186943, BRF_ESS | BRF_PRG | TAITO_Z80ROM1 },
+	{ "c78-34.c42",    0x020000, 0xf2186943, BRF_ESS | BRF_PRG | TAITO_Z80ROM1 },
 	
 	{ "c78-10.12",     0x080000, 0x44b1897c, BRF_GRA | TAITO_CHARS_BYTESWAP },
 	{ "c78-11.11",     0x080000, 0x7db3d4a3, BRF_GRA | TAITO_CHARS_BYTESWAP },
@@ -1870,7 +1870,7 @@ static struct BurnRomInfo DblaxleRomDesc[] = {
 	
 	{ "c78-04.3",      0x080000, 0xcc1aa37c, BRF_GRA | TAITO_SPRITEMAP },
 	
-	{ "c78-12.33",     0x080000, 0xfbb39585, BRF_SND | TAITO_YM2610A },
+	{ "c78-12.33",     0x100000, 0xb0267404, BRF_SND | TAITO_YM2610A },
 	{ "c78-13.46",     0x080000, 0x1b363aa2, BRF_SND | TAITO_YM2610A },
 	
 	{ "c78-14.31",     0x080000, 0x9cad4dfb, BRF_SND | TAITO_YM2610B },
@@ -4051,8 +4051,6 @@ static int DblaxleInit()
 	
 	TaitoLoadRoms(0);
 	
-	if (!strcmp(BurnDrvGetTextA(DRV_NAME), "dblaxle")) TaitoYM2610ARomSize = 0x180000;
-
 	// Allocate and Blank all required memory
 	TaitoMem = NULL;
 	MemIndex();
@@ -4068,12 +4066,6 @@ static int DblaxleInit()
 	
 	if (TaitoLoadRoms(1)) return 1;
 	
-	// First YM2610A Rom is underdumped
-	if (!strcmp(BurnDrvGetTextA(DRV_NAME), "dblaxle")) {
-		memcpy(TaitoYM2610ARom + 0x100000, TaitoYM2610ARom + 0x080000, 0x080000);
-		memset(TaitoYM2610ARom + 0x080000, 0, 0x080000);
-	}
-
 	SwitchToMusashi();
 	
 	// Setup the 68000 emulation

@@ -6,6 +6,7 @@
 #include "burn_gun.h"
 #include "bitswap.h"
 #include "genesis_vid.h"
+#include "8255ppi.h"
 #include "z80.h"
 #include "malloc.h"
 #define malloc(size) memalign(4, size)
@@ -274,29 +275,6 @@ void FD1089Decrypt();
 void fd1094_driver_init();
 void fd1094_machine_init();
 void fd1094_exit();
-
-// sys16_ppi.cpp
-typedef UINT8 (*PPIPortRead)();
-typedef void (*PPIPortWrite)(UINT8 data);
-extern PPIPortRead PPI0PortReadA;
-extern PPIPortRead PPI0PortReadB;
-extern PPIPortRead PPI0PortReadC;
-extern PPIPortWrite PPI0PortWriteA;
-extern PPIPortWrite PPI0PortWriteB;
-extern PPIPortWrite PPI0PortWriteC;
-extern PPIPortRead PPI1PortReadA;
-extern PPIPortRead PPI1PortReadB;
-extern PPIPortRead PPI1PortReadC;
-extern PPIPortWrite PPI1PortWriteA;
-extern PPIPortWrite PPI1PortWriteB;
-extern PPIPortWrite PPI1PortWriteC;
-
-void ppi8255_init(int num);
-void ppi8255_exit();
-void ppi8255_scan();
-UINT8 ppi8255_r(int which, int offset);
-void ppi8255_w(int which, int offset, UINT8 data);
-void ppi8255_set_portC( int which, UINT8 data );
 
 // genesis_vid.cpp
 

@@ -329,6 +329,8 @@ static struct BurnRomInfo EndurorRomDesc[] = {
 	{ "epr-7680.rom",     0x08000, 0x627b3c8c, SYS16_ROM_PCMDATA | BRF_SND },
 	
 	{ "epr-6844.ic123",   0x02000, 0xe3ec7bd6, SYS16_ROM_PROM | BRF_GRA },
+	
+	{ "317-0013a.key",    0x02000, 0x295e6737, SYS16_ROM_KEY | BRF_ESS | BRF_PRG },
 };
 
 
@@ -392,6 +394,8 @@ static struct BurnRomInfo Enduror1RomDesc[] = {
 	{ "epr-7763.ic6",     0x08000, 0x627b3c8c, SYS16_ROM_PCMDATA | BRF_SND },
 	
 	{ "epr-6844.ic123",   0x02000, 0xe3ec7bd6, SYS16_ROM_PROM | BRF_GRA },
+	
+	{ "317-0013a.key",    0x02000, 0x295e6737, SYS16_ROM_KEY | BRF_ESS | BRF_PRG },
 };
 
 
@@ -1017,25 +1021,44 @@ unsigned char EndurorProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Accelerate
 		case 0: {
 			if (System16AnalogPort2 > 1) return 0xff;
 			return 0;
 		}
-		
+
+		// Brake
 		case 1: {
 			if (System16AnalogPort3 > 1) return 0xff;
 			return 0;
 		}
 
+		// Bank Up / Down
 		case 2: {
-			temp = 0x80 + (System16AnalogPort1 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort1 >> 4) > 0x7f && (System16AnalogPort1 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort1 >> 4);
+			}
+
 			if (temp == 0x80) return 0x20;
 			if (temp > 0x80) return 0xff;
 			return 0;
 		}
 
+		// Steering
 		case 3: {
-			temp = 0x80 - (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) < 0xf82 && (System16AnalogPort0 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort0 >> 4);
+			}
+
 			return temp;
 		}
 	}
@@ -1048,18 +1071,29 @@ unsigned char HangonProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Steering
 		case 0: {
-			temp = 0x80 - (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) < 0xf82 && (System16AnalogPort0 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort0 >> 4);
+			}
+
 			if (temp < 0x20) temp = 0x20;
 			if (temp > 0xe0) temp = 0xe0;
 			return temp;
 		}
 		
+		// Accelerate
 		case 1: {
 			if (System16AnalogPort1 > 1) return 0xff;
 			return 0;
 		}
 		
+		// Brake
 		case 2: {
 			if (System16AnalogPort2 > 1) return 0xff;
 			return 0;
@@ -1074,15 +1108,32 @@ unsigned char SharrierProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Left / Right
 		case 0: {
-			temp = 0x80 - (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) < 0xf82 && (System16AnalogPort0 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort0 >> 4);
+			}
+
 			if (temp < 0x20) temp = 0x20;
 			if (temp > 0xe0) temp = 0xe0;
 			return temp;
 		}
-		
+
+		// Up / Down
 		case 1: {
-			temp = 0x80 - (System16AnalogPort1 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort1 >> 4) < 0xf82 && (System16AnalogPort1 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort1 >> 4);
+			}
+
 			if (temp < 0x60) temp = 0x60;
 			if (temp > 0xa0) temp = 0xa0;
 			return temp;
@@ -1115,8 +1166,6 @@ void SharrierMap68K()
 
 static int EndurorInit()
 {
-	//FD1089_Decrypt = fd1089_decrypt_0013A;
-	
 	System16Map68KDo = SharrierMap68K;
 	
 	System16ProcessAnalogControlsDo = EndurorProcessAnalogControls;
@@ -1139,8 +1188,6 @@ static int EndurorInit()
 
 static int Enduror1Init()
 {
-	//FD1089_Decrypt = fd1089_decrypt_0013A;
-	
 	System16Map68KDo = SharrierMap68K;
 	
 	System16ProcessAnalogControlsDo = EndurorProcessAnalogControls;
@@ -1250,7 +1297,7 @@ struct BurnDriver BurnDrvEnduror = {
 	"enduror", NULL, NULL, "1986",
 	"Enduro Racer (YM2151, FD1089B 317-0013A)\0", NULL, "Sega", "Hang-On",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_FD1089B_ENC | HARDWARE_SEGA_SPRITE_LOAD32,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_FD1089B_ENC | HARDWARE_SEGA_SPRITE_LOAD32, //GBF_RACING, 0,
 	NULL, EndurorRomInfo, EndurorRomName, EndurorInputInfo, EndurorDIPInfo,
 	EndurorInit, System16Exit, HangonFrame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1260,7 +1307,7 @@ struct BurnDriver BurnDrvEnduror1 = {
 	"enduror1", "enduror", NULL, "1986",
 	"Enduro Racer (YM2203, FD1089B 317-0013A)\0", NULL, "Sega", "Hang-On",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_FD1089B_ENC | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_YM2203,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_FD1089B_ENC | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_YM2203, //GBF_RACING, 0,
 	NULL, Enduror1RomInfo, Enduror1RomName, EndurorInputInfo, EndurorDIPInfo,
 	Enduror1Init, System16Exit, HangonYM2203Frame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1270,7 +1317,7 @@ struct BurnDriver BurnDrvEndurobl = {
 	"endurobl", "enduror", NULL, "1986",
 	"Enduro Racer (bootleg set 1)\0", NULL, "bootleg", "Hang-On",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_YM2203,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_YM2203, //GBF_RACING, 0,
 	NULL, EnduroblRomInfo, EnduroblRomName, EndurorInputInfo, EndurorDIPInfo,
 	EnduroblInit, System16Exit, HangonYM2203Frame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1280,7 +1327,7 @@ struct BurnDriver BurnDrvHangon = {
 	"hangon", NULL, NULL, "1985",
 	"Hang-On (rev A)\0", NULL, "Sega", "Hang-On",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_YM2203,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_YM2203, //GBF_RACING, 0,
 	NULL, HangonRomInfo, HangonRomName, HangonInputInfo, HangonDIPInfo,
 	HangonInit, System16Exit, HangonYM2203Frame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1290,7 +1337,7 @@ struct BurnDriver BurnDrvHangon1 = {
 	"hangon1", "hangon", NULL, "1985",
 	"Hang-On\0", NULL, "Sega", "Hang-On",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_YM2203,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_YM2203, //GBF_RACING, 0,
 	NULL, Hangon1RomInfo, Hangon1RomName, HangonInputInfo, HangonDIPInfo,
 	HangonInit, System16Exit, HangonYM2203Frame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1300,7 +1347,7 @@ struct BurnDriverD BurnDrvShangupb = {
 	"shangupb", "shangon", NULL, "1985",
 	"Super Hang-On (Hang-On upgrade, bootleg)\0", NULL, "bootleg", "Hang-On",
 	NULL, NULL, NULL, NULL,
-	BDF_CLONE | BDF_BOOTLEG, 2, HARDWARE_SEGA_HANGON,
+	BDF_CLONE | BDF_BOOTLEG, 2, HARDWARE_SEGA_HANGON, //GBF_RACING, 0,
 	NULL, ShangupbRomInfo, ShangupbRomName, ShangupbInputInfo, ShangupbDIPInfo,
 	ShangupbInit, System16Exit, HangonFrame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1310,7 +1357,7 @@ struct BurnDriver BurnDrvSharrier = {
 	"sharrier", NULL, NULL, "1985",
 	"Space Harrier (Rev A, 8751 315-5163A)\0", NULL, "Sega", "Hang-On",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_YM2203,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_YM2203, //GBF_SHOOT, 0,
 	NULL, SharrierRomInfo, SharrierRomName, SharrierInputInfo, SharrierDIPInfo,
 	SharrierInit, System16Exit, HangonYM2203Frame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1320,7 +1367,7 @@ struct BurnDriver BurnDrvSharrir1 = {
 	"sharrir1", "sharrier", NULL, "1985",
 	"Space Harrier (8751 315-5163)\0", NULL, "Sega", "Hang-On",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_YM2203,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_HANGON | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_YM2203, //GBF_SHOOT, 0,
 	NULL, Sharrir1RomInfo, Sharrir1RomName, SharrierInputInfo, SharrierDIPInfo,
 	SharrierInit, System16Exit, HangonYM2203Frame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3

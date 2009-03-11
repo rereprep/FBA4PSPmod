@@ -78,7 +78,9 @@ drvobj	= d_dodonpachi.o d_donpachi.o d_esprade.o d_feversos.o d_gaia.o d_guwange
 		d_parent.o \
 		d_commando.o d_contra.o d_ddragon.o d_galaga.o d_gng.o d_kangaroo.o d_lkage.o d_lwings.o \
 		d_renegade.o d_sf.o d_snk68.o d_sonson.o d_tecmo.o \
-		d_esd16.o d_funybubl.o d_nmg5.o d_suna16.o d_unico.o d_zerozone.o
+		d_esd16.o d_funybubl.o d_nmg5.o d_suna16.o d_unico.o d_zerozone.o \
+    d_deniam.o d_diverboy.o d_gotcha.o d_gumbo.o d_ikki.o d_mcatadv.o d_midas.o \
+    d_mugsmash.o d_pirates.o d_skyfox.o d_taotaido.o d_tigeroad.o 
 		
 		
 
@@ -168,7 +170,7 @@ LD		= psp-gcc
 AS		= psp-as
 FIXUP	= psp-fixup-imports
 
-CFLAGS	 = -O3 -G0 -g -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
+CFLAGS	 = -O3 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
 #	   -fomit-frame-pointer -fsigned-char \
 #	   -fstrict-aliasing -falign-functions=32 -falign-loops -falign-labels -falign-jumps \
 #	   -Wall -Wno-long-long -Wno-sign-compare -Wno-uninitialized -Wno-unused \

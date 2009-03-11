@@ -29,6 +29,24 @@ static struct BurnRomInfo dogyuunRomDesc[] = {
 STD_ROM_PICK(dogyuun);
 STD_ROM_FN(dogyuun);
 
+static struct BurnRomInfo dogyuunkRomDesc[] = {
+	{ "01.u64",       0x080000, 0xfe5bd7f4, BRF_ESS | BRF_PRG }, //  0 CPU #0 code
+
+	{ "tp022_3.w92",  0x100000, 0x191B595F, BRF_GRA },			 //  1 GP9001 #1 Tile data
+	{ "tp022_4.w93",  0x100000, 0xD58D29CA, BRF_GRA },			 //  2
+
+	{ "tp022_5.w16",  0x200000, 0xD4C1DB45, BRF_GRA },			 //  3 GP9001 #2 Tile data
+	{ "tp022_6.w17",  0x200000, 0xD48DC74F, BRF_GRA },			 //  4
+
+//	{"tp022.mcu",	0x010000, 0x00000000, 0x10}, //  5 Sound CPU
+
+	{ "tp022_2.w30",  0x040000, 0x043271B3, BRF_SND },			 //  6 ADPCM data
+};
+
+
+STD_ROM_PICK(dogyuunk);
+STD_ROM_FN(dogyuunk);
+
 static struct BurnInputInfo dogyuunInputList[] = {
 	{"P1 Coin",		BIT_DIGITAL,	DrvButton + 3,	"p1 coin"},
 	{"P1 Start",	BIT_DIGITAL,	DrvButton + 5,	"p1 start"},
@@ -65,8 +83,7 @@ static struct BurnDIPInfo dogyuunDIPList[] = {
 	// Defaults
 	{0x14,	0xFF, 0xFF,	0x00, NULL},
 	{0x15,	0xFF, 0xFF,	0x00, NULL},
-	{0x16,	0xFF, 0x0F,	0x00, NULL},
-
+	
 	// DIP 1
 	{0,		0xFE, 0,	2,	  NULL},
 	{0x14,	0x01, 0x01,	0x00, "Coin play"},
@@ -164,7 +181,18 @@ static struct BurnDIPInfo dogyuunDIPList[] = {
     {0x16,	0x01, 0x0F,	0x0F, "Taiwan"},
 };
 
-STDDIPINFO(dogyuun);
+static struct BurnDIPInfo dogyuunRegionDIPList[] = {
+	// Defaults
+	{0x16,	0xFF, 0x0F,	0x03, NULL},
+};
+
+static struct BurnDIPInfo dogyuunkRegionDIPList[] = {
+	// Defaults
+	{0x16,	0xFF, 0x0F,	0x05, NULL},
+};
+
+STDDIPINFOEXT(dogyuun, dogyuunRegion, dogyuun);
+STDDIPINFOEXT(dogyuunk, dogyuunkRegion, dogyuun);
 
 static unsigned char *Mem = NULL, *MemEnd = NULL;
 static unsigned char *RamStart, *RamEnd;
@@ -577,9 +605,18 @@ struct BurnDriver BurnDrvDogyuun = {
 	"dogyuun", NULL, NULL, "1992",
 	"Dogyuun\0", "No sound (sound MCU not dumped)", "Toaplan", "Dual Toaplan GP9001 based",
 	L"Dogyuun\0Dogyuun \u30C9\u30AD\u30E5\u30FC\u30F3\uFF01\uFF01\0", NULL, NULL, NULL,
-	BDF_GAME_WORKING | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_68K_Zx80,
+	BDF_GAME_WORKING | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_68K_Zx80, //GBF_VERSHOOT, 0,
 	NULL, dogyuunRomInfo, dogyuunRomName, dogyuunInputInfo, dogyuunDIPInfo,
 	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, 0, NULL, NULL, NULL, &ToaRecalcPalette,
 	240, 320, 3, 4
 };
 
+struct BurnDriver BurnDrvDogyuunk = {
+	"dogyuunk", "dogyuun", NULL, "1992",
+	"Dogyuun (Licensed to Unite Trading For Korea)\0", "No sound (sound MCU not dumped)", "Toaplan", "Dual Toaplan GP9001 based",
+	L"Dogyuun (Licensed to Unite Trading For Korea)\0Dogyuun \u30C9\u30AD\u30E5\u30FC\u30F3\uFF01\uFF01\0", NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_68K_Zx80, //GBF_VERSHOOT, 0,
+	NULL, dogyuunkRomInfo, dogyuunkRomName, dogyuunInputInfo, dogyuunkDIPInfo,
+	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, 0, NULL, NULL, NULL, &ToaRecalcPalette,
+	240, 320, 3, 4
+};

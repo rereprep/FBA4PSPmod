@@ -124,7 +124,7 @@ LD		= psp-gcc
 AS		= psp-as
 FIXUP	= psp-fixup-imports
 
-CFLAGS	 = -O3 -G0 -g  -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
+CFLAGS	 = -O3 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
 #	   -fomit-frame-pointer -fsigned-char \
 #	   -fstrict-aliasing -falign-functions=32 -falign-loops -falign-labels -falign-jumps \
 #	   -Wall -Wno-long-long -Wno-sign-compare -Wno-uninitialized -Wno-unused \

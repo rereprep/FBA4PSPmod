@@ -1448,21 +1448,60 @@ unsigned char Gforce2ProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+		
+		// Left/Right
 		case 0: {
-			temp = 0x80 + (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) > 0x7f && (System16AnalogPort0 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort0 >> 4);
+			}
+
 			return temp;
 		}
-		
+
+		// Up/Down
 		case 1: {
-			temp = 0x80 - (System16AnalogPort1 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort1 >> 4) < 0xf82 && (System16AnalogPort1 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort1 >> 4);
+			}
+
 			return temp;
 		}
-		
+
+		// Throttle
 		case 2: {
-			temp = 0x80 + (System16AnalogPort2 >> 4);
-			if (temp == 0x80) return 0x80;
-			if (temp > 0x80) return 0xff;
-			return 0;
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort2 >> 4) > 0x7f && (System16AnalogPort2 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort2 >> 4);
+			}
+
+			// full throttle
+			if(temp == 0) {
+				temp = 1;
+				return temp;
+			}
+
+			// throttle range
+			if(temp > 0 && temp < 128) {
+				return temp;
+			}
+
+			// normal speed
+			temp = 0;
+
+			//bprintf(0, _T("(0x80 - (System16AnalogPort1 >> 4)) int-> %d port-> %d char-> %d\n"), 0x80 - (System16AnalogPort1 >> 4), (System16AnalogPort1 >> 4), temp);
+			
+			return temp;
 		}
 	}
 	
@@ -1474,22 +1513,40 @@ unsigned char GlocProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Up/Down
 		case 3: {
-			temp = 0x80 - (System16AnalogPort1 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort1 >> 4) < 0xf82 && (System16AnalogPort1 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort1 >> 4);
+			}
+
 			if (temp < 0x40) temp = 0x40;
 			if (temp > 0xc0) temp = 0xc0;
 			return temp;
 		}
-		
+
+		// Throttle [?]
 		case 4: {
 			temp = 0x80 + (System16AnalogPort2 >> 4);
 			if (temp > 0xc0) return 0xff;
 			if (temp < 0x40) return 0;
 			return 0x80;
 		}
-		
+
+		// Left/Right
 		case 5: {
-			temp = 0x80 + (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) > 0x7f && (System16AnalogPort0 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort0 >> 4);
+			}
+
 			if (temp < 0x20) temp = 0x20;
 			if (temp > 0xe0) temp = 0xe0;
 			return temp;
@@ -1504,26 +1561,59 @@ unsigned char Glocr360ProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Moving Pitch
 		case 1: {
-			temp = 0x7f + (System16AnalogPort3 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort3 >> 4) > 0x7f && (System16AnalogPort3 >> 4) <= 0x80) {
+				temp = 0x7f + 0x7f;
+			} else {
+				temp = 0x7f + (System16AnalogPort3 >> 4);
+			}
+
 			if (temp == 0xfe) temp = 0xff;
 			return temp;
 		}
-		
+
+		// Moving Roll
 		case 2: {
-			temp = 0x7f + (System16AnalogPort2 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort2 >> 4) > 0x7f && (System16AnalogPort2 >> 4) <= 0x80) {
+				temp = 0x7f + 0x7f;
+			} else {
+				temp = 0x7f + (System16AnalogPort2 >> 4);
+			}
+
 			if (temp == 0xfe) temp = 0xff;
 			return temp;
 		}
-		
+
+		// Up/Down
 		case 3: {
-			temp = 0x7f - (System16AnalogPort1 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort1 >> 4) < 0xf82 && (System16AnalogPort1 >> 4) > 0x80) {
+				temp = 0x7f - 0xf82;
+			} else {
+				temp = 0x7f - (System16AnalogPort1 >> 4);
+			}
+
 			if (temp == 0xfe) temp = 0xff;
 			return temp;
 		}
-		
+
+		// Left/Right
 		case 5: {
-			temp = 0x7f + (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) > 0x7f && (System16AnalogPort0 >> 4) <= 0x80) {
+				temp = 0x7f + 0x7f;
+			} else {
+				temp = 0x7f + (System16AnalogPort0 >> 4);
+			}
+
 			if (temp == 0xfe) temp = 0xff;
 			return temp;
 		}
@@ -1537,18 +1627,29 @@ unsigned char PdriftProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Brake
 		case 3: {
 			if (System16AnalogPort2 > 1) return 0xff;
 			return 0;
 		}
-		
+
+		// Accelerate
 		case 4: {
 			if (System16AnalogPort1 > 1) return 0xff;
 			return 0;
 		}
-		
+
+		// Steering
 		case 5: {
-			temp = 0x80 + (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) > 0x7f && (System16AnalogPort0 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort0 >> 4);
+			}
+
 			if (temp < 0x20) temp = 0x20;
 			if (temp > 0xe0) temp = 0xe0;
 			return temp;
@@ -1690,7 +1791,7 @@ struct BurnDriver BurnDrvGforce2 = {
 	"gforce2", NULL, NULL, "1988",
 	"Galaxy Force 2\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, //GBF_SHOOT, 0,
 	NULL, Gforce2RomInfo, Gforce2RomName, Gforce2InputInfo, Gforce2DIPInfo,
 	Gforce2Init, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1700,7 +1801,7 @@ struct BurnDriver BurnDrvGforce2j = {
 	"gforce2j", "gforce2", NULL, "1988",
 	"Galaxy Force 2 (Japan)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, //GBF_SHOOT, 0,
 	NULL, Gforce2jRomInfo, Gforce2jRomName, Gforce2InputInfo, Gforce2DIPInfo,
 	Gforce2Init, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1710,7 +1811,7 @@ struct BurnDriver BurnDrvGloc = {
 	"gloc", NULL, NULL, "1990",
 	"G-LOC Air Battle (US)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, //GBF_SHOOT, 0,
 	NULL, GlocRomInfo, GlocRomName, GlocInputInfo, GlocDIPInfo,
 	GlocInit, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1720,7 +1821,7 @@ struct BurnDriver BurnDrvGlocr360 = {
 	"glocr360", "gloc", NULL, "1990",
 	"G-LOC R360\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, //GBF_SHOOT, 0,
 	NULL, Glocr360RomInfo, Glocr360RomName, Glocr360InputInfo, Glocr360DIPInfo,
 	Glocr360Init, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1730,7 +1831,7 @@ struct BurnDriver BurnDrvPdrift = {
 	"pdrift", NULL, NULL, "1988",
 	"Power Drift (World, Rev A)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, //GBF_RACING, 0,
 	NULL, PdriftRomInfo, PdriftRomName, PdriftInputInfo, PdriftDIPInfo,
 	PdriftInit, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1740,7 +1841,7 @@ struct BurnDriver BurnDrvPdrifta = {
 	"pdrifta", "pdrift", NULL, "1988",
 	"Power Drift (World)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, //GBF_RACING, 0,
 	NULL, PdriftaRomInfo, PdriftaRomName, PdriftInputInfo, PdriftDIPInfo,
 	PdriftInit, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1750,7 +1851,7 @@ struct BurnDriver BurnDrvPdrifte = {
 	"pdrifte", "pdrift", NULL, "1988",
 	"Power Drift (World, Earlier)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, //GBF_RACING, 0,
 	NULL, PdrifteRomInfo, PdrifteRomName, PdriftInputInfo, PdrifteDIPInfo,
 	PdriftInit, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1760,7 +1861,7 @@ struct BurnDriver BurnDrvPdriftj = {
 	"pdriftj", "pdrift", NULL, "1988",
 	"Power Drift (Japan)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMY, //GBF_RACING, 0,
 	NULL, PdriftjRomInfo, PdriftjRomName, PdriftInputInfo, PdriftjDIPInfo,
 	PdriftInit, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1770,7 +1871,7 @@ struct BurnDriver BurnDrvRchase = {
 	"rchase", NULL, NULL, "1991",
 	"Rail Chase (Japan)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, //GBF_SHOOT, 0,
 	NULL, RchaseRomInfo, RchaseRomName, RchaseInputInfo, RchaseDIPInfo,
 	RchaseInit, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -1780,7 +1881,7 @@ struct BurnDriver BurnDrvStrkfgtr = {
 	"strkfgtr", NULL, NULL, "1991",
 	"Strike Fighter (Japan)\0", NULL, "Sega", "Y-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMY, //GBF_SHOOT, 0,
 	NULL, StrkfgtrRomInfo, StrkfgtrRomName, GlocInputInfo, StrkfgtrDIPInfo,
 	GlocInit, YBoardExit, YBoardFrame, NULL, YBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3

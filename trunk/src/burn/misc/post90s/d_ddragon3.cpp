@@ -352,6 +352,51 @@ static struct BurnRomInfo DrvjRomDesc[] = {
 STD_ROM_PICK(Drvj);
 STD_ROM_FN(Drvj);
 
+static struct BurnRomInfo DrvpRomDesc[] = {
+	{ "30a14-0.ic80",  0x40000, 0xf42fe016, BRF_ESS | BRF_PRG }, //  0	68000 Program Code
+	{ "30a15-0.ic79",  0x20000, 0xad50e92c, BRF_ESS | BRF_PRG }, //	 1
+	
+	{ "30a13-0.ic43",  0x10000, 0x1e974d9b, BRF_ESS | BRF_PRG }, //  2	Z80 Program 
+	
+	{ "14.ic45",       0x20000, 0xb036a27b, BRF_GRA },	     //  3	Tiles
+	{ "15.ic46",       0x20000, 0x24d0bf41, BRF_GRA },	     //  4
+	{ "30.ic13",       0x20000, 0x72fe2b16, BRF_GRA },	     //  5
+	{ "31.ic14",       0x20000, 0xab48a0c8, BRF_GRA },	     //  6
+	{ "23.ic29",       0x20000, 0x0768fedd, BRF_GRA },	     //  7
+	{ "24.ic30",       0x20000, 0xec9db18a, BRF_GRA },	     //  8
+	{ "21.ic25",       0x20000, 0x902744b9, BRF_GRA },	     //  9
+	{ "22.ic26",       0x20000, 0x5b142d4d, BRF_GRA },	     //  10
+	
+	{ "9.ic39",        0x20000, 0x726c49b7, BRF_GRA },	     //  11	Sprites
+	{ "10.ic40",       0x20000, 0x37a1c335, BRF_GRA },	     //  12
+	{ "11.ic41",       0x20000, 0x2bcfe63c, BRF_GRA },	     //  13
+	{ "12.ic42",       0x20000, 0xb864cf17, BRF_GRA },	     //  14
+	{ "4.ic33",        0x20000, 0x8c71eb06, BRF_GRA },	     //  15
+	{ "5.ic34",        0x20000, 0x3e134be9, BRF_GRA },	     //  16
+	{ "6.ic35",        0x20000, 0xb4115ef0, BRF_GRA },	     //  17
+	{ "7.ic36",        0x20000, 0x4639333d, BRF_GRA },	     //  18
+	{ "16.ic19",       0x20000, 0x04420cc8, BRF_GRA },	     //  19
+	{ "17.ic20",       0x20000, 0x33f97b2f, BRF_GRA },	     //  20
+	{ "18.ic21",       0x20000, 0x0f9a8f2a, BRF_GRA },	     //  21
+	{ "19.ic22",       0x20000, 0x15c91772, BRF_GRA },	     //  22
+	{ "25.ic3",        0x20000, 0x894734b3, BRF_GRA },	     //  23
+	{ "26.ic4",        0x20000, 0xcd504584, BRF_GRA },	     //  24
+	{ "27.ic5",        0x20000, 0x38e8a9ad, BRF_GRA },	     //  25
+	{ "28.ic6",        0x20000, 0x80c1cb74, BRF_GRA },	     //  26
+	{ "30a12-0.ic43",  0x20000, 0x91da004c, BRF_GRA },	     //  27
+	{ "30a11-0.ic37",  0x20000, 0x5f419232, BRF_GRA },	     //  28
+	{ "30a10-0.ic23",  0x20000, 0x12f641ba, BRF_GRA },	     //  29
+	{ "30a9-0.ic7",    0x20000, 0x9199a77b, BRF_GRA },	     //  30
+	
+	{ "2.ic73",        0x40000, 0x3af21dbe, BRF_SND },	     //  31	Samples
+	{ "3.ic74",        0x40000, 0xc28b53cd, BRF_SND },	     //  32
+	
+	{ "30.ic38",       0x00100, 0x113c7443, BRF_GRA },	     //  33	PROM
+};
+
+STD_ROM_PICK(Drvp);
+STD_ROM_FN(Drvp);
+
 static struct BurnRomInfo DrvbRomDesc[] = {
 	{ "dd3.01",        0x20000, 0x68321d8b, BRF_ESS | BRF_PRG }, //  0	68000 Program Code
 	{ "dd3.03",        0x20000, 0xbc05763b, BRF_ESS | BRF_PRG }, //	 1
@@ -1129,7 +1174,6 @@ static int DrvInit()
 	nRet = BurnLoadRom(DrvZ80Rom, 2, 1); if (nRet != 0) return 1;
 	
 	// Load and decode the tiles
-	memset(DrvTempRom, 0, 0x400000);
 	nRet = BurnLoadRom(DrvTempRom + 0x000000, 3, 1); if (nRet != 0) return 1;
 	nRet = BurnLoadRom(DrvTempRom + 0x040000, 4, 1); if (nRet != 0) return 1;
 	nRet = BurnLoadRom(DrvTempRom + 0x080000, 5, 1); if (nRet != 0) return 1;
@@ -1150,6 +1194,116 @@ static int DrvInit()
 	
 	// Load Sample Roms
 	nRet = BurnLoadRom(DrvMSM6295ROMSrc + 0x00000, 15, 1); if (nRet != 0) return 1;
+	memcpy(MSM6295ROM, DrvMSM6295ROMSrc, 0x40000);
+	
+	free(DrvTempRom);
+	
+	// Setup the 68000 emulation
+	SekInit(0, 0x68000);
+	SekOpen(0);
+	SekMapMemory(Drv68KRom           , 0x000000, 0x07ffff, SM_ROM);
+	SekMapMemory(DrvFgVideoRam       , 0x080000, 0x080fff, SM_RAM);
+	SekMapMemory(DrvBgVideoRam       , 0x082000, 0x0827ff, SM_RAM);
+	SekMapMemory(DrvPaletteRam       , 0x140000, 0x1405ff, SM_RAM);
+	SekMapMemory(DrvSpriteRam        , 0x180000, 0x180fff, SM_RAM);
+	SekMapMemory(Drv68KRam           , 0x1c0000, 0x1c3fff, SM_RAM);
+	SekSetReadWordHandler(0, Ddragon368KReadWord);
+	SekSetWriteWordHandler(0, Ddragon368KWriteWord);
+	SekSetReadByteHandler(0, Ddragon368KReadByte);
+	SekSetWriteByteHandler(0, Ddragon368KWriteByte);
+	SekClose();
+	
+	// Setup the Z80 emulation
+	ZetInit(1);
+	ZetOpen(0);
+	ZetSetReadHandler(Ddragon3Z80Read);
+	ZetSetWriteHandler(Ddragon3Z80Write);
+	ZetMapArea(0x0000, 0xbfff, 0, DrvZ80Rom                );
+	ZetMapArea(0x0000, 0xbfff, 2, DrvZ80Rom                );
+	ZetMapArea(0xc000, 0xc7ff, 0, DrvZ80Ram                );
+	ZetMapArea(0xc000, 0xc7ff, 1, DrvZ80Ram                );
+	ZetMapArea(0xc000, 0xc7ff, 2, DrvZ80Ram                );
+	ZetMemEnd();
+	ZetClose();
+	
+	// Setup the YM2151 emulation
+	BurnYM2151Init(3579545, 25.0);
+	BurnYM2151SetIrqHandler(&DrvYM2151IrqHandler);
+	
+	// Setup the OKIM6295 emulation
+	MSM6295Init(0, 1000000 / 132, 100.0, 1);
+	
+	DrawFunction = DrvDraw;
+	
+	GenericTilesInit();
+
+	// Reset the driver
+	DrvDoReset();
+
+	return 0;
+}
+
+static int DrvpInit()
+{
+	int nRet = 0, nLen;
+	
+	BurnSetRefreshRate(57.0);
+
+	// Allocate and Blank all required memory
+	Mem = NULL;
+	MemIndex();
+	nLen = MemEnd - (unsigned char *)0;
+	if ((Mem = (unsigned char *)malloc(nLen)) == NULL) return 1;
+	memset(Mem, 0, nLen);
+	MemIndex();
+
+	DrvTempRom = (unsigned char *)malloc(0x400000);
+
+	// Load 68000 Program Roms
+	nRet = BurnLoadRom(Drv68KRom + 0x00000, 0, 2); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(Drv68KRom + 0x00001, 1, 2); if (nRet != 0) return 1;
+	
+	// Load Z80 Program Roms
+	nRet = BurnLoadRom(DrvZ80Rom, 2, 1); if (nRet != 0) return 1;
+	
+	// Load and decode the tiles
+	nRet = BurnLoadRom(DrvTempRom + 0x000000,  3, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x020000,  4, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x040000,  5, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x060000,  6, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x080000,  7, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x0a0000,  8, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x0c0000,  9, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x0e0000, 10, 1); if (nRet != 0) return 1;
+	GfxDecode(8192, 4, 16, 16, TilePlaneOffsets, TileXOffsets, TileYOffsets, 0x100, DrvTempRom, DrvTiles);
+	
+	// Load and decode the sprites
+	memset(DrvTempRom, 0, 0x400000);
+	nRet = BurnLoadRom(DrvTempRom + 0x000000, 11, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x020000, 12, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x040000, 13, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x060000, 14, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x100000, 15, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x120000, 16, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x140000, 17, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x160000, 18, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x200000, 19, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x220000, 20, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x240000, 21, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x260000, 22, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x300000, 23, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x320000, 24, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x340000, 25, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x360000, 26, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x080000, 27, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x180000, 28, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x280000, 29, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvTempRom + 0x380000, 30, 1); if (nRet != 0) return 1;
+	GfxDecode(0x4800, 4, 16, 16, SpritePlaneOffsets, SpriteXOffsets, SpriteYOffsets, 0x100, DrvTempRom, DrvSprites);
+	
+	// Load Sample Roms
+	nRet = BurnLoadRom(DrvMSM6295ROMSrc + 0x00000, 31, 1); if (nRet != 0) return 1;
+	nRet = BurnLoadRom(DrvMSM6295ROMSrc + 0x40000, 32, 1); if (nRet != 0) return 1;
 	memcpy(MSM6295ROM, DrvMSM6295ROMSrc, 0x40000);
 	
 	free(DrvTempRom);
@@ -1224,7 +1378,6 @@ static int DrvbInit()
 	nRet = BurnLoadRom(DrvZ80Rom, 3, 1); if (nRet != 0) return 1;
 	
 	// Load and decode the tiles
-	memset(DrvTempRom, 0, 0x400000);
 	nRet = BurnLoadRom(DrvTempRom + 0x000000, 4, 1); if (nRet != 0) return 1;
 	nRet = BurnLoadRom(DrvTempRom + 0x040000, 5, 1); if (nRet != 0) return 1;
 	nRet = BurnLoadRom(DrvTempRom + 0x080000, 6, 1); if (nRet != 0) return 1;
@@ -1332,7 +1485,6 @@ static int CtribeInit()
 	nRet = BurnLoadRom(DrvZ80Rom, 3, 1); if (nRet != 0) return 1;
 	
 	// Load and decode the tiles
-	memset(DrvTempRom, 0, 0x400000);
 	nRet = BurnLoadRom(DrvTempRom + 0x000000, 4, 1); if (nRet != 0) return 1;
 	nRet = BurnLoadRom(DrvTempRom + 0x040000, 5, 1); if (nRet != 0) return 1;
 	nRet = BurnLoadRom(DrvTempRom + 0x080000, 6, 1); if (nRet != 0) return 1;
@@ -1841,7 +1993,7 @@ struct BurnDriver BurnDrvDdragon3 = {
 	"ddragon3", NULL, NULL, "1990",
 	"Double Dragon 3 - The Rosetta Stone (US)\0", NULL, "Technos", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 3, HARDWARE_MISC_POST90S,
+	BDF_GAME_WORKING, 3, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
 	NULL, DrvRomInfo, DrvRomName, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, NULL, DrvScan,
 	0, NULL, NULL, NULL, NULL, 320, 240, 4, 3
@@ -1851,9 +2003,19 @@ struct BurnDriver BurnDrvDdrago3j = {
 	"ddrago3j", "ddragon3", NULL, "1990",
 	"Double Dragon 3 - The Rosetta Stone (Japan)\0", NULL, "Technos", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 3, HARDWARE_MISC_POST90S,
+	BDF_GAME_WORKING | BDF_CLONE, 3, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
 	NULL, DrvjRomInfo, DrvjRomName, DrvInputInfo, DrvDIPInfo,
 	DrvInit, DrvExit, DrvFrame, NULL, DrvScan,
+	0, NULL, NULL, NULL, NULL, 320, 240, 4, 3
+};
+
+struct BurnDriver BurnDrvDdrago3p = {
+	"ddrago3p", "ddragon3", NULL, "1990",
+	"Double Dragon 3 - The Rosetta Stone (prototype)\0", NULL, "Technos", "Miscellaneous",
+	NULL, NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_PROTOTYPE, 3, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
+	NULL, DrvpRomInfo, DrvpRomName, DrvInputInfo, DrvDIPInfo,
+	DrvpInit, DrvExit, DrvFrame, NULL, DrvScan,
 	0, NULL, NULL, NULL, NULL, 320, 240, 4, 3
 };
 
@@ -1861,7 +2023,7 @@ struct BurnDriver BurnDrvDdrago3b = {
 	"ddrago3b", "ddragon3", NULL, "1990",
 	"Double Dragon 3 - The Rosetta Stone (bootleg)\0", NULL, "bootleg", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 3, HARDWARE_MISC_POST90S,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 3, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
 	NULL, DrvbRomInfo, DrvbRomName, DrvInputInfo, DrvbDIPInfo,
 	DrvbInit, DrvExit, DrvFrame, NULL, DrvScan,
 	0, NULL, NULL, NULL, NULL, 320, 240, 4, 3
@@ -1871,7 +2033,7 @@ struct BurnDriver BurnDrvCtribe = {
 	"ctribe", NULL, NULL, "1990",
 	"The Combatribes (US)\0", NULL, "Technos", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 3, HARDWARE_MISC_POST90S,
+	BDF_GAME_WORKING, 3, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
 	NULL, CtribeRomInfo, CtribeRomName, DrvInputInfo, CtribeDIPInfo,
 	CtribeInit, DrvExit, DrvFrame, NULL, DrvScan,
 	0, NULL, NULL, NULL, NULL, 320, 240, 4, 3
@@ -1881,7 +2043,7 @@ struct BurnDriver BurnDrvCtribe1 = {
 	"ctribe1", "ctribe", NULL, "1990",
 	"The Combatribes (US) - Set 1?\0", NULL, "Technos", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 3, HARDWARE_MISC_POST90S,
+	BDF_GAME_WORKING | BDF_CLONE, 3, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
 	NULL, Ctribe1RomInfo, Ctribe1RomName, DrvInputInfo, CtribeDIPInfo,
 	CtribeInit, DrvExit, DrvFrame, NULL, DrvScan,
 	0, NULL, NULL, NULL, NULL, 320, 240, 4, 3
@@ -1891,7 +2053,7 @@ struct BurnDriver BurnDrvCtribeb = {
 	"ctribeb", "ctribe", NULL, "1990",
 	"The Combatribes (bootleg set 1)\0", NULL, "bootleg", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 3, HARDWARE_MISC_POST90S,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 3, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
 	NULL, CtribebRomInfo, CtribebRomName, DrvInputInfo, CtribeDIPInfo,
 	CtribeInit, DrvExit, DrvFrame, NULL, DrvScan,
 	0, NULL, NULL, NULL, NULL, 320, 240, 4, 3
@@ -1901,7 +2063,7 @@ struct BurnDriver BurnDrvCtribb2 = {
 	"ctribb2", "ctribe", NULL, "1990",
 	"The Combatribes (bootleg set 2)\0", NULL, "bootleg", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 3, HARDWARE_MISC_POST90S,
+	BDF_GAME_WORKING | BDF_CLONE | BDF_BOOTLEG, 3, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
 	NULL, Ctribb2RomInfo, Ctribb2RomName, DrvInputInfo, CtribeDIPInfo,
 	CtribeInit, DrvExit, DrvFrame, NULL, DrvScan,
 	0, NULL, NULL, NULL, NULL, 320, 240, 4, 3
