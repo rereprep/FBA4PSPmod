@@ -1,50 +1,62 @@
 // FB Alpha Legend of Silkroad driver
-// Based on MAME driver by Haze, R.Belmont, and Stephh
+// Based on MAME driver by David Haywood, R.Belmont, and Stephh
 
 #include "tiles_generic.h"
 #include "burn_ym2151.h"
 #include "msm6295.h"
 
-static unsigned char *Mem, *MemEnd, *AllRam, *RamEnd;
-static unsigned char *DrvRom, *DrvSprRam, *DrvPalRam, *DrvVidRam, *DrvRam;
-static unsigned char *DrvGfx, *DrvTransTab;
-static unsigned char *DrvSnd0, *DrvSnd1;
+static unsigned char *AllMem;
+static unsigned char *MemEnd;
+static unsigned char *AllRam;
+static unsigned char *RamEnd;
+static unsigned char *Drv68KROM;
+static unsigned char *DrvGfxROM;
+static unsigned char *DrvSndROM0;
+static unsigned char *DrvSndROM1;
+static unsigned char *DrvSprRAM;
+static unsigned char *DrvPalRAM;
+static unsigned char *DrvVidRAM;
+static unsigned char *Drv68KRAM;
+static unsigned char *DrvTransTab;
 static unsigned short *DrvSysRegs;
+static unsigned int *DrvPalette;
 
-static unsigned int *Palette, *DrvPalette;
-static unsigned char DrvRecalc;
+static unsigned char DrvRecalc = 0;
 
-static unsigned char DrvJoy1[16], DrvJoy2[16], DrvDips[2], DrvReset;
+static unsigned char DrvJoy1[16];
+static unsigned char DrvJoy2[16];
+static unsigned char DrvDips[2];
+static unsigned char DrvReset;
 static unsigned short DrvInputs[2];
 
 static struct BurnInputInfo DrvInputList[] = {
-	{"Coin 1"       , BIT_DIGITAL  , DrvJoy2 + 0,	 "p1 coin"  },
-	{"Coin 2"       , BIT_DIGITAL  , DrvJoy2 + 1,	 "p2 coin"  },
+	{"Coin 1",	BIT_DIGITAL,	DrvJoy2 + 0,	"p1 coin"	},
+	{"Coin 2",	BIT_DIGITAL,	DrvJoy2 + 1,	"p2 coin"	},
 
-	{"P1 Start"     , BIT_DIGITAL  , DrvJoy2 + 2,	 "p1 start" },
-	{"P1 Up"        ,	BIT_DIGITAL  , DrvJoy1 + 15, "p1 up"    },
-	{"P1 Down"      ,	BIT_DIGITAL  , DrvJoy1 + 14, "p1 down", },
-	{"P1 Left"      , BIT_DIGITAL  , DrvJoy1 + 12, "p1 left"  },
-	{"P1 Right"     , BIT_DIGITAL  , DrvJoy1 + 13, "p1 right" },
-	{"P1 Button 1"  , BIT_DIGITAL  , DrvJoy1 + 11, "p1 fire 1"},
-	{"P1 Button 2"  , BIT_DIGITAL  , DrvJoy1 + 10, "p1 fire 2"},
-	{"P1 Button 3"  , BIT_DIGITAL  , DrvJoy1 + 9,	 "p1 fire 3"},
+	{"P1 Start",	BIT_DIGITAL,	DrvJoy2 + 2,	"p1 start"	},
+	{"P1 Up",	BIT_DIGITAL,	DrvJoy1 + 15,	"p1 up"		},
+	{"P1 Down",	BIT_DIGITAL,	DrvJoy1 + 14,	"p1 down"	},
+	{"P1 Left",	BIT_DIGITAL,	DrvJoy1 + 12,	"p1 left"	},
+	{"P1 Right",	BIT_DIGITAL,	DrvJoy1 + 13,	"p1 right"	},
+	{"P1 Button 1",	BIT_DIGITAL,	DrvJoy1 + 11,	"p1 fire 1"	},
+	{"P1 Button 2",	BIT_DIGITAL,	DrvJoy1 + 10,	"p1 fire 2"	},
+	{"P1 Button 3",	BIT_DIGITAL,	DrvJoy1 + 9,	"p1 fire 3"	},
 
-	{"P2 Start"     , BIT_DIGITAL  , DrvJoy2 + 3,	 "p2 start" },
-	{"P2 Up"        ,	BIT_DIGITAL  , DrvJoy1 + 7,  "p2 up"    },
-	{"P2 Down"      ,	BIT_DIGITAL  , DrvJoy1 + 6,  "p2 down"  },
-	{"P2 Left"      , BIT_DIGITAL  , DrvJoy1 + 4,  "p2 left"  },
-	{"P2 Right"     , BIT_DIGITAL  , DrvJoy1 + 5,  "p2 right" },
-	{"P2 Button 1"  , BIT_DIGITAL  , DrvJoy1 + 3,	 "p2 fire 1"},
-	{"P2 Button 2"  , BIT_DIGITAL  , DrvJoy1 + 2,	 "p2 fire 2"},
-	{"P2 Button 3"  , BIT_DIGITAL  , DrvJoy1 + 1,	 "p2 fire 3"},
+	{"P2 Start",	BIT_DIGITAL,	DrvJoy2 + 3,	"p2 start"	},
+	{"P2 Up",	BIT_DIGITAL,	DrvJoy1 + 7,	"p2 up"		},
+	{"P2 Down",	BIT_DIGITAL,	DrvJoy1 + 6,	"p2 down"	},
+	{"P2 Left",	BIT_DIGITAL,	DrvJoy1 + 4,	"p2 left"	},
+	{"P2 Right",	BIT_DIGITAL,	DrvJoy1 + 5,	"p2 right"	},
+	{"P2 Button 1",	BIT_DIGITAL,	DrvJoy1 + 3,	"p2 fire 1"	},
+	{"P2 Button 2",	BIT_DIGITAL,	DrvJoy1 + 2,	"p2 fire 2"	},
+	{"P2 Button 3",	BIT_DIGITAL,	DrvJoy1 + 1,	"p2 fire 3"	},
 
-	{"Test"         ,	BIT_DIGITAL  , DrvJoy2 + 5,  "diag"     },
-	{"Service"      ,	BIT_DIGITAL  , DrvJoy2 + 4,  "service"  },
+	{"Test",	BIT_DIGITAL,	DrvJoy2 + 5,	"diag"		},
+	{"Service",	BIT_DIGITAL,	DrvJoy2 + 4,	"service"	},
 
-	{"Reset",	  BIT_DIGITAL  , &DrvReset,	"reset"    },
-	{"Dip 1",	  BIT_DIPSWITCH, DrvDips + 0,	"dip"	   },
-	{"Dip 2",	  BIT_DIPSWITCH, DrvDips + 1,	"dip"	   },
+	{"Reset",	BIT_DIGITAL,	&DrvReset,	"reset"		},
+	{"Dip 1",	BIT_DIPSWITCH,	DrvDips + 0,	"dip"		},
+	{"Dip 2",	BIT_DIPSWITCH,	DrvDips + 1,	"dip"		},
 };
 
 STDINPUTINFO(Drv);
@@ -62,9 +74,6 @@ static struct BurnDIPInfo DrvDIPList[]=
 	{0x15, 0x01, 0x02, 0x02, "Off"			},
 	{0x15, 0x01, 0x02, 0x00, "On"			},
  
-	// the number at the bottom of the "Warning" screen
-	// is actually the difficulty level.  0 is easiest
-	// and 7 is hardest.
 	{0,    0xfe, 0,    8,    "Difficulty"		},
 	{0x15, 0x01, 0xe0, 0x60, "Easiest"		},
 	{0x15, 0x01, 0xe0, 0x40, "Easier"		},
@@ -110,7 +119,6 @@ static void palette_write(int offset, unsigned short pal)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	Palette[offset] = (r << 16) | (g << 8) | b;
 	DrvPalette[offset] = BurnHighCol(r, g, b, 0);
 }
 
@@ -136,10 +144,6 @@ unsigned char __fastcall silkroad_read_byte(unsigned int address)
 		case 0xc00005:
 			return DrvDips[0];
 
-		case 0xc00006:
-		case 0xc00007:
-			return 0;
-
 		case 0xc00025:
 			return MSM6295ReadStatus(0);
 
@@ -150,16 +154,6 @@ unsigned char __fastcall silkroad_read_byte(unsigned int address)
 			return MSM6295ReadStatus(1);
 	}
 
-	return 0;
-}
-
-unsigned short __fastcall silkroad_read_word(unsigned int)
-{
-	return 0;
-}
-
-unsigned int __fastcall silkroad_read_long(unsigned int)
-{
 	return 0;
 }
 
@@ -175,7 +169,6 @@ void __fastcall silkroad_write_byte(unsigned int address, unsigned char data)
 			BurnYM2151SelectRegister(data);
 		return;
 
-
 		case 0xc0002d:
 			BurnYM2151WriteRegister(data);
 		return;
@@ -183,17 +176,13 @@ void __fastcall silkroad_write_byte(unsigned int address, unsigned char data)
 		case 0xc00031:
 			MSM6295Command(1, data);
 		return;
-
-		case 0xc00034:
-		case 0xc00039:
-		return;
 	}
 }
 
 void __fastcall silkroad_write_word(unsigned int address, unsigned short data)
 {
 	if ((address & 0xffffc000) == 0x600000) {
-		*((unsigned short *)(DrvPalRam + (address & 0x3ffe))) = data;
+		*((unsigned short *)(DrvPalRAM + (address & 0x3ffe))) = data;
 
 		palette_write((address >> 2) & 0x0fff, data);
 
@@ -210,7 +199,7 @@ void __fastcall silkroad_write_word(unsigned int address, unsigned short data)
 void __fastcall silkroad_write_long(unsigned int address, unsigned int data)
 {
 	if ((address & 0xffffc000) == 0x600000) {
-		*((unsigned int *)(DrvPalRam + (address & 0x3ffc))) = data;
+		*((unsigned int *)(DrvPalRAM + (address & 0x3ffc))) = data;
 
 		palette_write((address >> 2) & 0x0fff, data >> 16);
 
@@ -218,7 +207,7 @@ void __fastcall silkroad_write_long(unsigned int address, unsigned int data)
 	}
 }
 
-static int DrvGfxDecode()
+static int DrvGfxROMDecode()
 {
 	static int Planes[6] = { 0x0000008, 0x0000000, 0x1000008, 0x1000000, 0x2000008, 0x2000000 };
 	static int XOffs[16] = { 0x000, 0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007,
@@ -230,26 +219,23 @@ static int DrvGfxDecode()
 	if (tmp == NULL) {
 		return 1;
 	}
-	memset(tmp, 0, 0x600000);
 
 	for (int i = 0; i < 4; i++ ){
 		if (BurnLoadRom(tmp + 0x000000, 2 + i * 3, 1)) return 1;
 		if (BurnLoadRom(tmp + 0x200000, 3 + i * 3, 1)) return 1;
 		if (BurnLoadRom(tmp + 0x400000, 4 + i * 3, 1)) return 1;
 
-		// fix rom04
-		if (i == 0) {
+		if (i == 0) { // fix rom04
 			for (int j = 0x1b3fff; j >= 0; j--) {
 				tmp[0x44c000 + j] = tmp[0x44c000 + (j - 1)];
 			}
 		}
 
-		// Invert bits
 		for (int j = 0; j < 0x600000; j++) {
 			tmp[j] ^= 0xff;
 		}
 
-		GfxDecode(0x08000, 6, 16, 16, Planes, XOffs, YOffs, 0x200, tmp, DrvGfx + 0x0800000 * i);
+		GfxDecode(0x08000, 6, 16, 16, Planes, XOffs, YOffs, 0x200, tmp, DrvGfxROM + 0x0800000 * i);
 	}
 
 	free (tmp);
@@ -259,12 +245,10 @@ static int DrvGfxDecode()
 		return 1;
 	}	
 
-	// Make a table that holds info on if a tile is completely transparent, opaque
-	// or only semi-transparent. This gives a massive speedup when drawing tiles.
 	{
 		memset (DrvTransTab, 0, 0x20000);
 		for (int i = 0, c = 0; i < 0x2000000; i++) {
-			if (DrvGfx[i]) {
+			if (DrvGfxROM[i]) {
 				DrvTransTab[i>>8] |= 1;
 				c++;
 			}
@@ -295,40 +279,36 @@ static int DrvDoReset()
 	MSM6295Reset(1);
 
 	for (int nChannel = 0; nChannel < 4; nChannel++) {
-		MSM6295SampleInfo[0][nChannel] = DrvSnd0 + (nChannel << 8);
-		MSM6295SampleData[0][nChannel] = DrvSnd0 + (nChannel << 16);
+		MSM6295SampleInfo[0][nChannel] = DrvSndROM0 + (nChannel << 8);
+		MSM6295SampleData[0][nChannel] = DrvSndROM0 + (nChannel << 16);
 
-		MSM6295SampleInfo[1][nChannel] = DrvSnd1 + (nChannel << 8);
-		MSM6295SampleData[1][nChannel] = DrvSnd1 + (nChannel << 16);
+		MSM6295SampleInfo[1][nChannel] = DrvSndROM1 + (nChannel << 8);
+		MSM6295SampleData[1][nChannel] = DrvSndROM1 + (nChannel << 16);
 	}
-
-	DrvRecalc = 1;
 
 	return 0;
 }
 
 static int MemIndex()
 {
-	unsigned char *Next; Next = Mem;
+	unsigned char *Next; Next = AllMem;
 
-	DrvRom		= Next; Next += 0x0200000;
+	Drv68KROM	= Next; Next += 0x0200000;
 
 	MSM6295ROM	= Next;
-	DrvSnd0		= Next; Next += 0x0080000;
-	DrvSnd1		= Next; Next += 0x0040000;
+	DrvSndROM0	= Next; Next += 0x0080000;
+	DrvSndROM1	= Next; Next += 0x0040000;
 
-	DrvPalette	= (unsigned int*)Next; Next += 0x01001 * sizeof(int);
+	DrvPalette	= (unsigned int  *)Next; Next += 0x0001001 * sizeof (int);
 	
 	AllRam		= Next;
 
-	DrvSprRam	= Next; Next += 0x0001000;
-	DrvPalRam	= Next; Next += 0x0004000;
-	DrvVidRam	= Next; Next += 0x000c000;
-	DrvRam		= Next; Next += 0x0020000;
+	DrvSprRAM	= Next; Next += 0x0001000;
+	DrvPalRAM	= Next; Next += 0x0004000;
+	DrvVidRAM	= Next; Next += 0x000c000;
+	Drv68KRAM	= Next; Next += 0x0020000;
 
 	DrvSysRegs	= (unsigned short*)Next; Next += 0x0000020 * sizeof (short);
-
-	Palette		= (unsigned int*)Next; Next += 0x01000 * sizeof(int);
 
 	RamEnd		= Next;
 
@@ -341,48 +321,44 @@ static int DrvInit()
 {
 	int nLen;
 
-	DrvGfx = (unsigned char*)malloc(0x2000000);
-	if (DrvGfx == NULL) {
+	DrvGfxROM = (unsigned char*)malloc(0x2000000);
+	if (DrvGfxROM == NULL) {
 		return 1;
 	}
-	memset(DrvGfx, 0, 0x2000000);
 
-	if (DrvGfxDecode()) return 1;
+	if (DrvGfxROMDecode()) return 1;
 
-	Mem = NULL;
 	MemIndex();
 	nLen = MemEnd - (unsigned char *)0;
-	if ((Mem = (unsigned char *)malloc(nLen)) == NULL) return 1;
-	memset(Mem, 0, nLen);
+	if ((AllMem = (unsigned char *)malloc(nLen)) == NULL) return 1;
+	memset(AllMem, 0, nLen);
 	MemIndex();
 
 	{
-		if (BurnLoadRom(DrvRom + 0, 0, 2)) return 1;
-		if (BurnLoadRom(DrvRom + 1, 1, 2)) return 1;
+		if (BurnLoadRom(Drv68KROM + 0, 0, 2)) return 1;
+		if (BurnLoadRom(Drv68KROM + 1, 1, 2)) return 1;
 
 		for (int i = 0; i < 0x200000; i+= 4) {
-			int t = DrvRom[i + 1];
-			DrvRom[i + 1] = DrvRom[i + 2];
-			DrvRom[i + 2] = t;
+			int t = Drv68KROM[i + 1];
+			Drv68KROM[i + 1] = Drv68KROM[i + 2];
+			Drv68KROM[i + 2] = t;
 		}
 
-		if (BurnLoadRom(DrvSnd0, 14, 1)) return 1;
-		if (BurnLoadRom(DrvSnd1, 15, 1)) return 1;
+		if (BurnLoadRom(DrvSndROM0, 14, 1)) return 1;
+		if (BurnLoadRom(DrvSndROM1, 15, 1)) return 1;
 	}
 
 	SekInit(0, 0x68EC020);
 	SekOpen(0);
-	SekMapMemory (DrvRom,		0x000000, 0x1fffff, SM_ROM);
-	SekMapMemory (DrvSprRam,	0x40c000, 0x40cfff, SM_RAM);
-	SekMapMemory (DrvPalRam,	0x600000, 0x603fff, SM_ROM);
-	SekMapMemory (DrvVidRam,	0x800000, 0x80bfff, SM_RAM);
-	SekMapMemory (DrvRam,		0xfe0000, 0xffffff, SM_RAM);
+	SekMapMemory(Drv68KROM,		0x000000, 0x1fffff, SM_ROM);
+	SekMapMemory(DrvSprRAM,		0x40c000, 0x40cfff, SM_RAM);
+	SekMapMemory(DrvPalRAM,		0x600000, 0x603fff, SM_ROM);
+	SekMapMemory(DrvVidRAM,		0x800000, 0x80bfff, SM_RAM);
+	SekMapMemory(Drv68KRAM,		0xfe0000, 0xffffff, SM_RAM);
 	SekSetWriteByteHandler(0,	silkroad_write_byte);
 	SekSetWriteWordHandler(0,	silkroad_write_word);
 	SekSetWriteLongHandler(0,	silkroad_write_long);
 	SekSetReadByteHandler(0,	silkroad_read_byte);
-	SekSetReadWordHandler(0,	silkroad_read_word);
-	SekSetReadLongHandler(0,	silkroad_read_long);
 	SekClose();
 
 	BurnYM2151Init(3579545, 100.0);
@@ -406,18 +382,19 @@ static int DrvExit()
 
 	GenericTilesExit();
 
-	free (Mem);
-	Mem = NULL;
+	free (AllMem);
+	AllMem = NULL;
 
-	free (DrvGfx);
-	DrvGfx = NULL;
+	free (DrvGfxROM);
+	DrvGfxROM = NULL;
 
 	free (DrvTransTab);
 	DrvTransTab = NULL;
 
+	DrvRecalc = 0;
+
 	return 0;
 }
-
 
 static void silkroad_draw_tile(int code, int sx, int sy, int color, int flipx)
 {
@@ -426,29 +403,29 @@ static void silkroad_draw_tile(int code, int sx, int sy, int color, int flipx)
 	if (flipx) {
 		if (sx >= 0 && sx <= 352 && sy >= 0 && sy <= 208) {
 			if (DrvTransTab[code] & 2) {
-				Render16x16Tile_FlipX(pTransDraw, code, sx, sy, color, 6, 0, DrvGfx);
+				Render16x16Tile_FlipX(pTransDraw, code, sx, sy, color, 6, 0, DrvGfxROM);
 			} else {
-				Render16x16Tile_Mask_FlipX(pTransDraw, code, sx, sy, color, 6, 0, 0, DrvGfx);
+				Render16x16Tile_Mask_FlipX(pTransDraw, code, sx, sy, color, 6, 0, 0, DrvGfxROM);
 			}
 		} else {
 			if (DrvTransTab[code] & 2) {
-				Render16x16Tile_FlipX_Clip(pTransDraw, code, sx, sy, color, 6, 0, DrvGfx);
+				Render16x16Tile_FlipX_Clip(pTransDraw, code, sx, sy, color, 6, 0, DrvGfxROM);
 			} else {
-				Render16x16Tile_Mask_FlipX_Clip(pTransDraw, code, sx, sy, color, 6, 0, 0, DrvGfx);
+				Render16x16Tile_Mask_FlipX_Clip(pTransDraw, code, sx, sy, color, 6, 0, 0, DrvGfxROM);
 			}
 		}
 	} else {
 		if (sx >= 0 && sx <= 352 && sy >= 0 && sy <= 208) {
 			if (DrvTransTab[code] & 2) {
-				Render16x16Tile(pTransDraw, code, sx, sy, color, 6, 0, DrvGfx);
+				Render16x16Tile(pTransDraw, code, sx, sy, color, 6, 0, DrvGfxROM);
 			} else {
-				Render16x16Tile_Mask(pTransDraw, code, sx, sy, color, 6, 0, 0, DrvGfx);
+				Render16x16Tile_Mask(pTransDraw, code, sx, sy, color, 6, 0, 0, DrvGfxROM);
 			}
 		} else {
 			if (DrvTransTab[code] & 2) {
-				Render16x16Tile_Clip(pTransDraw, code, sx, sy, color, 6, 0, DrvGfx);
+				Render16x16Tile_Clip(pTransDraw, code, sx, sy, color, 6, 0, DrvGfxROM);
 			} else {
-				Render16x16Tile_Mask_Clip(pTransDraw, code, sx, sy, color, 6, 0, 0, DrvGfx);
+				Render16x16Tile_Mask_Clip(pTransDraw, code, sx, sy, color, 6, 0, 0, DrvGfxROM);
 			}
 		}
 	}
@@ -456,15 +433,13 @@ static void silkroad_draw_tile(int code, int sx, int sy, int color, int flipx)
 
 static void draw_sprites(int pri)
 {
-	unsigned int *source = (unsigned int*)DrvSprRam;
+	unsigned int *source = (unsigned int*)DrvSprRAM;
 	unsigned int *finish = source + 0x1000/4;
 	unsigned int *maxspr = source;
 
 	while (maxspr < finish)
 	{
-		int attr = maxspr[1] >> 16;
-
-		if ((attr & 0xff00) == 0xff00) break;
+		if ((maxspr[1] & 0xff000000) == 0xff000000) break;
 		maxspr += 2;
 	}
 
@@ -472,92 +447,74 @@ static void draw_sprites(int pri)
 
 	while (finish >= source)
 	{
-		int xpos  = finish[0] & 0x01ff;
-		int ypos  = finish[0] >> 16;
-		int tileno = finish[1] & 0xffff;
-		int attr  = finish[1] >> 16;
-
-		xpos -= 50;
-		ypos -= 16;
-
+		int xpos   = (finish[0] & 0x01ff) - 50;
+		int ypos   = (finish[0] >> 16)    - 16;
+		int attr   =  finish[1] >> 16;
+		int tileno = (finish[1] & 0xffff) | ((attr & 0x8000) << 1);
 		finish -= 2;
 
-		if (ypos == -16 || ypos > 223) continue;
-
-		int flipx = (attr & 0x0080);
-
-		int width = ((attr >> 8) & 0x0f) + 1;
-		int color = (attr & 0x003f);
-
 		int priority = attr & 0x1000;
+		if (pri != priority || ypos == -16 || ypos > 223) continue;
 
-		if (attr & 0x8000) tileno += 0x10000;
+		int color = attr & 0x003f;
+		int flipx = attr & 0x0080;
+		int width = ((attr >> 8) & 0x0f) + 1;
 
-		if (priority == pri) {
-			if (!flipx) {
-				for (int wcount = 0; wcount < width; wcount++) {
-					int sx = xpos + ((wcount << 4) | 8);
+		if (flipx) {
+			for (int wcount = width; wcount > 0; wcount--) {
+				int sx = xpos + (((wcount << 4) - 0x10) | 8);
 
-					if (sx < -15 || sx > 379) continue;
+				if (sx < -15 || sx > 379) continue;
 
-					silkroad_draw_tile(tileno + wcount, sx, ypos, color, 0);
-				}
-			} else {
-				for (int wcount = width; wcount > 0; wcount--) {
-					int sx = xpos + (((wcount << 4) - 0x10) | 8);
+				silkroad_draw_tile(tileno+(width-wcount), sx, ypos, color, 1);
+			}
+		} else {
+			for (int wcount = 0; wcount < width; wcount++) {
+				int sx = xpos + ((wcount << 4) | 8);
 
-					if (sx < -15 || sx > 379) continue;
+				if (sx < -15 || sx > 379) continue;
 
-					silkroad_draw_tile(tileno+(width-wcount), sx, ypos, color, 1);
-				}
+				silkroad_draw_tile(tileno + wcount, sx, ypos, color, 0);
 			}
 		}
 	}
 }
 
-static void draw_fg(int offset, int scrollx, int scrolly)
+static void draw_layer(int offset, int scrollx, int scrolly)
 {
-	unsigned int *vidram = (unsigned int*)(DrvVidRam + offset);
+	unsigned int *vidram = (unsigned int*)(DrvVidRAM + offset);
 
 	for (int offs = 0; offs < 0x4000 / 4; offs++)
 	{
 		int sx = (offs << 4) & 0x3f0;
 		int sy = (offs >> 2) & 0x3f0;
-
-		sx -= scrollx & 0x3ff;
-		sy -= scrolly & 0x3ff;
-
-		sx -= 50;
-		sy -= 16;
-
+		sx -= scrollx + 50;
+		sy -= scrolly + 16;
 		if (sy < -15) sy += 0x400;
 		if (sx < -15) sx += 0x400;
 
-		if (sx >= 380) continue;
+		if (sx >= nScreenWidth || sy >= nScreenHeight) continue;
 
-		int code  = vidram[offs] & 0xffff;
+		int code  =  vidram[offs] & 0xffff;
 		int color = (vidram[offs] >> 16) & 0x1f;
 		int flipx = (vidram[offs] >> 16) & 0x80;
 
-		code += 0x18000;
-
-		silkroad_draw_tile(code, sx, sy, color, flipx);
+		silkroad_draw_tile(code + 0x18000, sx, sy, color, flipx);
 	}
 }
 
 static int DrvDraw()
 {
-	if (DrvRecalc) {
-		for (int i = 0; i < 0x1000; i++) {
-			int rgb = Palette[i];
-			DrvPalette[i] = BurnHighCol(rgb >> 16, rgb >> 8, rgb, 0);
+	if (DrvRecalc != nBurnBpp) {
+		unsigned short *pal = (unsigned short*)DrvPalRAM;
+		for (int i = 0; i < 0x2000; i+=2) {
+			palette_write(i/2, pal[i]);
 		}
 
-		// Set magenta for layer disabling
 		DrvPalette[0x1000] = BurnHighCol(0xff, 0x00, 0xff, 0);
+		DrvRecalc = nBurnBpp;
 	}
 
-	// Set background color
 	if (nBurnLayer & 1) {
 		for (int i = 0; i < nScreenWidth * nScreenHeight; i++) {
 			pTransDraw[i] = 0x7c0;
@@ -568,17 +525,16 @@ static int DrvDraw()
 		}
 	}
 
-	if (nBurnLayer    & 2) draw_fg(0x0000, DrvSysRegs[ 0], DrvSysRegs[ 1]);
+	if (nBurnLayer    & 2) draw_layer(0x0000, DrvSysRegs[ 0] & 0x3ff, DrvSysRegs[ 1] & 0x3ff);
 	if (nSpriteEnable & 1) draw_sprites(0x0000);
-	if (nBurnLayer    & 4) draw_fg(0x4000, DrvSysRegs[ 5], DrvSysRegs[10]);
+	if (nBurnLayer    & 4) draw_layer(0x4000, DrvSysRegs[ 5] & 0x3ff, DrvSysRegs[10] & 0x3ff);
 	if (nSpriteEnable & 2) draw_sprites(0x1000);
-	if (nBurnLayer    & 8) draw_fg(0x8000, DrvSysRegs[ 4], DrvSysRegs[ 2]);
+	if (nBurnLayer    & 8) draw_layer(0x8000, DrvSysRegs[ 4] & 0x3ff, DrvSysRegs[ 2] & 0x3ff);
 
 	BurnTransferCopy(DrvPalette);
 
 	return 0;
 }
-
 
 static int DrvFrame()
 {
@@ -595,14 +551,12 @@ static int DrvFrame()
 
 		DrvInputs[1] ^= DrvJoy2[4] << 6;
 
-		// Clear opposites
 		if (!(DrvInputs[0] & 0x00c0)) DrvInputs[0] |= 0x00c0;
 		if (!(DrvInputs[0] & 0x0030)) DrvInputs[0] |= 0x0030;
 		if (!(DrvInputs[0] & 0xc000)) DrvInputs[0] |= 0xc000;
 		if (!(DrvInputs[0] & 0x3000)) DrvInputs[0] |= 0x3000;
 	}
 
-	// Allow CPU overclock
 	int nTotalCycles = (int)((long long)16000000 * nBurnCPUSpeedAdjust / (0x0100 * 60));
 
 	SekOpen(0);
@@ -653,6 +607,7 @@ static int DrvScan(int nAction, int *pnMin)
 	return 0;
 }
 
+
 // The Legend of Silkroad
 
 static struct BurnRomInfo silkroadRomDesc[] = {
@@ -686,8 +641,8 @@ struct BurnDriver BurnDrvSilkroad = {
 	"silkroad", NULL, NULL, "1999",
 	"The Legend of Silkroad\0", NULL, "Unico", "Miscellaneous",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_MISC_POST90S,
+	BDF_GAME_WORKING, 2, HARDWARE_MISC_POST90S, //GBF_SCRFIGHT, 0,
 	NULL, silkroadRomInfo, silkroadRomName, DrvInputInfo, DrvDIPInfo,
-	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, 0, NULL, NULL, NULL, &DrvRecalc,
+	DrvInit, DrvExit, DrvFrame, DrvDraw, DrvScan, 0, NULL, NULL, NULL, NULL,
 	380, 224, 4, 3
 };

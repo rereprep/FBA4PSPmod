@@ -139,10 +139,10 @@ static struct BurnDIPInfo batriderDIPList[] = {
 	{0x16,	0x01, 0x30, 0x20, "2"},
 	{0x16,	0x01, 0x30, 0x30, "1"},
 	{0,		0xFE, 0,	4,	  "Extra player"},
-	{0x16,	0x01, 0xC0, 0x00, "1500000 each"},
-	{0x16,	0x01, 0xC0, 0x40, "1000000 each"},
-	{0x16,	0x01, 0xC0, 0x80, "2000000 each"},
-	{0x16,	0x01, 0xC0, 0xC0, "No extra player"},
+  {0x16,	0x01, 0xC0, 0x00, "1500000 each"},
+  {0x16,	0x01, 0xC0, 0x40, "1000000 each"},
+  {0x16,	0x01, 0xC0, 0x80, "2000000 each"},
+  {0x16,	0x01, 0xC0, 0xC0, "No extra player"},
 
 	// DIP 3
 	{0,		0xFE, 0,	2,	  "Screen flip"},
@@ -212,13 +212,31 @@ static struct BurnDIPInfo batriderRegionDIPList[] = {
 	{0x18,	0xFF,  0xFF,	0x00,   NULL},
 };
 
-static struct BurnDIPInfo batridrkRegionDIPList[] = {
+static struct BurnDIPInfo batridRegionDIPList[] = {
 	// Defaults
-	{0x18,	0xFF,  0xFF,	0x00,   NULL},
+	{0x18,	0xFF,  0xFF,	0x02,   NULL},
+};
+
+static struct BurnDIPInfo batriduRegionDIPList[] = {
+	// Defaults
+	{0x18,	0xFF,  0xFF,	0x01,   NULL},
+};
+
+static struct BurnDIPInfo batridcRegionDIPList[] = {
+	// Defaults
+	{0x18,	0xFF,  0xFF,	0x18,   NULL},
+};
+
+static struct BurnDIPInfo batridkRegionDIPList[] = {
+	// Defaults
+	{0x18,	0xFF,  0xFF,	0x17,   NULL},
 };
 
 STDDIPINFOEXT(batrider, batriderRegion, batrider);
-STDDIPINFOEXT(batridrk, batridrkRegion, batrider);
+STDDIPINFOEXT(batrid, batridRegion, batrider);
+STDDIPINFOEXT(batridu, batriduRegion, batrider);
+STDDIPINFOEXT(batridc, batridcRegion, batrider);
+STDDIPINFOEXT(batridk, batridkRegion, batrider);
 
 static unsigned char *Mem = NULL, *MemEnd = NULL;
 static unsigned char *RamStart, *RamEnd;
@@ -277,7 +295,7 @@ static int drvScan(int nAction, int* pnMin)
 	if (nAction & ACB_VOLATILE) {		// Scan volatile ram
 
 		memset(&ba, 0, sizeof(ba));
-		ba.Data		= RamStart;
+    ba.Data		= RamStart;
 		ba.nLen		= RamEnd - RamStart;
 		ba.szName	= "RAM";
 		BurnAcb(&ba);
@@ -440,7 +458,6 @@ static int drvZInit()
 	ZetMapArea(0xC000, 0xDFFF, 2, RamZ80);			//
 
 	ZetMemEnd();
-	ZetClose();
 
 	nCurrentBank = 2;
 
@@ -664,9 +681,7 @@ static int drvDoReset()
 	SekReset();
 	SekClose();
 
-	ZetOpen(0);
 	ZetReset();
-	ZetClose();
 
 	MSM6295Reset(0);
 	MSM6295Reset(1);
@@ -830,7 +845,6 @@ static int drvFrame()
 	ToaClearOpposites(&drvInput[1]);
 
 	SekNewFrame();
-	ZetNewFrame();
 
 	nCyclesTotal[0] = (int)((long long)16000000 * nBurnCPUSpeedAdjust / (0x0100 * 60));
 	nCyclesTotal[1] = TOA_Z80_SPEED / 60;
@@ -844,7 +858,6 @@ static int drvFrame()
 	int nSoundBufferPos = 0;
 
 	SekOpen(0);
-	
 	for (int i = 1; i <= nInterleave; i++) {
     	int nCurrentCPU;
 		int nNext;
@@ -886,11 +899,9 @@ static int drvFrame()
 		if ((i & 1) == 0) {
 			// Run Z80
 			nCurrentCPU = 1;
-			ZetOpen(0);
 			nNext = i * nCyclesTotal[nCurrentCPU] / nInterleave;
 			nCyclesSegment = nNext - nCyclesDone[nCurrentCPU];
 			nCyclesDone[nCurrentCPU] += ZetRun(nCyclesSegment);
-			ZetClose();
 
 			// Render sound segment
 			if (pBurnSoundOut) {
@@ -923,8 +934,8 @@ static int drvFrame()
 }
 
 // Rom information
-static struct BurnRomInfo batriderRomDesc[] = {
-	{ "prg0b.u22",    0x080000, 0x4F3FC729, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
+static struct BurnRomInfo batridRomDesc[] = {
+	{ "prg0_europe.u22", 0x080000, 0x91d3e975, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
 	{ "prg2.u21",     0x080000, 0xBDAA5FBF, BRF_ESS | BRF_PRG }, //  1
 	{ "prg1b.u23",    0x080000, 0x8E70B492, BRF_ESS | BRF_PRG }, //  2				(odd)
 	{ "prg3.u24",     0x080000, 0x7AA9F941, BRF_ESS | BRF_PRG }, //  3
@@ -941,13 +952,13 @@ static struct BurnRomInfo batriderRomDesc[] = {
 };
 
 
-STD_ROM_PICK(batrider);
-STD_ROM_FN(batrider);
+STD_ROM_PICK(batrid);
+STD_ROM_FN(batrid);
 
-static struct BurnRomInfo batridraRomDesc[] = {
-	{ "prg0.bin",     0x080000, 0xF93EA27C, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
+static struct BurnRomInfo batriduRomDesc[] = {
+	{ "prg0_usa.u22", 0x080000, 0x2049d007, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
 	{ "prg2.u21",     0x080000, 0xBDAA5FBF, BRF_ESS | BRF_PRG }, //  1
-	{ "prg1.bin",     0x080000, 0x8AE7F592, BRF_ESS | BRF_PRG }, //  2				(odd)
+	{ "prg1b.u23",    0x080000, 0x8E70B492, BRF_ESS | BRF_PRG }, //  2				(odd)
 	{ "prg3.u24",     0x080000, 0x7AA9F941, BRF_ESS | BRF_PRG }, //  3
 
 	{ "rom-1.bin",    0x400000, 0x0DF69CA2, BRF_GRA },			 //  4 GP9001 Tile data
@@ -962,11 +973,53 @@ static struct BurnRomInfo batridraRomDesc[] = {
 };
 
 
-STD_ROM_PICK(batridra);
-STD_ROM_FN(batridra);
+STD_ROM_PICK(batridu);
+STD_ROM_FN(batridu);
 
-static struct BurnRomInfo batridrkRomDesc[] = {
-	{ "prg0.u22",     0x080000, 0xD9D8C907, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
+static struct BurnRomInfo batridcRomDesc[] = {
+	{ "prg0_china.u22", 0x080000, 0xc3b91f7e, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
+	{ "prg2.u21",     0x080000, 0xBDAA5FBF, BRF_ESS | BRF_PRG }, //  1
+	{ "prg1b.u23",    0x080000, 0x8E70B492, BRF_ESS | BRF_PRG }, //  2				(odd)
+	{ "prg3.u24",     0x080000, 0x7AA9F941, BRF_ESS | BRF_PRG }, //  3
+
+	{ "rom-1.bin",    0x400000, 0x0DF69CA2, BRF_GRA },			 //  4 GP9001 Tile data
+	{ "rom-3.bin",    0x400000, 0x60167D38, BRF_GRA },			 //  5
+	{ "rom-2.bin",    0x400000, 0x1BFEA593, BRF_GRA },			 //  6
+	{ "rom-4.bin",    0x400000, 0xBEE03c94, BRF_GRA },			 //  7
+
+	{ "snd.u77",      0x040000, 0x56682696, BRF_ESS | BRF_PRG }, //  8 Z80 program
+
+	{ "rom-5.bin",    0x100000, 0x4274DAf6, BRF_SND },			 //  9 MSM6295 #1 ADPCM data
+	{ "rom-6.bin",    0x100000, 0x2A1C2426, BRF_SND },			 // 10 MSM6295 #2 ADPCM data
+};
+
+
+STD_ROM_PICK(batridc);
+STD_ROM_FN(batridc);
+
+static struct BurnRomInfo batridjRomDesc[] = {
+	{ "prg0b.u22",    0x080000, 0x4f3fc729, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
+	{ "prg2.u21",     0x080000, 0xBDAA5FBF, BRF_ESS | BRF_PRG }, //  1
+	{ "prg1b.u23",    0x080000, 0x8E70B492, BRF_ESS | BRF_PRG }, //  2				(odd)
+	{ "prg3.u24",     0x080000, 0x7AA9F941, BRF_ESS | BRF_PRG }, //  3
+
+	{ "rom-1.bin",    0x400000, 0x0DF69CA2, BRF_GRA },			 //  4 GP9001 Tile data
+	{ "rom-3.bin",    0x400000, 0x60167D38, BRF_GRA },			 //  5
+	{ "rom-2.bin",    0x400000, 0x1BFEA593, BRF_GRA },			 //  6
+	{ "rom-4.bin",    0x400000, 0xBEE03c94, BRF_GRA },			 //  7
+
+	{ "snd.u77",      0x040000, 0x56682696, BRF_ESS | BRF_PRG }, //  8 Z80 program
+
+	{ "rom-5.bin",    0x100000, 0x4274DAf6, BRF_SND },			 //  9 MSM6295 #1 ADPCM data
+	{ "rom-6.bin",    0x100000, 0x2A1C2426, BRF_SND },			 // 10 MSM6295 #2 ADPCM data
+};
+
+
+STD_ROM_PICK(batridj);
+STD_ROM_FN(batridj);
+
+static struct BurnRomInfo batridkRomDesc[] = {
+	{ "prg0_korea.u22", 0x080000, 0xd9d8c907, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
 	{ "prg2.u21",     0x080000, 0xBDAA5FBF, BRF_ESS | BRF_PRG }, //  1
 	{ "prg1.u23",     0x080000, 0x8E70B492, BRF_ESS | BRF_PRG }, //  2				(odd)
 	{ "prg3.u24",     0x080000, 0x7AA9F941, BRF_ESS | BRF_PRG }, //  3
@@ -983,36 +1036,86 @@ static struct BurnRomInfo batridrkRomDesc[] = {
 };
 
 
-STD_ROM_PICK(batridrk);
-STD_ROM_FN(batridrk);
+STD_ROM_PICK(batridk);
+STD_ROM_FN(batridk);
 
-struct BurnDriver BurnDrvBatrider = {
-	"batrider", NULL, NULL, "1998",
-	"Armed police Batrider (Batrider ver. Fri Feb 13 1998, Japan)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
+static struct BurnRomInfo batridjaRomDesc[] = {
+	{ "prg0.bin",     0x080000, 0xf93ea27c, BRF_ESS | BRF_PRG }, //  0 CPU #0 code	(even)
+	{ "prg2.u21",     0x080000, 0xBDAA5FBF, BRF_ESS | BRF_PRG }, //  1
+	{ "prg1.bin",     0x080000, 0x8ae7f592, BRF_ESS | BRF_PRG }, //  2				(odd)
+	{ "prg3.u24",     0x080000, 0x7AA9F941, BRF_ESS | BRF_PRG }, //  3
+
+	{ "rom-1.bin",    0x400000, 0x0DF69CA2, BRF_GRA },			 //  4 GP9001 Tile data
+	{ "rom-3.bin",    0x400000, 0x60167D38, BRF_GRA },			 //  5
+	{ "rom-2.bin",    0x400000, 0x1BFEA593, BRF_GRA },			 //  6
+	{ "rom-4.bin",    0x400000, 0xBEE03c94, BRF_GRA },			 //  7
+
+	{ "snd.u77",      0x040000, 0x56682696, BRF_ESS | BRF_PRG }, //  8 Z80 program
+
+	{ "rom-5.bin",    0x100000, 0x4274DAf6, BRF_SND },			 //  9 MSM6295 #1 ADPCM data
+	{ "rom-6.bin",    0x100000, 0x2A1C2426, BRF_SND },			 // 10 MSM6295 #2 ADPCM data
+};
+
+
+STD_ROM_PICK(batridja);
+STD_ROM_FN(batridja);
+
+struct BurnDriver BurnDrvBatrid = {
+	"batrid", NULL, NULL, "1998",
+	"Armed Police Batrider (Europe) (Fri Feb 13 1998)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING,
-	NULL, batriderRomInfo, batriderRomName, batriderInputInfo, batriderDIPInfo,
+	BDF_GAME_WORKING | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING, //GBF_VERSHOOT, 0,
+	NULL, batridRomInfo, batridRomName, batriderInputInfo, batridDIPInfo,
 	drvInit, drvExit, drvFrame, drvDraw, drvScan, 0, NULL, NULL, NULL, &ToaRecalcPalette,
 	240, 320, 3, 4
 };
 
-struct BurnDriver BurnDrvBatridra = {
-	"batridra", "batrider", NULL, "1998",
-	"Armed police Batrider (Batrider ver. Mon Dec 22 1997, Japan)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
+struct BurnDriver BurnDrvBatridu = {
+	"batridu", "batrid", NULL, "1998",
+	"Armed Police Batrider (U.S.A.) (Fri Feb 13 1998)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING,
-	NULL, batridraRomInfo, batridraRomName, batriderInputInfo, batriderDIPInfo,
+	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING, //GBF_VERSHOOT, 0,
+	NULL, batriduRomInfo, batriduRomName, batriderInputInfo, batriduDIPInfo,
 	drvInit, drvExit, drvFrame, drvDraw, drvScan, 0, NULL, NULL, NULL, &ToaRecalcPalette,
 	240, 320, 3, 4
 };
 
-struct BurnDriver BurnDrvBatridrk = {
-	"batridrk", "batrider", NULL, "1998",
-	"Armed police Batrider (Batrider ver. Fri Feb 13 1998, Korea)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
+struct BurnDriver BurnDrvBatridc = {
+	"batridc", "batrid", NULL, "1998",
+	"Armed Police Batrider (China) (Fri Feb 13 1998)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING,
-	NULL, batridrkRomInfo, batridrkRomName, batriderInputInfo, batridrkDIPInfo,
+	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING, //GBF_VERSHOOT, 0,
+	NULL, batridcRomInfo, batridcRomName, batriderInputInfo, batridcDIPInfo,
 	drvInit, drvExit, drvFrame, drvDraw, drvScan, 0, NULL, NULL, NULL, &ToaRecalcPalette,
 	240, 320, 3, 4
 };
 
+struct BurnDriver BurnDrvBatridj = {
+	"batridj", "batrid", NULL, "1998",
+	"Armed Police Batrider - B Version (Japan) (Fri Feb 13 1998)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
+	NULL, NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING, //GBF_VERSHOOT, 0,
+	NULL, batridjRomInfo, batridjRomName, batriderInputInfo, batriderDIPInfo,
+	drvInit, drvExit, drvFrame, drvDraw, drvScan, 0, NULL, NULL, NULL, &ToaRecalcPalette,
+	240, 320, 3, 4
+};
+
+struct BurnDriver BurnDrvBatridk = {
+	"batridk", "batrid", NULL, "1998",
+	"Armed Police Batrider (Korea) (Fri Feb 13 1998)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
+	NULL, NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING, //GBF_VERSHOOT, 0,
+	NULL, batridkRomInfo, batridkRomName, batriderInputInfo, batridkDIPInfo,
+	drvInit, drvExit, drvFrame, drvDraw, drvScan, 0, NULL, NULL, NULL, &ToaRecalcPalette,
+	240, 320, 3, 4
+};
+
+struct BurnDriver BurnDrvBatridja = {
+	"batridja", "batrid", NULL, "1998",
+	"Armed Police Batrider (Japan) (Mon Dec 22 1997)\0", NULL, "Raizing / 8ing", "Toaplan GP9001 based",
+	NULL, NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_CLONE | TOA_ROTATE_GRAPHICS_CCW, 2, HARDWARE_TOAPLAN_RAIZING, //GBF_VERSHOOT, 0,
+	NULL, batridjaRomInfo, batridjaRomName, batriderInputInfo, batriderDIPInfo,
+	drvInit, drvExit, drvFrame, drvDraw, drvScan, 0, NULL, NULL, NULL, &ToaRecalcPalette,
+	240, 320, 3, 4
+};

@@ -341,7 +341,7 @@ static struct BurnDIPInfo LoffireDIPList[]=
 {
 	// Default Values
 	{0x0e, 0xff, 0xff, 0xff, NULL                                 },
-	{0x0f, 0xff, 0xff, 0x9d, NULL                                 },
+	{0x0f, 0xff, 0xff, 0x9c, NULL                                 },
 
 	// Dip 1
 	BOARDX_COINAGE(0x0e)
@@ -1915,13 +1915,37 @@ unsigned char AbcopProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Left / Right
 		case 0: {
-			temp = 0x80 - (System16AnalogPort0 >> 4);
-			if (temp < 0x20) temp = 0x20;
-			if (temp > 0xe0) temp = 0xe0;
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) < 0xf82 && (System16AnalogPort0 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort0 >> 4);
+			}
+			
+			//if (temp < 32) {
+			if (temp < 0x20) {
+				//bprintf(0, _T("(temp < 0x20) int-> %i char-> %i\n"), 0x80 + (System16AnalogPort0 >> 4), temp);
+				temp = 0x20;
+				return temp;
+			}
+
+			// if (temp > 224) {
+			if (temp > 0xe0) {
+				//bprintf(0, _T("(temp > 0xe0) int-> %i char-> %i\n"), 0x80 + (System16AnalogPort0 >> 4), temp);
+				temp = 0xe0;
+				return temp;
+			}
+
+			//bprintf(0, _T("(0x80 + (System16AnalogPort0 >> 4)) int-> %i char-> %i\n"), 0x80 + (System16AnalogPort0 >> 4), temp);
+
 			return temp;
 		}
 		
+		// Accelerate 
 		case 1: {
 			if (System16AnalogPort1 > 1) return 0xff;
 			return 0;
@@ -1934,45 +1958,118 @@ unsigned char AbcopProcessAnalogControls(UINT16 value)
 unsigned char AburnerProcessAnalogControls(UINT16 value)
 {
 	unsigned char temp = 0;
-	
+
 	switch (value) {
+
+		// Left / Right
 		case 0: {
-			temp = 0x80 + (System16AnalogPort0 >> 4);
-			if (temp < 0x20) temp = 0x20;
-			if (temp > 0xe0) temp = 0xe0;
+			
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) > 0x7f && (System16AnalogPort0 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort0 >> 4);
+			}
+
+			//if (temp < 32) {
+			if (temp < 0x20) {
+				//bprintf(0, _T("(temp < 0x20) int-> %i char-> %i\n"), 0x80 + (System16AnalogPort0 >> 4), temp);
+				temp = 0x20;
+				return temp;
+			}
+
+			// if (temp > 224) {
+			if (temp > 0xe0) {
+				//bprintf(0, _T("(temp > 0xe0) int-> %i char-> %i\n"), 0x80 + (System16AnalogPort0 >> 4), temp);
+				temp = 0xe0;
+				return temp;
+			}
+
+			//bprintf(0, _T("(0x80 + (System16AnalogPort0 >> 4)) int-> %i char-> %i\n"), 0x80 + (System16AnalogPort0 >> 4), temp);
 			return temp;
 		}
 		
+		// Up / Down 
 		case 1: {
-			temp = 0x80 - (System16AnalogPort1 >> 4);
-			if (temp < 0x40) temp = 0x40;
-			if (temp > 0xc0) temp = 0xc0;
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort1 >> 4) < 0xf82 && (System16AnalogPort1 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort1 >> 4);
+			}
+
+			// if (temp < 64) {
+			if (temp < 0x40) {
+				//bprintf(0, _T("(temp < 0x40) int-> %d port-> %d  char-> %d\n"), 0x80 - (System16AnalogPort1 >> 4), (System16AnalogPort1 >> 4), temp);
+				temp = 0x40;
+				return temp;
+			}
+
+			// if (temp > 192) {
+			if (temp > 0xc0) {
+				//bprintf(0, _T("(temp > 0xc0) int-> %d port-> %d char-> %d\n"), 0x80 - (System16AnalogPort1 >> 4), (System16AnalogPort1 >> 4), temp);
+				temp = 0xc0;
+				return temp;
+			}
+
+			//bprintf(0, _T("(0x80 - (System16AnalogPort1 >> 4)) int-> %d port-> %d char-> %d\n"), 0x80 - (System16AnalogPort1 >> 4), (System16AnalogPort1 >> 4), temp);
 			return temp;
 		}
 		
+		// Throttle
 		case 2: {
-			temp = 0x80 + (System16AnalogPort2 >> 4);
-			if (temp > 0xc0) return 0xff;
-			if (temp < 0x40) return 0;
-			return 0x80;
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort2 >> 4) > 0x7f && (System16AnalogPort2 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort2 >> 4);
+			}
+
+			// if (temp > 192) {
+			if (temp > 0xc0) {
+				//bprintf(0, _T("(temp > 0xc0) int-> %d port-> %d  char-> %d\n"), 0x80 - (System16AnalogPort2 >> 4), (System16AnalogPort2 >> 4), temp);
+				temp = 0xff;
+				return temp;
+			}
+
+			// if (temp < 64) {
+			if (temp < 0x40) {
+				//bprintf(0, _T("(temp < 0x40) int-> %d port-> %d  char-> %d\n"), 0x80 - (System16AnalogPort2 >> 4), (System16AnalogPort2 >> 4), temp);
+				temp = 0;
+				return temp;
+			}
+
+			temp = 0x80;
+			//bprintf(0, _T("(0x80 - (System16AnalogPort1 >> 4)) int-> %d port-> %d char-> %d\n"), 0x80 - (System16AnalogPort1 >> 4), (System16AnalogPort1 >> 4), temp);
+			return temp;
 		}
-	}
-	
+	}	
 	return 0;
 }
 
 unsigned char GpriderProcessAnalogControls(UINT16 value)
 {
 	switch (value) {
+
+		// Left / Right
 		case 0: {
-			return 0x80 + (System16AnalogPort0 >> 4);
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) > 0x7f && (System16AnalogPort0 >> 4) <= 0x80) {
+				return 0x80 + 0x7f;
+			} else {
+				return 0x80 + (System16AnalogPort0 >> 4);
+			}
 		}
-		
+
+		// Accelerate
 		case 1: {
 			if (System16AnalogPort1 > 1) return 0x10;
 			return 0xef;
 		}
 		
+		// Brake
 		case 2: {
 			if (System16AnalogPort2 > 1) return 0x10;
 			return 0xef;
@@ -1985,23 +2082,11 @@ unsigned char GpriderProcessAnalogControls(UINT16 value)
 unsigned char LoffireProcessAnalogControls(UINT16 value)
 {
 	switch (value) {
-		case 0: {
-			return BurnGunReturnX(0);
-		}
-		
-		case 1: {
-			return ~BurnGunReturnY(0);
-		}
-		
-		case 2: {
-			return BurnGunReturnX(1);
-		}
-		
-		case 3: {
-			return ~BurnGunReturnY(1);
-		}
-	}
-	
+		case 0: {	return BurnGunReturnX(0);	}
+		case 1: {	return ~BurnGunReturnY(0);	}
+		case 2: {	return BurnGunReturnX(1);	}
+		case 3: {	return ~BurnGunReturnY(1);	}
+	}	
 	return 0;
 }
 
@@ -2010,18 +2095,29 @@ unsigned char RacheroProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Left / Right
 		case 0: {
-			temp = 0x80 - (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) < 0xf82 && (System16AnalogPort0 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort0 >> 4);
+			}
+			
 			if (temp < 0x20) temp = 0x20;
 			if (temp > 0xe0) temp = 0xe0;
 			return temp;
 		}
-		
+
+		// Accelerate
 		case 1: {
 			if (System16AnalogPort1 > 1) return 0xff;
 			return 0;
 		}
-		
+
+		// Brake
 		case 2: {
 			if (System16AnalogPort2 > 1) return 0xff;
 			return 0;
@@ -2036,18 +2132,29 @@ unsigned char SmgpProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Left / Right
 		case 0: {
-			temp = 0x80 + (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) > 0x7f && (System16AnalogPort0 >> 4) <= 0x80) {
+				return 0x80 + 0x7f;
+			} else {
+				return 0x80 + (System16AnalogPort0 >> 4);
+			}
+
 			if (temp < 0x39) temp = 0x38;
 			if (temp > 0xc8) temp = 0xc8;
 			return temp;
 		}
 		
+		// Accelerate
 		case 1: {
 			if (System16AnalogPort1 > 1) return 0xb8;
 			return 0x38;
 		}
-		
+
+		// Brake
 		case 2: {
 			if (System16AnalogPort2 > 1) return 0xa8;
 			return 0x28;
@@ -2062,18 +2169,65 @@ unsigned char ThndrbldProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Left / Right
 		case 0: {
-			return 0x80 - (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) < 0xf82 && (System16AnalogPort0 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort0 >> 4);
+			}
+
+			if (temp < 0x20) {
+				temp = 0x20;
+				return temp;
+			}
+
+			if (temp > 0xe0) {
+				temp = 0xe0;
+				return temp;
+			}
+
+			return temp;
 		}
 		
+		// Throttle
 		case 1: {
-			temp = 0x80 + (System16AnalogPort2 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort2 >> 4) > 0x7f && (System16AnalogPort2 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort2 >> 4);
+			}
+
 			if (temp == 1) temp = 0;
 			return temp;
 		}
 		
+		// Up / Down
 		case 2: {
-			return 0x80 + (System16AnalogPort1 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort1 >> 4) > 0x7f && (System16AnalogPort1 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort1 >> 4);
+			}
+
+			if (temp < 0x20) {
+				temp = 0x20;
+				return temp;
+			}
+
+			if (temp > 0xe0) {
+				temp = 0xe0;
+				return temp;
+			}
+
+			return temp;
 		}
 	}
 	
@@ -2179,7 +2333,7 @@ struct BurnDriver BurnDrvAbcop = {
 	"abcop", NULL, NULL, "1990",
 	"A.B. Cop (FD1094 317-0169b)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, AbcopRomInfo, AbcopRomName, AbcopInputInfo, AbcopDIPInfo,
 	AbcopInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2189,7 +2343,7 @@ struct BurnDriver BurnDrvAburner2 = {
 	"aburner2", NULL, NULL, "1987",
 	"After Burner II\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32, //GBF_SHOOT, 0,
 	NULL, Aburner2RomInfo, Aburner2RomName, Aburner2InputInfo, Aburner2DIPInfo,
 	Aburner2Init, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2199,7 +2353,7 @@ struct BurnDriver BurnDrvAburner = {
 	"aburner", "aburner2", NULL, "1987",
 	"After Burner (Japan)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32, //GBF_SHOOT, 0,
 	NULL, AburnerRomInfo, AburnerRomName, Aburner2InputInfo, AburnerDIPInfo,
 	Aburner2Init, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2209,7 +2363,7 @@ struct BurnDriver BurnDrvGprider = {
 	"gprider", NULL, NULL, "1990",
 	"GP Rider (set 2, World, FD1094 317-0163)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	0, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	0, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, GpriderRomInfo, GpriderRomName, GpriderInputInfo, GpriderDIPInfo,
 	GpriderInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2219,7 +2373,7 @@ struct BurnDriver BurnDrvGprider1 = {
 	"gprider1", "gprider", NULL, "1990",
 	"GP Rider (set 1, US, FD1094 317-0162)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, Gprider1RomInfo, Gprider1RomName, GpriderInputInfo, GpriderDIPInfo,
 	GpriderInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2229,7 +2383,7 @@ struct BurnDriver BurnDrvLoffire = {
 	"loffire", NULL, NULL, "1989",
 	"Line of Fire / Bakudan Yarou (World, FD1094 317-0136)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_SHOOT, 0,
 	NULL, LoffireRomInfo, LoffireRomName, LoffireInputInfo, LoffireDIPInfo,
 	LoffireInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2239,7 +2393,7 @@ struct BurnDriver BurnDrvLoffirej = {
 	"loffirej", "loffire", NULL, "1989",
 	"Line of Fire / Bakudan Yarou (Japan, FD1094 317-0134)\0", NULL, "Sega", "X-Board",
 	L"Line of Fire / Bakudan Yarou (Japan, FD1094 317-0134)\0\u7206\u5F3E\u91CE\u90CE\0", NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_SHOOT, 0,
 	NULL, LoffirejRomInfo, LoffirejRomName, LoffireInputInfo, LoffireDIPInfo,
 	LoffireInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2249,7 +2403,7 @@ struct BurnDriver BurnDrvLoffireu = {
 	"loffireu", "loffire", NULL, "1989",
 	"Line of Fire / Bakudan Yarou (US, FD1094 317-0135)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_SHOOT, 0,
 	NULL, LoffireuRomInfo, LoffireuRomName, LoffireInputInfo, LoffireDIPInfo,
 	LoffireInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2259,7 +2413,7 @@ struct BurnDriver BurnDrvRachero = {
 	"rachero", NULL, NULL, "1989",
 	"Racing Hero (FD1094 317-0144)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, RacheroRomInfo, RacheroRomName, RacheroInputInfo, RacheroDIPInfo,
 	RacheroInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2269,7 +2423,7 @@ struct BurnDriverD BurnDrvRascot2 = {
 	"rascot2", NULL, NULL, "19??",
 	"Royal Ascot 2\0", NULL, "????", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32, //GBF_MISC, 0,
 	NULL, Rascot2RomInfo, Rascot2RomName, Aburner2InputInfo, Aburner2DIPInfo,
 	Aburner2Init, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2279,7 +2433,7 @@ struct BurnDriver BurnDrvSmgp = {
 	"smgp", NULL, NULL, "1989",
 	"Super Monaco GP (set 9, World, Rev B, 'Twin', FD1094 317-0126a)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, SmgpRomInfo, SmgpRomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2289,7 +2443,7 @@ struct BurnDriver BurnDrvSmgp5 = {
 	"smgp5", "smgp", NULL, "1989",
 	"Super Monaco GP (set 7, World, 'Air Drive Cabinet', FD1094 317-0126)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, Smgp5RomInfo, Smgp5RomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2299,7 +2453,7 @@ struct BurnDriver BurnDrvSmgp6 = {
 	"smgp6", "smgp", NULL, "1989",
 	"Super Monaco GP (set 8, World, Rev A, FD1094 317-0126a)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, Smgp6RomInfo, Smgp6RomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2309,7 +2463,7 @@ struct BurnDriver BurnDrvSmgpj = {
 	"smgpj", "smgp", NULL, "1989",
 	"Super Monaco GP (set 2, Japan, Rev B, FD1094 317-0124a)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, SmgpjRomInfo, SmgpjRomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2319,7 +2473,7 @@ struct BurnDriver BurnDrvSmgpja = {
 	"smgpja", "smgp", NULL, "1989",
 	"Super Monaco GP (set 1, Japan, Rev A, FD1094 317-0124a)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, SmgpjaRomInfo, SmgpjaRomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2329,7 +2483,7 @@ struct BurnDriver BurnDrvSmgpu = {
 	"smgpu", "smgp", NULL, "1989",
 	"Super Monaco GP (set 6, US, Rev C, FD1094 317-0125a)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, SmgpuRomInfo, SmgpuRomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2339,7 +2493,7 @@ struct BurnDriver BurnDrvSmgpu1 = {
 	"smgpu1", "smgp", NULL, "1989",
 	"Super Monaco GP (set 5, US, Rev B, FD1094 317-0125a)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, Smgpu1RomInfo, Smgpu1RomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2349,7 +2503,7 @@ struct BurnDriver BurnDrvSmgpu2 = {
 	"smgpu2", "smgp", NULL, "1989",
 	"Super Monaco GP (set 4, US, Rev A, FD1094 317-0125a)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, Smgpu2RomInfo, Smgpu2RomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2359,7 +2513,7 @@ struct BurnDriver BurnDrvSmgpu3 = {
 	"smgpu3", "smgp", NULL, "1989",
 	"Super Monaco GP (set 3, US, FD1094 317-0125a)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_RACING, 0,
 	NULL, Smgpu3RomInfo, Smgpu3RomName, SmgpInputInfo, SmgpDIPInfo,
 	SmgpInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2369,7 +2523,7 @@ struct BurnDriver BurnDrvThndrbld = {
 	"thndrbld", NULL, NULL, "1987",
 	"Thunder Blade (upright, FD1094 317-0056)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC,
+	BDF_GAME_WORKING, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32 | HARDWARE_SEGA_FD1094_ENC, //GBF_SHOOT, 0,
 	NULL, ThndrbldRomInfo, ThndrbldRomName, ThndrbldInputInfo, ThndrbldDIPInfo,
 	ThndrbldInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3
@@ -2379,7 +2533,7 @@ struct BurnDriver BurnDrvThndrbd1 = {
 	"thndrbd1", "thndrbld", NULL, "1987",
 	"Thunder Blade (deluxe/standing, unprotected)\0", NULL, "Sega", "X-Board",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32,
+	BDF_GAME_WORKING | BDF_CLONE, 2, HARDWARE_SEGA_SYSTEMX | HARDWARE_SEGA_SPRITE_LOAD32, //GBF_SHOOT, 0,
 	NULL, Thndrbd1RomInfo, Thndrbd1RomName, ThndrbldInputInfo, Thndrbd1DIPInfo,
 	ThndrbldInit, XBoardExit, XBoardFrame, NULL, XBoardScan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3

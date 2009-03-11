@@ -196,7 +196,7 @@ STDDIPINFOEXT(powerinj, powerins, powerinj);
 // Rom information
 
 static struct BurnRomInfo powerinsRomDesc[] = {
-	{ "93095-3j.u108",	0x080000, 0x3050a3fb, BRF_ESS | BRF_PRG },	// 68000 code
+	{ "93095-3a.u108",	0x080000, 0x9825ea3d, BRF_ESS | BRF_PRG },	// 68000 code
 	{ "93095-4.u109", 	0x080000, 0xd3d7a782, BRF_ESS | BRF_PRG },
 
 	{ "93095-2.u90",	  0x020000, 0x4b123cc6, BRF_ESS | BRF_PRG },	// Z80 code
@@ -230,6 +230,42 @@ static struct BurnRomInfo powerinsRomDesc[] = {
 
 STD_ROM_PICK(powerins);
 STD_ROM_FN(powerins);
+
+static struct BurnRomInfo powerinjRomDesc[] = {
+	{ "93095-3j.u108",	0x080000, 0x3050a3fb, BRF_ESS | BRF_PRG },	// 68000 code
+	{ "93095-4.u109", 	0x080000, 0xd3d7a782, BRF_ESS | BRF_PRG },
+
+	{ "93095-2.u90",	  0x020000, 0x4b123cc6, BRF_ESS | BRF_PRG },	// Z80 code
+
+	{ "93095-5.u16",	  0x100000, 0xb1371808, BRF_GRA }, 			// layer 0
+	{ "93095-6.u17",	  0x100000, 0x29c85d80, BRF_GRA },
+	{ "93095-7.u18",	  0x080000, 0x2dd76149, BRF_GRA },
+
+	{ "93095-1.u15",	  0x020000, 0x6a579ee0, BRF_GRA }, 			// layer 1
+
+	{ "93095-12.u116",	0x100000, 0x35f3c2a3, BRF_GRA },
+	{ "93095-13.u117",	0x100000, 0x1ebd45da, BRF_GRA },
+	{ "93095-14.u118",	0x100000, 0x760d871b, BRF_GRA },
+	{ "93095-15.u119",	0x100000, 0xd011be88, BRF_GRA },
+	{ "93095-16.u120",	0x100000, 0xa9c16c9c, BRF_GRA },
+	{ "93095-17.u121",	0x100000, 0x51b57288, BRF_GRA },
+	{ "93095-18.u122",	0x100000, 0xb135e3f2, BRF_GRA },
+	{ "93095-19.u123",	0x100000, 0x67695537, BRF_GRA },
+
+	{ "93095-10.u48",	  0x100000, 0x329ac6c5, BRF_SND }, 			// sound 1
+	{ "93095-11.u49",	  0x100000, 0x75d6097c, BRF_SND },
+
+	{ "93095-8.u46",	  0x100000, 0xf019bedb, BRF_SND }, 			// sound 2
+	{ "93095-9.u47",	  0x100000, 0xadc83765, BRF_SND },
+
+	{ "22.u81",			    0x000020, 0x67d5ec4b, BRF_OPT },			// unknown
+	{ "21.u71",			    0x000100, 0x182cd81f, BRF_OPT },
+	{ "20.u54",			    0x000100, 0x38bd0e2f, BRF_OPT },
+
+};
+
+STD_ROM_PICK(powerinj);
+STD_ROM_FN(powerinj);
 
 static struct BurnRomInfo powerinaRomDesc[] = {
 	{ "rom1",		0x080000, 0xb86c84d6, BRF_ESS | BRF_PRG },	// 68000 code
@@ -666,7 +702,7 @@ static int powerinsInit()
 
 	m6295size = 0x80000 * 4 * 2;
 
-	if ( strcmp(BurnDrvGetTextA(DRV_NAME), "powerins") == 0 ) {
+	if ( strcmp(BurnDrvGetTextA(DRV_NAME), "powerins") == 0 || strcmp(BurnDrvGetTextA(DRV_NAME), "powerinj") == 0) {
 		game_drv = GAME_POWERINS;
 	} else
 	if ( strcmp(BurnDrvGetTextA(DRV_NAME), "powerina") == 0 ) {
@@ -1286,10 +1322,20 @@ static int powerinsScan(int nAction,int *pnMin)
 
 struct BurnDriver BurnDrvPowerins = {
 	"powerins", NULL, NULL, "1993",
+	"Power Instinct (USA)\0", NULL, "Atlus", "Miscellaneous",
+	NULL, NULL, NULL, NULL,
+	BDF_GAME_WORKING | BDF_16BIT_ONLY, 2, HARDWARE_MISC_POST90S, //GBF_VSFIGHT, FBF_PWRINST,
+	NULL, powerinsRomInfo, powerinsRomName, powerinsInputInfo, powerinsDIPInfo,
+	powerinsInit, powerinsExit, powerinsFrame, NULL, powerinsScan, 0, NULL, NULL, NULL, &bRecalcPalette,
+	320, 224, 4, 3
+};
+
+struct BurnDriver BurnDrvPowerinj = {
+	"powerinj", "powerins", NULL, "1993",
 	"Gouketsuji Ichizoku (Japan)\0", NULL, "Atlus", "Miscellaneous",
 	L"\u8C6A\u8840\u5BFA\u4E00\u65CF (Japan)\0Gouketsuji Ichizoku\0", NULL, NULL, NULL,
-	BDF_GAME_WORKING | BDF_16BIT_ONLY, 2, HARDWARE_MISC_POST90S,
-	NULL, powerinsRomInfo, powerinsRomName, powerinsInputInfo, powerinjDIPInfo,
+	BDF_GAME_WORKING | BDF_16BIT_ONLY | BDF_CLONE, 2, HARDWARE_MISC_POST90S, //BF_VSFIGHT, FBF_PWRINST,
+	NULL, powerinjRomInfo, powerinjRomName, powerinsInputInfo, powerinjDIPInfo,
 	powerinsInit, powerinsExit, powerinsFrame, NULL, powerinsScan, 0, NULL, NULL, NULL, &bRecalcPalette,
 	320, 224, 4, 3
 };

@@ -1171,18 +1171,29 @@ unsigned char OutrunProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Steering
 		case 0: {
-			temp = 0x80 + (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) > 0x7f && (System16AnalogPort0 >> 4) <= 0x80) {
+				temp = 0x80 + 0x7f;
+			} else {
+				temp = 0x80 + (System16AnalogPort0 >> 4);
+			}
+
 			if (temp < 0x20) temp = 0x20;
 			if (temp > 0xe0) temp = 0xe0;
 			return temp;
 		}
-		
+
+		// Accelerate
 		case 4: {
 			if (System16AnalogPort1 > 1) return 0xff;
 			return 0;
 		}
 		
+		// Brake
 		case 8: {
 			if (System16AnalogPort2 > 1) return 0xff;
 			return 0;
@@ -1197,18 +1208,29 @@ unsigned char ShangonProcessAnalogControls(UINT16 value)
 	unsigned char temp = 0;
 	
 	switch (value) {
+
+		// Steering
 		case 0: {
-			temp = 0x80 - (System16AnalogPort0 >> 4);
+
+			// Prevent CHAR data overflow
+			if((System16AnalogPort0 >> 4) < 0xf82 && (System16AnalogPort0 >> 4) > 0x80) {
+				temp = 0x80 - 0xf82;
+			} else {
+				temp = 0x80 - (System16AnalogPort0 >> 4);
+			}
+
 			if (temp < 0x20) temp = 0x20;
 			if (temp > 0xe0) temp = 0xe0;
 			return temp;
 		}
-		
+
+		// Accelerate
 		case 1: {
 			if (System16AnalogPort1 > 1) return 0xff;
 			return 0;
 		}
-		
+
+		// Brake
 		case 2: {
 			if (System16AnalogPort2 > 1) return 0xff;
 			return 0;
@@ -1382,7 +1404,7 @@ struct BurnDriver BurnDrvOutrun = {
 	"outrun", NULL, NULL, "1986",
 	"Out Run (sitdown/upright, Rev B)\0", NULL, "Sega", "Out Run",
 	NULL, NULL, NULL, NULL,
-	BDF_GAME_WORKING, 2, HARDWARE_SEGA_OUTRUN | HARDWARE_SEGA_SPRITE_LOAD32, //GBF_RACING, 0,
+	BDF_GAME_WORKING | BDF_HISCORE_SUPPORTED, 2, HARDWARE_SEGA_OUTRUN | HARDWARE_SEGA_SPRITE_LOAD32, //GBF_RACING, 0,
 	NULL, OutrunRomInfo, OutrunRomName, OutrunInputInfo, OutrunDIPInfo,
 	OutrunInit, System16Exit, OutrunFrame, NULL, System16Scan,
 	0, NULL, NULL, NULL, NULL, 320, 224, 4, 3

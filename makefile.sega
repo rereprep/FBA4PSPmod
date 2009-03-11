@@ -71,7 +71,9 @@ depobj	:= 	$(drvobj) \
 	   	roms.o ui.o gui.o snd.o UniCache.o exception.o pspadhoc.o \
 		z80.o z80daisy.o i8039.o m6800.o m6800_intf.o m6809.o m6809_intf.o hd6309.o hd6309_intf.o \
 	        \
-		fd1089.o fd1094.o genesis_vid.o mc8123.o sys16_fd1094.o sys16_gfx.o sys16_ppi.o sys16_run.o
+		fd1089.o fd1094.o genesis_vid.o mc8123.o sys16_fd1094.o sys16_gfx.o sys16_run.o \
+		8255ppi.o
+		
 autobj += $(depobj)
 
 # burn_sound_mips.o
@@ -126,7 +128,7 @@ LD		= psp-gcc
 AS		= psp-as
 FIXUP	= psp-fixup-imports
 
-CFLAGS	 = -O3 -G0 -g -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
+CFLAGS	 = -O3 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
 #	   -fomit-frame-pointer -fsigned-char \
 #	   -fstrict-aliasing -falign-functions=32 -falign-loops -falign-labels -falign-jumps \
 #	   -Wall -Wno-long-long -Wno-sign-compare -Wno-uninitialized -Wno-unused \

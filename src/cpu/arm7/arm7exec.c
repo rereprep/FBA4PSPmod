@@ -1358,7 +1358,10 @@
         }
 
         change_pc(R15);
-
+#ifdef SHOW_FPS
+extern unsigned int debugValue[2];
+debugValue[1]=R15;
+#endif
         ARM7_CHECKIRQ;
 
         /* All instructions remove 3 cycles.. Others taking less / more will have adjusted this # prior to here */

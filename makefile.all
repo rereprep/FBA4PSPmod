@@ -134,7 +134,8 @@ depobj	:= 	$(drvobj) \
 	   	\
 	   	k052109.o k051960.o konamiic.o k007232.o \
 		\
-		  fd1089.o fd1094.o genesis_vid.o mc8123.o sys16_fd1094.o sys16_gfx.o sys16_ppi.o sys16_run.o 
+		fd1089.o fd1094.o genesis_vid.o mc8123.o sys16_fd1094.o sys16_gfx.o sys16_run.o \
+		8255ppi.o  
 
 autobj += $(depobj)
 

@@ -154,7 +154,7 @@ static int pgmGetRoms(bool bLoad)
 
 		BurnDrvGetRomInfo(&ri, i);
 
-		if ((ri.nType & BRF_PRG) && (ri.nType & 7) == 1)
+		if ((ri.nType & BRF_PRG) && (ri.nType & 0x0f) == 1)
 		{
 			if (bLoad) {
 				BurnDrvGetRomInfo(&pi, i+1);
@@ -177,7 +177,7 @@ static int pgmGetRoms(bool bLoad)
 			continue;
 		}
 
-		if ((ri.nType & BRF_GRA) && (ri.nType & 7) == 2)
+		if ((ri.nType & BRF_GRA) && (ri.nType & 0x0f) == 2)
 		{
 			if (bLoad) {
 				if (!bPgmUseCache) {
@@ -206,7 +206,7 @@ static int pgmGetRoms(bool bLoad)
 			continue;
 		}
 
-		if ((ri.nType & BRF_GRA) && (ri.nType & 7) == 3)
+		if ((ri.nType & BRF_GRA) && (ri.nType & 0x0f) == 3)
 		{
 			if (bLoad) {
 				if (!bPgmUseCache) {
@@ -230,7 +230,7 @@ static int pgmGetRoms(bool bLoad)
 			continue;
 		}
 
-		if ((ri.nType & BRF_GRA) && (ri.nType & 7) == 4)
+		if ((ri.nType & BRF_GRA) && (ri.nType & 0x0f) == 4)
 		{
 			if (bLoad) {
 				if (!bPgmUseCache) {
@@ -254,7 +254,7 @@ static int pgmGetRoms(bool bLoad)
 			continue;
 		}
 
-		if ((ri.nType & BRF_SND) && (ri.nType & 7) == 5)
+		if ((ri.nType & BRF_SND) && (ri.nType & 0x0f) == 5)
 		{
 #ifndef PGM_MUTE
 			if (bLoad) {
@@ -285,7 +285,7 @@ static int pgmGetRoms(bool bLoad)
 			continue;
 		}
 		
-		if ((ri.nType & BRF_PRG) && (ri.nType & 7) == 6)
+		if ((ri.nType & BRF_PRG) && (ri.nType & 0x0f) == 8)
 		{
 			if (bLoad) {
 				BurnDrvGetRomInfo(&pi, i+1);
@@ -306,7 +306,7 @@ static int pgmGetRoms(bool bLoad)
 			continue;
 		}
 		
-		if ((ri.nType & BRF_PRG) && (ri.nType & 7) == 7)
+		if ((ri.nType & BRF_PRG) && (ri.nType & 0x0f) == 7)
 		{
 			if (bLoad) {
 				BurnLoadRom(PGMARMROM, i, 1);			
@@ -1300,7 +1300,8 @@ int kov2Frame()
 		PgmInput[4] |= (PgmBtn1[i] & 1) << i;
 		PgmInput[5] |= (PgmBtn2[i] & 1) << i;
 	}	
-
+	RamArmShared[0x138] = PgmInput[7];  // region hack
+	
 	int nCyclesDone[2] = {0, 0};
 	int nCyclesNext[2] = {0, 0};
 
@@ -1327,7 +1328,7 @@ int kov2Frame()
 				*armIrq=0;
 				arm7_execute(ARM_IRQ_DELAY);
 				arm7_set_irq_line(ARM7_FIRQ_LINE,1);
-				arm7_execute(M68K_CYCS_PER_INTER-ARM_IRQ_DELAY);
+				//arm7_execute(M68K_CYCS_PER_INTER-ARM_IRQ_DELAY);
 			}else
 				arm7_execute(M68K_CYCS_PER_INTER);
 		}
