@@ -105,7 +105,7 @@ depobj	:= 	$(drvobj) \
 	   	vez.o nec.o \
 		m6800.o m6800_intf.o m6809.o m6809_intf.o hd6309.o hd6309_intf.o\
 		z80.o z80daisy.o i8039.o\
-		arm7.o\
+		arm7.o arm7_intf.o \
 	   	cave.o cave_tile.o cave_sprite.o cave_palette.o \
 	   	cps.o cps_config.o cps_draw.o cps_mem.o cps_obj.o cps_pal.o cps_run.o \
 	   	cps2_crpt.o cps_rw.o cps_scr.o cpsr.o cpsrd.o \

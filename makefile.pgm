@@ -58,7 +58,7 @@ depobj	:= 	$(drvobj) \
 	   	sek.o zet.o eeprom_93cxx.o \
 	   	burn_sound.o burn_sound_c.o \
 	   	ics2115.o \
-	   	arm7.o\
+	   	arm7.o arm7_intf.o \
 	   	\
 	   	pgm_crypt.o pgm_draw.o pgm_prot.o pgm_run.o \
 	   	\
