@@ -27,7 +27,7 @@ static unsigned char *Mem = NULL, *MemEnd = NULL;
 static unsigned char *RamStart, *RamEnd;
 
 unsigned char *USER0, *USER1, *USER2;
-unsigned char *PGM68KBIOS, *PGM68KROM, *PGMTileROM, *PGMTileROMExp, *PGMSPRColROM = NULL, *PGMSPRMaskROM = NULL, *PGMARMROM;
+unsigned char *PGM68KBIOS, *PGM68KROM,  *PGMARMROM;
 unsigned char *PGMARMRAM0, *PGMARMRAM1, *PGMARMRAM2, *PGMARMShareRAM;
 
 unsigned char nPgmPalRecalc = 0;
@@ -40,7 +40,6 @@ void (*pPgmResetCallback)() = NULL;
 void (*pPgmInitCallback)() = NULL;
 int (*pPgmScanCallback)(int, int*) = NULL;
 
-static int kov2 = 0;
 static int nEnableArm7 = 0;
 
 #define M68K_CYCS_PER_FRAME	(20000000 / 60)
@@ -55,8 +54,6 @@ static int nEnableArm7 = 0;
 
 static int nCyclesDone[3];
 
-bool bPgmUseCache = false;
-static bool bUseArm=false;
 static bool bPgmCreateCache = false;
 unsigned long nPGMTileROMOffset;
 unsigned long nPGMSPRColROMOffset;
@@ -121,9 +118,7 @@ static int pgmGetRoms(bool bLoad)
 
 	unsigned char *PGM68KROMLoad = PGM68KROM;
 	unsigned char *PGMUSER0Load = USER0;
-	unsigned char *PGMTileROMLoad = PGMTileROM + 0x400000;
-	unsigned char *PGMSPRColROMLoad = PGMSPRColROM;
-	unsigned char *PGMSPRMaskROMLoad = PGMSPRMaskROM;
+	
 	unsigned int biosRomRegionLength=0x400000;
 	cacheFileSize = 0;
 	nPGMTileROMOffset = 0xffffffff;
@@ -163,10 +158,7 @@ static int pgmGetRoms(bool bLoad)
 		if ((ri.nType & BRF_GRA) && (ri.nType & 0x0f) == 2)
 		{
 			if (bLoad) {
-				if (!bPgmUseCache) {
-					BurnLoadRom(PGMTileROMLoad, i, 1);
-					PGMTileROMLoad += ri.nLen;
-				}else 
+				
 				{
 					if(nPGMTileROMOffset == 0xffffffff)
 					{
@@ -192,10 +184,7 @@ static int pgmGetRoms(bool bLoad)
 		if ((ri.nType & BRF_GRA) && (ri.nType & 0x0f) == 3)
 		{
 			if (bLoad) {
-				if (!bPgmUseCache) {
-					BurnLoadRom(PGMSPRColROMLoad, i, 1);
-					PGMSPRColROMLoad += ri.nLen;
-				} else 
+				 
 				{
 					if(nPGMSPRColROMOffset == 0xffffffff)
 					{
@@ -216,10 +205,7 @@ static int pgmGetRoms(bool bLoad)
 		if ((ri.nType & BRF_GRA) && (ri.nType & 0x0f) == 4)
 		{
 			if (bLoad) {
-				if (!bPgmUseCache) {
-					BurnLoadRom(PGMSPRMaskROMLoad, i, 1);
-					PGMSPRMaskROMLoad += ri.nLen;
-				} else 
+				
 				{
 					if(nPGMSPRMaskROMOffset == 0xffffffff)
 					{
@@ -240,10 +226,7 @@ static int pgmGetRoms(bool bLoad)
 		if ((ri.nType & BRF_SND) && (ri.nType & 0x0f) == 5)
 		{
 			if (bLoad) {
-				if (!bPgmUseCache) {
-					//BurnLoadRom(PGMSNDROMLoad, i, 1);
-					//PGMSNDROMLoad += ri.nLen;
-				}else 
+				
 				{
 					if(nPGMSNDROMOffset == 0xffffffff)
 					{
@@ -381,22 +364,19 @@ static void pgm_calendar_w(unsigned short data)
 
 inline static unsigned int CalcCol(unsigned short nColour)
 {
-#ifndef BUILD_PSP
-	int r, g, b;
 
-	r = (nColour & 0x001F) << 3;	// Red
-	r |= r >> 5;
-	g = (nColour & 0x03E0) >> 2;  // Green
-	g |= g >> 5;
-	b = (nColour & 0x7C00) >> 7;	// Blue
-	b |= b >> 5;
-
-	return BurnHighCol(b, g, r, 0);
-#else
 	return ((nColour & 0x001f) << 11) | 
 	       ((nColour & 0x03e0) <<  1) | 
 	       ((nColour & 0x7c00) >> 10);
-#endif
+}
+
+void __fastcall PgmPalWriteWord(unsigned int sekAddress, unsigned short wordValue)
+{
+	// 0xA00000 ~ 0xA011FF: 2304 color Palette (X1R5G5B5)
+	sekAddress -= 0xA00000;
+	sekAddress >>= 1;
+	RamPal[sekAddress] = wordValue;
+	RamCurPal[sekAddress] = CalcCol(wordValue);
 }
 
 unsigned char __fastcall PgmReadByte(unsigned int sekAddress)
@@ -588,36 +568,13 @@ if (nEnableArm7) {
 	return 0;
 }
 
-#ifndef PGM_LOW_MEMORY
-static void expand_gfx_2()
-{
-	unsigned char *src = PGMTileROM;
-	unsigned char *dst = PGMTileROMExp;
-
-	for (int i = nPGMTileROMLen/5-1; i >= 0 ; i --) {
-		dst[0+8*i] = ((src[0+5*i] >> 0) & 0x1f);
-		dst[1+8*i] = ((src[0+5*i] >> 5) & 0x07) | ((src[1+5*i] << 3) & 0x18);
-		dst[2+8*i] = ((src[1+5*i] >> 2) & 0x1f );
-		dst[3+8*i] = ((src[1+5*i] >> 7) & 0x01) | ((src[2+5*i] << 1) & 0x1e);
-		dst[4+8*i] = ((src[2+5*i] >> 4) & 0x0f) | ((src[3+5*i] << 4) & 0x10);
-		dst[5+8*i] = ((src[3+5*i] >> 1) & 0x1f );
-		dst[6+8*i] = ((src[3+5*i] >> 6) & 0x03) | ((src[4+5*i] << 2) & 0x1c);
-		dst[7+8*i] = ((src[4+5*i] >> 3) & 0x1f );
-	}
-}
-#endif
-
 int pgmInit()
 {
 	spriteCacheArrayFreeP=0;
 	Mem = NULL;
 	bGamePuzlstar = strcmp(BurnDrvGetTextA(DRV_NAME), "puzlstar") == 0;
 	bGameDrgw2 = strcmp(BurnDrvGetTextA(DRV_NAME), "drgw2") == 0 || strcmp(BurnDrvGetTextA(DRV_NAME), "drgw2c") == 0 || strcmp(BurnDrvGetTextA(DRV_NAME), "drgw2j") == 0;
-	if (strncmp(BurnDrvGetTextA(DRV_NAME), "kov2", 4) == 0)
-	{
-		kov2 = 1;
-	}
-	
+		
 	pgmGetRoms(false);
 
 	pgmMemIndex();
@@ -626,11 +583,6 @@ int pgmInit()
 	memset(Mem, 0, nLen);
 	pgmMemIndex();
 
-	bPgmUseCache = true;
-	
-	if (bPgmUseCache) {
-
-		
 		extern char szAppCachePath[];
 		
 		strcpy(filePathName, szAppCachePath);
@@ -653,58 +605,36 @@ int pgmInit()
 			if ((uniCacheHead = (unsigned char *)malloc(0x0A00000)) == NULL) return 1;
 			memset(uniCacheHead, 0, 0x0A00000);
 		}
-	} else {
-			
-#ifndef PGM_LOW_MEMORY
-	PGMTileROMExp   = (unsigned char*)malloc((nPGMTileROMLen / 5) * 8);	// Expanded 8x8 Text Tiles and 32x32 BG Tiles
-#endif		
-		PGMTileROM      = (unsigned char*)malloc(nPGMTileROMLen);			// 8x8 Text Tiles + 32x32 BG Tiles	
-		PGMSPRColROM	= (unsigned char*)malloc(nPGMSPRColROMLen);
-		PGMSPRMaskROM	= (unsigned char*)malloc(nPGMSPRMaskROMLen);
-		memset(PGMTileROM, 0, nPGMTileROMLen);
-		memset(PGMSPRColROM, 0, nPGMSPRColROMLen);
-		memset(PGMSPRMaskROM, 0, nPGMSPRMaskROMLen);
-	}
+
 
 
 	pgmGetRoms(true);
 	
-	if (bPgmUseCache) {
 		if ( bPgmCreateCache ) {
 			free(uniCacheHead);
 			uniCacheHead=NULL;
 			sceIoClose( cacheFile );
 			cacheFile = sceIoOpen( filePathName,PSP_O_RDONLY, 0777);
 		}
-	}
+
 	
 	// load bios roms
 	BurnLoadRom(PGM68KBIOS,		0x00080, 1);	// 68k bios
 	//BurnLoadRom(PGMTileROM,		0x00081, 1);	// Bios Text and Tiles
 
-		
-	if (bPgmUseCache) {
-		//Init cacheIndex
-		initCacheStructure(0.95);
-
-	}
-#ifndef PGM_LOW_MEMORY
-	// expand gfx1 into gfx2
-	expand_gfx_2();
-#endif
-
-//	printf("Main %08x  Tile %08x  Col %08x  Mask %08x\n", nLen, nPGMTileROMLen, nPGMSPRColROMLen, nPGMSPRMaskROMLen );
-
-
 	if (pPgmInitCallback) {
 		pPgmInitCallback();
 	}
+	
+	//Init cacheIndex
+	initCacheStructure(0.9);
+
 
 	{
 		SekInit(0, 0x68000);										// Allocate 68000
 	    SekOpen(0);
 
-			SekMapMemory(PGM68KBIOS,		0x000000, 0x01ffff, SM_ROM);				// 68000 BIOS
+		SekMapMemory(PGM68KBIOS,		0x000000, 0x01ffff, SM_ROM);				// 68000 BIOS
 		SekMapMemory(PGM68KROM,			0x100000, (nPGM68KROMLen-1)+0x100000, SM_ROM);				// 68000 ROM
 
 		SekMapMemory(Ram68K,			0x800000, 0x81ffff, SM_RAM);				// Main Ram
@@ -722,6 +652,8 @@ int pgmInit()
 		SekMapMemory((unsigned char *)RamPal,	0xa00000, 0xa011ff, SM_RAM);
 		SekMapMemory((unsigned char *)RamVReg,	0xb00000, 0xb0ffff, SM_RAM);
 
+
+		SekMapHandler(1,			0xA00000, 0xA011FF, SM_WRITE);
 		SekMapHandler(2,			0xc10000, 0xc1ffff, SM_READ | SM_WRITE);
 
 		SekSetReadWordHandler(0, PgmReadWord);
@@ -729,6 +661,8 @@ int pgmInit()
 		SekSetWriteWordHandler(0, PgmWriteWord);
 		SekSetWriteByteHandler(0, PgmWriteByte);
 
+		SekSetWriteWordHandler(1, PgmPalWriteWord);
+		
 		SekSetReadWordHandler(2, PgmZ80ReadWord);
 		SekSetWriteWordHandler(2, PgmZ80WriteWord);
 
@@ -775,22 +709,8 @@ int pgmExit()
 
 	ics2115_exit();
 
-	free (PGMTileROM);
-#ifndef PGM_LOW_MEMORY
-	free (PGMTileROMExp);
-#endif
-
-	if (!bPgmUseCache) {
-		free (PGMSPRColROM);
-		free (PGMSPRMaskROM);
-	}
-
 	PGM68KBIOS = NULL;
 	PGM68KROM = NULL;
-	PGMTileROM = NULL;
-	PGMTileROMExp = NULL;
-	PGMSPRColROM = NULL;
-	PGMSPRMaskROM = NULL;
 
 	// ics2115_exit can free and nil it
 	ICSSNDROM = NULL;
@@ -803,7 +723,7 @@ int pgmExit()
 
 	pPgmInitCallback = NULL;
 	pPgmScanCallback = NULL;
-	kov2 = 0;
+
 	nEnableArm7 = 0;
 	destroyUniCache();
 
@@ -921,7 +841,7 @@ int pgmScan(int nAction,int *pnMin)
 	struct BurnArea ba;
 
 	if (pnMin) {						// Return minimum compatible version
-		*pnMin =  0x029702;
+		*pnMin =  0x029671;
 	}
 
 	if (nAction & ACB_MEMORY_ROM) {						// Scan memory rom
@@ -930,74 +850,46 @@ int pgmScan(int nAction,int *pnMin)
 		ba.nAddress = 0;
 		ba.szName	= "BIOS ROM";
 		BurnAcb(&ba);
-
+				
 		ba.Data		= PGM68KROM;
 		ba.nLen		= nPGM68KROMLen;
-		ba.nAddress = 0x100000;
+		ba.nAddress = 0;
 		ba.szName	= "68K ROM";
 		BurnAcb(&ba);
+		
+		ba.Data		= PGMARMROM;
+		ba.nLen		= RamStart-PGMARMROM;
+		ba.nAddress = 0;
+		ba.szName	= "ARM ROM";
+		BurnAcb(&ba);
+
 	}
+
 
 	if (nAction & ACB_MEMORY_RAM) {						// Scan memory, devices & variables
-		ba.Data		= RamBg;
-		ba.nLen		= 0x0004000;
-		ba.nAddress = 0x900000;
-		ba.szName	= "Bg RAM";
-		BurnAcb(&ba);
-
-		ba.Data		= RamTx;
-		ba.nLen		= 0x0002000;
-		ba.nAddress = 0x904000;
-		ba.szName	= "Tx RAM";
-		BurnAcb(&ba);
-
-		ba.Data		= RamRs;
-		ba.nLen		= 0x0000800;
-		ba.nAddress = 0x907000;
-		ba.szName	= "Row Scroll";
-		BurnAcb(&ba);
-
-		ba.Data		= RamPal;
-		ba.nLen		= 0x0001200;
-		ba.nAddress = 0xA00000;
-		ba.szName	= "Palette";
-		BurnAcb(&ba);
-
-		ba.Data		= RamVReg;
-		ba.nLen		= 0x0010000;
-		ba.nAddress = 0xB00000;
-		ba.szName	= "Video Regs";
-		BurnAcb(&ba);
-
-		ba.Data		= RamZ80;
-		ba.nLen		= 0x0010000;
-		ba.nAddress = 0xC10000;
-		ba.szName	= "Z80 RAM";
+		ba.Data		= RamStart;
+		ba.nLen		= RamEnd-RamStart;
+		ba.nAddress = 0;
+		ba.szName	= "RAM";
 		BurnAcb(&ba);
 	}
-
-	if (nAction & ACB_NVRAM) {								// Scan nvram
-		ba.Data		= Ram68K;
-		ba.nLen		= 0x020000;
-		ba.nAddress	= 0x800000;
-		ba.szName	= "68K RAM";
-		BurnAcb(&ba);
-	}
-
 	if (nAction & ACB_DRIVER_DATA) {
-
+	
 		SekScan(nAction);										// Scan 68000 state
-		ZetScan(nAction);									// Scan Z80 state
-
+		ZetScan(nAction);										// Scan Z80 state
+		// Scan critical driver variables
 		SCAN_VAR(PgmInput);
 
+		if (nAction & ACB_WRITE)
+			nPgmPalRecalc = 1;
 		SCAN_VAR(nPgmZ80Work);
-	//	ics2115_scan(nAction, pnMin);
+		ics2115_scan(nAction, pnMin);
+	}
 
-		if (pPgmScanCallback) {
-			pPgmScanCallback(nAction, pnMin);
-		}
+	if (pPgmScanCallback) {
+		pPgmScanCallback(nAction, pnMin);
 	}
 
  	return 0;
 }
+
