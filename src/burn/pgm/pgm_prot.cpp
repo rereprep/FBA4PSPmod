@@ -1418,7 +1418,7 @@ int killbldtScan(int nAction, int */*pnMin*/)
 	if (nAction & ACB_MEMORY_RAM) {
 		ba.Data		= USER0 + 0x000000;
 		ba.nLen		= 0x0004000;
-		ba.nAddress = 0x300000;
+		ba.nAddress = 0;
 		ba.szName	= "ProtRAM";
 		BurnAcb(&ba);
 	}
@@ -1450,34 +1450,6 @@ int pstarsScan(int nAction, int */*pnMin*/)
 
 int asic27AScan(int nAction,int *)
 {
-	struct BurnArea ba;
-
-	if (nAction & ACB_MEMORY_RAM) {
-		ba.Data		= PGMARMShareRAM;
-		ba.nLen		= 0x0010000;
-		ba.nAddress	= 0xd00000;
-		ba.szName	= "ARM SHARE RAM";
-		BurnAcb(&ba);
-
-		ba.Data		= PGMARMRAM0;
-		ba.nLen		= 0x0000400;
-		ba.nAddress	= 0;
-		ba.szName	= "ARM RAM 0";
-		BurnAcb(&ba);
-
-		ba.Data		= PGMARMRAM1;
-		ba.nLen		= 0x0010000;
-		ba.nAddress	= 0;
-		ba.szName	= "ARM RAM 1";
-		BurnAcb(&ba);
-
-		ba.Data		= PGMARMRAM2;
-		ba.nLen		= 0x0000400;
-		ba.nAddress	= 0;
-		ba.szName	= "ARM RAM 2";
-		BurnAcb(&ba);
-	}
-
 	if (nAction & ACB_DRIVER_DATA) {
 		Arm7Scan(nAction);
 
@@ -1494,7 +1466,7 @@ int olds100aScan(int nAction, int */*pnMin*/)
 	if (nAction & ACB_MEMORY_RAM) {
 		ba.Data		= USER0 + 0x000000;
 		ba.nLen		= 0x0004000;
-		ba.nAddress	= 0x400000;
+		ba.nAddress	= 0;
 		ba.szName	= "ProtRAM";
 		BurnAcb(&ba);
 	}

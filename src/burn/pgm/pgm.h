@@ -26,13 +26,16 @@ extern int nPGMTileROMLen;
 
 extern unsigned char *Ram68K;
 extern unsigned char *USER0, *USER1, *USER2;
-extern unsigned char *PGM68KROM, *PGMTileROM, *PGMTileROMExp, *PGMSPRColROM, *PGMSPRMaskROM, *PGMARMROM;
+extern unsigned char *PGM68KROM, *PGMARMROM;
 extern unsigned char *PGMARMRAM0, *PGMARMRAM1, *PGMARMRAM2, *PGMARMShareRAM;
 extern unsigned short *RamRs, *RamPal, *RamVReg, *RamSpr;
 extern unsigned int *RamBg, *RamTx, *RamCurPal;
 extern unsigned char nPgmPalRecalc;
 
-extern bool bPgmUseCache;
+extern unsigned long nPGMTileROMOffset;
+extern unsigned long nPGMSPRColROMOffset;
+extern unsigned long nPGMSPRMaskROMOffset;
+
 extern unsigned int * pgmSprIndex;
 extern unsigned char * pgmIdxCacheTemp;
 extern unsigned char * pgmDatCacheTemp;
