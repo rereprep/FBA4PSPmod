@@ -90,6 +90,17 @@ static ARM7_REGS arm7;
 static int ARM7_ICOUNT;
 static int total_cycles = 0;
 static int curr_cycles = 0;
+static bool arm7Suspend = false;
+
+void Arm7Suspend()
+{
+	arm7Suspend=true;
+}
+
+void Arm7Resume()
+{
+	arm7Suspend=false;
+}
 
 void Arm7Open(int )
 {
@@ -130,6 +141,7 @@ static void arm7_exit()
 
 int Arm7Run(int cycles)
 {
+	if(arm7Suspend) return cycles;
 /* include the arm7 core execute code */
 #include "arm7exec.c"
 }

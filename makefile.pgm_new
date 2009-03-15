@@ -25,7 +25,7 @@ DEPEND = 1
 #
 
 # Specify the name of the executable file, without ".exe"
-BINDIR = bin/mid
+BINDIR = bin/pgm_new
 NAME = ${BINDIR}/FBA4PSP.elf
 
 #ifndef	CPUTYPE
@@ -39,84 +39,33 @@ NAME = ${BINDIR}/FBA4PSP.elf
 objdir	= obj/PSP/
 srcdir	= src/
 
-alldir	= burn burn/cave burn/pgm burn/toaplan burn/taito generated psp zlib \
-burn/misc burn/misc/post90s burn/misc/pre90s cpu cpu/c68k cpu/cz80 cpu/m6502 cpu/nec cpu/m6809 cpu/hd6309 cpu/m6800 \
-cpu/arm7 burn/misc burn/misc/dec0 burn/konami
+alldir	= burn burn/pgm_new generated psp zlib \
+		 cpu cpu/c68k cpu/cz80 cpu/arm7_new
 
 incdir	= -I. -I$(PSPSDK)/include $(foreach dir,$(alldir),-I$(srcdir)$(dir)) -I$(objdir)generated
 
-lib		=  -lm -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
+lib		=   -lpspgu -lpspdebug -lpspdisplay -lpspge -lpspctrl -lpspsdk -lc \
 			-lpspnet -lpspnet_adhoc -lpspnet_adhocctl -lpspwlan -lpsputility \
-			-lpspuser -lpspkernel -lpsppower -lpspaudio -lpsprtc -lpng -lg
+			-lpspuser -lpspkernel -lpsppower -lpspaudio -lpsprtc -lpng -lg -lm
 
 		
-drvobj	= d_dodonpachi.o d_donpachi.o d_esprade.o d_feversos.o d_gaia.o d_guwange.o \
-		d_hotdogst.o d_mazinger.o d_metmqstr.o d_pwrinst2.o d_sailormn.o d_uopoko.o \
-		d_pgm.o \
-		d_batrider.o d_batsugun.o d_battleg.o d_bbakraid.o d_dogyuun.o d_hellfire.o d_kbash.o \
-		d_mahoudai.o d_outzone.o d_shippumd.o d_snowbro2.o d_tekipaki.o d_truxton.o \
-		d_truxton2.o d_vfive.o d_zerowing.o \
-		\
-		d_1945kiii.o d_aerofgt.o d_seta2.o d_shadfrce.o d_powerins.o d_galpanic.o \
-		\
-		d_4enraya.o d_1942.o d_ambush.o d_arkanoid.o d_bankp.o d_bionicc.o d_bombjack.o \
-		d_dotrikun.o d_epos.o d_exedexes.o d_funkybee.o d_gberet.o d_gunsmoke.o d_higemaru.o \
-		d_jack.o d_kyugo.o d_madgear.o d_meijinsn.o d_minivdr.o d_mole.o d_mrdo.o d_mrflea.o \
-		d_mystston.o d_pacman.o d_pkunwar.o d_pooyan.o d_prehisle.o d_quizo.o d_route16.o d_scregg.o \
-		d_solomon.o d_tigerheli.o d_tnzs.o d_vulgus.o d_wallc.o d_wc90.o \
-		\
-		d_biomtoy.o d_ddragon3.o d_drtomy.o d_gaiden.o d_fstarfrc.o \
-		d_hyperpac.o d_kaneko16.o d_news.o d_ohmygod.o d_tumbleb.o d_wwfwfest.o \
-		\
-		d_taitof2.o d_taitox.o d_taitoz.o d_taitomisc.o d_darius2.o \
-		\
-		d_baddudes.o d_robocop.o \
-		\
-		d_tmnt.o \
-		\
-		d_galpanic.o d_hyperpac.o d_kaneko16.o d_m90.o d_m92.o d_news.o d_ohmygod.o d_powerins.o \
-		d_parent.o \
-		d_commando.o d_contra.o d_ddragon.o d_galaga.o d_gng.o d_kangaroo.o d_lkage.o d_lwings.o \
-		d_renegade.o d_sf.o d_snk68.o d_sonson.o d_tecmo.o \
-		d_esd16.o d_funybubl.o d_nmg5.o d_suna16.o d_unico.o d_zerozone.o \
-    d_deniam.o d_diverboy.o d_gotcha.o d_gumbo.o d_ikki.o d_mcatadv.o d_midas.o \
-    d_mugsmash.o d_pirates.o d_skyfox.o d_taotaido.o d_tigeroad.o 
-		
-		
+drvobj	= d_pgm.o 
 
 depobj	:= 	$(drvobj) \
 	   	\
 	   	burn.o burn_gun.o load.o \
 	   	\
 	   	sek.o zet.o eeprom_93cxx.o \
-		arm7.o \
-	   	burn_sound.o burn_sound_c.o timer.o \
-	   	burn_ym2151.o burn_ym3812.o burn_ym2608.o burn_ym2610.o burn_ymf278b.o burn_ym2203.o burn_ym2612.o \
-	   	ay8910.o ym2151.o fm.o fmopl.o ymdeltat.o \
-	   	dac.o ics2115.o msm5205.o msm6295.o rf5c68.o segapcm.o sn76496.o upd7759.o ymf278b.o ymz280b.o \
-	   	burn_ym3526.o \
-	   	x1010.o \
-	   	vez.o nec.o \
-		m6800.o m6800_intf.o m6809.o m6809_intf.o hd6309.o hd6309_intf.o \
-	   	cave.o cave_tile.o cave_sprite.o cave_palette.o \
+	   	burn_sound.o burn_sound_c.o \
+	   	ics2115.o \
+	   	arm7.o arm7_intf.o \
 	   	\
 	   	pgm_crypt.o pgm_draw.o pgm_prot.o pgm_run.o \
-	   	\
-	   	toaplan.o toa_gp9001.o toa_extratext.o toa_palette.o \
-	   	\
-	   	toa_bcu2.o toaplan1.o \
 	   	\
 	   	adler32.o compress.o crc32.o deflate.o inffast.o inflate.o inftrees.o trees.o uncompr.o zutil.o \
 	   	\
 	   	main.o drv.o input.o state.o statec.o unzip.o zipfn.o bzip.o font.o \
-	   	roms.o ui.o gui.o snd.o UniCache.o exception.o pspadhoc.o \
-	   	m6502.o m6502_intf.o \
-	   	tiles_generic.o \
-	   	irem_cpu.o\
-	   	tc0110pcr.o tc0220ioc.o tc0150rod.o tc0140syt.o tc0100scn.o tc0510nio.o tc0480scp.o tc0360pri.o \
-	   	tc0280grd.o pc080sn.o pc090oj.o cchip.o taito_ic.o taito.o \
-	   	dec_aud.o dec_misc.o dec_vid.o \
-	   	k052109.o k051960.o konamiic.o  k007232.o
+	   	roms.o ui.o gui.o snd.o UniCache.o exception.o pspadhoc.o	
 autobj += $(depobj)
 
 # burn_sound_mips.o
@@ -193,10 +142,10 @@ ASFLAGS	= -O3 -G0
 
 LDFLAGS	= -static -L. -L$(PSPSDK)/lib
 
-DEF	:= -DSUB_VERSION=\"MID\" -DPSP_FW_VERSION=$(PSP_FW_VERSION) -DFILENAME=$(NAME) \
+DEF	:= -DSUB_VERSION=\"PGM_NEW\" -DPSP_FW_VERSION=$(PSP_FW_VERSION) -DFILENAME=$(NAME) \
 	-DBUILD_PSP -DUSE_SPEEDHACKS -DNEOGEO_HACKS \
 	-DPBPNAME='"$(TARGET)"' -DVERSION_MAJOR=$(VERSION_MAJOR) -DVERSION_MINOR=$(VERSION_MINOR)
-
+	
 #	-DFASTCALL
 
 #ifdef DEBUG
@@ -233,12 +182,12 @@ ifeq ($(MAKELEVEL),1)
 ifdef DEPEND
 
 all:	init $(autdep) $(autobj)
-	@$(MAKE) -f makefile.mid -s
+	@$(MAKE) -f makefile.pgm_new -s
 
 else
 
 all:	init $(autobj)
-	@$(MAKE) -f makefile.mid -s
+	@$(MAKE) -f makefile.pgm_new -s
 endif
 else
 
@@ -262,7 +211,7 @@ $(NAME):	$(allobj)
 	@$(FIXUP) $@
 	@psp-strip $(NAME) -o eboot_strip.elf
 	@mksfoex -d MEMSIZE=1 'FinalBurn Alpha for PSP' eboot.sfo
-	@pack-pbp ${BINDIR}/EBOOT.PBP eboot.sfo $(srcdir)psp/fbapsp_mid.png NULL NULL NULL NULL eboot_strip.elf NULL
+	@pack-pbp ${BINDIR}/EBOOT.PBP eboot.sfo $(srcdir)psp/fbapsp_pgm.png NULL NULL NULL NULL eboot_strip.elf NULL
 	-@rm -f eboot.sfo eboot_strip.elf
 
 
