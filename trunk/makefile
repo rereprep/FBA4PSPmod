@@ -61,6 +61,9 @@ cave: FORCE
 pgm: FORCE
 
 	@$(MAKE) -s -f makefile.pgm
+pgm_new: FORCE
+
+	@$(MAKE) -s -f makefile.pgm_new
 sega: FORCE
 
 	@$(MAKE) -s -f makefile.sega
@@ -78,6 +81,10 @@ alltarget : FORCE
 	-@rm -f -r obj/PSP/burn/burn*
 	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.pgm
+	-@rm -f -r obj/PSP/psp
+	-@rm -f -r obj/PSP/burn/burn*
+	-@rm -f -r src/generated/driverlist.h
+	@$(MAKE) -s -f makefile.pgm_new
 	-@rm -f -r obj/PSP/psp
 	-@rm -f -r obj/PSP/burn/burn*
 	-@rm -f -r src/generated/driverlist.h

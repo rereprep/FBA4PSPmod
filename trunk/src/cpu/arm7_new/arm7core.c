@@ -78,16 +78,19 @@
 *****************************************************************************/
 
 #include <stdarg.h>
-#include <string.h>
 //#include "deprecat.h"
 
 #define ARM7_DEBUG_CORE 0
+#define logerror	printf
+#define fatalerror	logerror
 
 #if 0
 #define LOG(x) mame_printf_debug x
 #else
-#define LOG(x)
+#define LOG(x) logerror x
 #endif
+
+#define ARM7_INLINE	static inline
 
 /* Prototypes */
 
@@ -103,80 +106,73 @@ static void HandleALU(UINT32 insn);
 static void HandleMul(UINT32 insn);
 static void HandleUMulLong(UINT32 insn);
 static void HandleSMulLong(UINT32 insn);
-INLINE void HandleBranch(UINT32 insn);       // pretty short, so inline should be ok
+ARM7_INLINE void HandleBranch(UINT32 insn);       // pretty short, so ARM7_INLINE should be ok
 static void HandleMemSingle(UINT32 insn);
 static void HandleMemBlock(UINT32 insn);
 static UINT32 decodeShift(UINT32 insn, UINT32 *pCarry);
-INLINE void SwitchMode(int);
+ARM7_INLINE void SwitchMode(int);
 static void arm7_check_irq_state(void);
 
-INLINE void arm7_cpu_write32(UINT32 addr, UINT32 data);
-INLINE void arm7_cpu_write16(UINT32 addr, UINT16 data);
-INLINE void arm7_cpu_write8(UINT32 addr, UINT8 data);
-INLINE UINT32 arm7_cpu_read32(UINT32 addr);
-INLINE UINT16 arm7_cpu_read16(UINT32 addr);
-INLINE UINT8 arm7_cpu_read8(offs_t addr);
+ARM7_INLINE void arm7_cpu_write32(UINT32 addr, UINT32 data);
+ARM7_INLINE void arm7_cpu_write16(UINT32 addr, UINT16 data);
+ARM7_INLINE void arm7_cpu_write8(UINT32 addr, UINT8 data);
+ARM7_INLINE UINT32 arm7_cpu_read32(UINT32 addr);
+ARM7_INLINE UINT16 arm7_cpu_read16(UINT32 addr);
+ARM7_INLINE UINT8 arm7_cpu_read8(UINT32 addr);
 
 /* Static Vars */
 // Note: for multi-cpu implementation, this approach won't work w/o modification
-//WRITE32_HANDLER((*arm7_coproc_do_callback));    // holder for the co processor Data Operations Callback func.
-//READ32_HANDLER((*arm7_coproc_rt_r_callback));   // holder for the co processor Register Transfer Read Callback func.
-//WRITE32_HANDLER((*arm7_coproc_rt_w_callback));  // holder for the co processor Register Transfer Write Callback Callback func.
+void((*arm7_coproc_do_callback)(unsigned int, unsigned int));    // holder for the co processor Data Operations Callback func.
+unsigned int((*arm7_coproc_rt_r_callback)(unsigned int));   // holder for the co processor Register Transfer Read Callback func.
+void((*arm7_coproc_rt_w_callback)(unsigned int, unsigned int));  // holder for the co processor Register Transfer Write Callback Callback func.
 // holder for the co processor Data Transfer Read & Write Callback funcs
 void (*arm7_coproc_dt_r_callback)(UINT32 insn, UINT32 *prn, UINT32 (*read32)(UINT32 addr));
 void (*arm7_coproc_dt_w_callback)(UINT32 insn, UINT32 *prn, void (*write32)(UINT32 addr, UINT32 data));
-
-#ifdef UNUSED_DEFINITION
-// custom dasm callback handlers for co-processor instructions
-char *(*arm7_dasm_cop_dt_callback)(char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
-char *(*arm7_dasm_cop_rt_callback)(char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
-char *(*arm7_dasm_cop_do_callback)(char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
-#endif
 
 
 /***************************************************************************
  * Default Memory Handlers
  ***************************************************************************/
-INLINE void arm7_cpu_write32(UINT32 addr, UINT32 data)
+ARM7_INLINE void arm7_cpu_write32(UINT32 addr, UINT32 data)
 {
     addr &= ~3;
-    program_write_dword_32le(addr, data);
+   Arm7_program_write_dword_32le(addr, data); // iq_132
 }
 
 
-INLINE void arm7_cpu_write16(UINT32 addr, UINT16 data)
+ARM7_INLINE void arm7_cpu_write16(UINT32 addr, UINT16 data)
 {
     addr &= ~1;
-    program_write_word_32le(addr, data);
+    Arm7_program_write_word_32le(addr, data); // iq_132
 }
 
-INLINE void arm7_cpu_write8(UINT32 addr, UINT8 data)
+ARM7_INLINE void arm7_cpu_write8(UINT32 addr, UINT8 data)
 {
-    program_write_byte_32le(addr, data);
+    Arm7_program_write_byte_32le(addr, data); // iq_132
 }
 
-INLINE UINT32 arm7_cpu_read32(offs_t addr)
+ARM7_INLINE UINT32 arm7_cpu_read32(UINT32 addr)
 {
     UINT32 result;
 
     if (addr & 3)
     {
-        result = program_read_dword_32le(addr & ~3);
+        result = Arm7_program_read_dword_32le(addr & ~3); // iq_132
         result = (result >> (8 * (addr & 3))) | (result << (32 - (8 * (addr & 3))));
     }
     else
     {
-        result = program_read_dword_32le(addr);
+        result = Arm7_program_read_dword_32le(addr); // iq_132
     }
 
     return result;
 }
 
-INLINE UINT16 arm7_cpu_read16(offs_t addr)
+ARM7_INLINE UINT16 arm7_cpu_read16(UINT32 addr)
 {
     UINT16 result;
 
-    result = program_read_word_32le(addr & ~1);
+    result = Arm7_program_read_word_32le(addr & ~1);
 
     if (addr & 1)
     {
@@ -186,10 +182,45 @@ INLINE UINT16 arm7_cpu_read16(offs_t addr)
     return result;
 }
 
-INLINE UINT8 arm7_cpu_read8(offs_t addr)
+ARM7_INLINE UINT8 arm7_cpu_read8(UINT32 addr)
 {
+	UINT8 result = Arm7_program_read_byte_32le(addr);
+
     // Handle through normal 8 bit handler (for 32 bit cpu)
-    return program_read_byte_32le(addr);
+    return result;
+}
+
+ARM7_INLINE UINT32 cpu_readop32(UINT32 addr)
+{
+	// iq_132
+
+    UINT32 result;
+
+    if (addr & 3)
+    {
+        result = Arm7_program_opcode_dword_32le(addr & ~3); // iq_132
+        result = (result >> (8 * (addr & 3))) | (result << (32 - (8 * (addr & 3))));
+    }
+    else
+    {
+        result = Arm7_program_opcode_dword_32le(addr); // iq_132
+    }
+
+    return result;
+}
+
+ARM7_INLINE UINT32 cpu_readop16(UINT32 addr)
+{
+    UINT16 result;
+
+    result = Arm7_program_opcode_word_32le(addr & ~1); // iq_132
+
+    if (addr & 1)
+    {
+        result = ((result >> 8) & 0xff) | ((result & 0xff) << 8);
+    }
+
+    return result;
 }
 
 /***************
@@ -270,7 +301,7 @@ static const char *GetModeText(int cpsr)
 #define SetRegister(rIndex, value) ARM7REG(sRegisterTable[GET_MODE][rIndex]) = value
 
 // I could prob. convert to macro, but Switchmode shouldn't occur that often in emulated code..
-INLINE void SwitchMode(int cpsr_mode_val)
+ARM7_INLINE void SwitchMode(int cpsr_mode_val)
 {
     UINT32 cspr = GET_CPSR & ~MODE_FLAG;
     SET_CPSR(cspr | cpsr_mode_val);
@@ -509,7 +540,7 @@ static int storeDec(UINT32 pat, UINT32 rbv)
  ***************************************************************************/
 
 // CPU INIT
-/*
+#if 0
 static void arm7_core_init(const char *cpuname, int index)
 {
     state_save_register_item_array(cpuname, index, ARM7.sArmRegister);
@@ -520,18 +551,21 @@ static void arm7_core_init(const char *cpuname, int index)
     state_save_register_item(cpuname, index, ARM7.pendingUnd);
     state_save_register_item(cpuname, index, ARM7.pendingSwi);
 }
-*/
+#endif
+
 // CPU RESET
 static void arm7_core_reset(void)
 {
-    
-    memset(&ARM7, 0, (int)&ARM7.ppMemRead-(int)&ARM7);
-    
+    int (*save_irqcallback)(int) = ARM7.irq_callback;
+
+    memset(&ARM7, 0, sizeof(ARM7));
+    ARM7.irq_callback = save_irqcallback;
+
     /* start up in SVC mode with interrupts disabled. */
     SwitchMode(eARM7_MODE_SVC);
     SET_CPSR(GET_CPSR | I_MASK | F_MASK | 0x10);
     R15 = 0;
-    change_pc(R15);
+//    change_pc(R15);
 }
 
 // Execute used to be here.. moved to separate file (arm7exec.c) to be included by cpu cores separately
@@ -562,7 +596,7 @@ static void arm7_check_irq_state(void)
         SET_CPSR(GET_CPSR | I_MASK);            /* Mask IRQ */
         SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x10;                             /* IRQ Vector address */
-        change_pc(R15);
+//        change_pc(R15);
         ARM7.pendingAbtD = 0;
         return;
     }
@@ -575,7 +609,7 @@ static void arm7_check_irq_state(void)
         SET_CPSR(GET_CPSR | I_MASK | F_MASK);   /* Mask both IRQ & FIQ */
         SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x1c;                             /* IRQ Vector address */
-        change_pc(R15);
+  //      change_pc(R15);
         return;
     }
 
@@ -587,7 +621,7 @@ static void arm7_check_irq_state(void)
         SET_CPSR(GET_CPSR | I_MASK);            /* Mask IRQ */
         SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x18;                             /* IRQ Vector address */
-        change_pc(R15);
+  //      change_pc(R15);
         return;
     }
 
@@ -599,7 +633,7 @@ static void arm7_check_irq_state(void)
         SET_CPSR(GET_CPSR | I_MASK);            /* Mask IRQ */
         SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x0c;                             /* IRQ Vector address */
-        change_pc(R15);
+  //      change_pc(R15);
         ARM7.pendingAbtP = 0;
         return;
     }
@@ -612,7 +646,7 @@ static void arm7_check_irq_state(void)
         SET_CPSR(GET_CPSR | I_MASK);            /* Mask IRQ */
         SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x04;                             /* IRQ Vector address */
-        change_pc(R15);
+ //       change_pc(R15);
         ARM7.pendingUnd = 0;
         return;
     }
@@ -633,7 +667,7 @@ static void arm7_check_irq_state(void)
         SET_CPSR(GET_CPSR | I_MASK);            /* Mask IRQ */
         SET_CPSR(GET_CPSR & ~T_MASK);           /* Go to ARM mode */
         R15 = 0x08;                             /* Jump to the SWI vector */
-        change_pc(R15);
+   //     change_pc(R15);
         ARM7.pendingSwi = 0;
         return;
     }
@@ -675,11 +709,10 @@ static void arm7_core_set_irq_line(int irqline, int state)
 static void HandleCoProcDO(UINT32 insn)
 {
     // This instruction simply instructs the co-processor to do something, no data is returned to ARM7 core
-/*(    if (arm7_coproc_do_callback)
-        arm7_coproc_do_callback(Machine, insn, 0, 0);    // simply pass entire opcode to callback - since data format is actually dependent on co-proc implementation
+    if (arm7_coproc_do_callback)
+        arm7_coproc_do_callback(0, insn);   // iq_132?? // simply pass entire opcode to callback - since data format is actually dependent on co-proc implementation
     else
         LOG(("%08x: Co-Processor Data Operation executed, but no callback defined!\n", R15));
-*/
 }
 
 // Co-Processor Register Transfer - To/From Arm to Co-Proc
@@ -689,11 +722,11 @@ static void HandleCoProcRT(UINT32 insn)
     /* xxxx 1110 oooL nnnn dddd cccc ppp1 mmmm */
 
     // Load (MRC) data from Co-Proc to ARM7 register
-/*    if (insn & 0x00100000)       // Bit 20 = Load or Store
+    if (insn & 0x00100000)       // Bit 20 = Load or Store
     {
         if (arm7_coproc_rt_r_callback)
         {
-            UINT32 res = arm7_coproc_rt_r_callback(Machine, insn, 0);   // RT Read handler must parse opcode & return appropriate result
+            UINT32 res = arm7_coproc_rt_r_callback(insn);   // RT Read handler must parse opcode & return appropriate result
             SET_REGISTER((insn >> 12) & 0xf, res);
         }
         else
@@ -703,11 +736,10 @@ static void HandleCoProcRT(UINT32 insn)
     else
     {
         if (arm7_coproc_rt_r_callback)
-            arm7_coproc_rt_w_callback(Machine, insn, GET_REGISTER((insn >> 12) & 0xf), 0);
+         ; //  arm7_coproc_rt_w_callback(insn, GET_REGISTER((insn >> 12) & 0xf), 0); // iq_132
         else
             LOG(("%08x: Co-Processor Register Transfer executed, but no RT Write callback defined!\n", R15));
     }
-*/
 }
 
 /* Data Transfer - To/From Arm to Co-Proc
@@ -773,7 +805,7 @@ static void HandleCoProcDT(UINT32 insn)
         SET_REGISTER(rn, ornv);
 }
 
-static void HandleBranch(UINT32 insn)
+ARM7_INLINE void HandleBranch(UINT32 insn)
 {
     UINT32 off = (insn & INSN_BRANCH) << 2;
 
@@ -793,7 +825,7 @@ static void HandleBranch(UINT32 insn)
         R15 += off + 8;
     }
 
-    change_pc(R15);
+//    change_pc(R15);
 }
 
 static void HandleMemSingle(UINT32 insn)
@@ -866,7 +898,7 @@ static void HandleMemSingle(UINT32 insn)
             {
                 R15 = READ32(rnv);
                 R15 -= 4;
-                change_pc(R15);
+           //     change_pc(R15);
                 // LDR, PC takes 2S + 2N + 1I (5 total cycles)
                 ARM7_ICOUNT -= 2;
             }
@@ -1100,7 +1132,7 @@ static void HandleHalfWordDT(UINT32 insn)
             }
         }
     }
-    change_pc(R15);
+ //   change_pc(R15);
 }
 
 static void HandleSwap(UINT32 insn)
@@ -1139,7 +1171,7 @@ static void HandlePSRTransfer(UINT32 insn)
 {
     int reg = (insn & 0x400000) ? SPSR : eCPSR; // Either CPSR or SPSR
     UINT32 newval, val = 0;
-    int oldmode = GET_CPSR & MODE_FLAG;
+    UINT32 oldmode = GET_CPSR & MODE_FLAG;
 
     // get old value of CPSR/SPSR
     newval = GET_REGISTER(reg);
@@ -1234,7 +1266,7 @@ static void HandleALU(UINT32 insn)
 {
     UINT32 op2, sc = 0, rd, rn, opcode;
     UINT32 by, rdn;
-    UINT32 oldR15 = R15;
+ //   UINT32 oldR15 = R15; // iq_132
 
     opcode = (insn & INSN_OPCODE) >> INSN_OPCODE_SHIFT;
 
@@ -1397,8 +1429,8 @@ static void HandleALU(UINT32 insn)
         }
     }
 
-    if (oldR15 != R15)
-        change_pc(R15);
+ //   if (oldR15 != R15)
+//        change_pc(R15);
 }
 
 static void HandleMul(UINT32 insn)
@@ -1512,7 +1544,7 @@ static void HandleMemBlock(UINT32 insn)
 {
     UINT32 rb = (insn & INSN_RN) >> INSN_RN_SHIFT;
     UINT32 rbp = GET_REGISTER(rb);
-    UINT32 oldR15 = R15;
+//    UINT32 oldR15 = R15; // iq_132
     int result;
 
 #if ARM7_DEBUG_CORE
@@ -1688,6 +1720,6 @@ static void HandleMemBlock(UINT32 insn)
         ARM7_ICOUNT -= (result + 1) + 2 + 1;
     }
 
-    if (oldR15 != R15)
-        change_pc(R15);
+ //   if (oldR15 != R15)
+ //       change_pc(R15);
 } /* HandleMemBlock */
