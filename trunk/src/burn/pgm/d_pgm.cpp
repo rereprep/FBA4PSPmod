@@ -187,20 +187,6 @@ static struct BurnDIPInfo orld105kDIPList[] = {
 	// Defaults
 	{0x2E,	0xFF, 0xFF,	0x02, NULL},
 };
-static struct BurnDIPInfo oldsDIPList[] = {
-
-	// Defaults
-	{0x2E,	0xFF, 0xFF,	0x06, NULL},
-
-	// DIP 2
-	{0,		0xFE, 0,	6,	  "Region"},
-	{0x2E,	0x01, 0x0F,	0x01, "Taiwan"},
-	{0x2E,	0x01, 0x0F,	0x02, "China"},
-	{0x2E,	0x01, 0x0F,	0x03, "Japan"},
-	{0x2E,	0x01, 0x0F,	0x04, "Korea"},
-	{0x2E,	0x01, 0x0F,	0x05, "Hong Kong"},
-	{0x2E,	0x01, 0x0F,	0x06, "World"},
-};
 static struct BurnDIPInfo sangoDIPList[] = {
 
 	// Defaults
@@ -214,6 +200,36 @@ static struct BurnDIPInfo sangoDIPList[] = {
 	{0x2E,	0x01, 0x0F,	0x03, "Korea"},
 	{0x2E,	0x01, 0x0F,	0x04, "Hong Kong"},
 	{0x2E,	0x01, 0x0F,	0x05, "World"},
+};
+
+static struct BurnDIPInfo oldsDIPList[] = {
+
+	// Defaults
+	{0x2E,	0xFF, 0xFF,	0x04, NULL},
+
+	// DIP 2
+	{0,		0xFE, 0,	6,	  "Region"},
+	{0x2E,	0x01, 0x0F,	0x01, "Taiwan"},
+	{0x2E,	0x01, 0x0F,	0x02, "China"},
+	{0x2E,	0x01, 0x0F,	0x03, "Japan"},
+	{0x2E,	0x01, 0x0F,	0x04, "Korea"},
+	{0x2E,	0x01, 0x0F,	0x05, "Hong Kong"},
+	{0x2E,	0x01, 0x0F,	0x06, "World"},
+};
+
+static struct BurnDIPInfo olds100DIPList[] = {
+
+	// Defaults
+	{0x2E,	0xFF, 0xFF,	0x06, NULL},
+
+	// DIP 2
+	{0,		0xFE, 0,	6,	  "Region"},
+	{0x2E,	0x01, 0x0F,	0x01, "Taiwan"},
+	{0x2E,	0x01, 0x0F,	0x02, "China"},
+	{0x2E,	0x01, 0x0F,	0x03, "Japan"},
+	{0x2E,	0x01, 0x0F,	0x04, "Korea"},
+	{0x2E,	0x01, 0x0F,	0x05, "Hong Kong"},
+	{0x2E,	0x01, 0x0F,	0x06, "World"},
 };
 
 static struct BurnDIPInfo kovjDIPList[] = {
@@ -316,7 +332,7 @@ static struct BurnDIPInfo martmastDIPList[] = {
 	{0,		0xFE, 0,	7,	  "Region (Fake)"},
 	{0x2E,	0x01, 0x07,	0x00, "China"},
 	{0x2E,	0x01, 0x07,	0x01, "Taiwan"},
-	{0x2E,	0x01, 0x07,	0x02, "China"},
+	{0x2E,	0x01, 0x07,	0x02, "Japan"},
 	{0x2E,	0x01, 0x07,	0x03, "Korea"},
 	{0x2E,	0x01, 0x07,	0x04, "Hong Kong"},
 	{0x2E,	0x01, 0x07,	0x05, "World"},
@@ -332,7 +348,7 @@ static struct BurnDIPInfo martmascDIPList[] = {
 	{0,		0xFE, 0,	7,	  "Region (Fake)"},
 	{0x2E,	0x01, 0x07,	0x00, "China"},
 	{0x2E,	0x01, 0x07,	0x01, "Taiwan"},
-	{0x2E,	0x01, 0x07,	0x02, "China"},
+	{0x2E,	0x01, 0x07,	0x02, "Japan"},
 	{0x2E,	0x01, 0x07,	0x03, "Korea"},
 	{0x2E,	0x01, 0x07,	0x04, "Hong Kong"},
 	{0x2E,	0x01, 0x07,	0x05, "World"},
@@ -355,6 +371,7 @@ STDDIPINFOEXT(kov2,     pgm, kov2);
 STDDIPINFOEXT(martmast, pgm, martmast);
 STDDIPINFOEXT(martmasc, pgm, martmasc);
 STDDIPINFOEXT(olds,     pgm, olds);
+STDDIPINFOEXT(olds100,  pgm, olds100);
 
 // -----------------------------------------------------------------------------
 // BIOS
@@ -780,7 +797,7 @@ void killbldt_patch()
 
 	killbld_sharedprotram = (unsigned short*)USER0;
 
-	BurnLoadRom(USER1,  1, 1); // load protection data
+	BurnLoadRom(USER1, 11, 1); // load protection data
 	BurnLoadRom(USER2, 12, 1); // load ram dump
 }
 
@@ -885,7 +902,7 @@ struct BurnDriverD BurnDrvDrgw3k = {
 };
 
 
-// Oriental Legend Special (V101, Korea)
+// Oriental Legend Special / Xi Yo Gi Shi Re Zuang Super (ver. 101, Korean Board)
 
 static struct BurnRomInfo oldsRomDesc[] = {
 	{ "sp_v101.u2",		  0x080000, 0x08eb9661, 1 | BRF_ESS | BRF_PRG }, // 68000
@@ -894,9 +911,7 @@ static struct BurnRomInfo oldsRomDesc[] = {
 	{ "sp_v101.u5",		  0x080000, 0x58662e12, 1 | BRF_ESS | BRF_PRG },
 	{ "sp_v101.u1",		  0x080000, 0x2b2f4f1e, 1 | BRF_ESS | BRF_PRG },
 
-	{ "sp_v101.u6",		  0x010000, 0x097046bc, 7 | BRF_ESS | BRF_PRG }, // protection rom (not used atm)
-
-	{ "t0500.rom",		  0x400000, 0xd881726c, 2 | BRF_GRA },		 // 32x32 BG Tiles
+	{ "t0500.rom",		  0x400000, 0xd881726c, 2 | BRF_GRA },		 // Tile data
 	{ "t0501.rom",		  0x200000, 0xd2106864, 2 | BRF_GRA },
 
 	{ "a0500.rom",		  0x400000, 0x80a59197, 3 | BRF_GRA },		 // Sprite Colour Data
@@ -912,19 +927,64 @@ static struct BurnRomInfo oldsRomDesc[] = {
 	{ "b0502.rom",		  0x400000, 0xe97b31c3, 4 | BRF_GRA },
 	{ "b0503.u16",		  0x400000, 0xe41d98e4, 4 | BRF_GRA },
 
-	{ "m0500.rom",		  0x200000, 0x37928cdd, 5 | BRF_SND },		 // Samples - (8 bit mono 11025Hz)
+	{ "m0500.rom",		  0x200000, 0x37928cdd, 5 | BRF_SND },		 // Samples
+
+	{ "sp_v101.u6",		  0x010000, 0x097046bc, 0 | BRF_ESS | BRF_PRG }, // protection rom
+
+	{ "ram_dump", 		  0x040000, 0x619cc52d, 0 | BRF_ESS },		 // ram dump
 };
 
 STDROMPICKEXT(olds, olds, pgm);
 STD_ROM_FN(olds);
 
+static void olds_ram()
+{
+	USER2 = USER0 + 0x40000;
+
+	// load ram dump
+	if (!strcmp(BurnDrvGetTextA(DRV_NAME), "olds100a")) {
+		BurnLoadRom(USER2, 15, 1);
+	} else {
+		BurnLoadRom(USER2, 20, 1);
+	}
+	BurnByteswap(USER2, 0x40000);
+
+	// stage fix
+	unsigned short* dst = (unsigned short *)malloc(0x40000);
+	if (dst)
+	{
+		memcpy(dst, USER2, 0x40000);
+		for (int i = 0; i < 0x20000 / 2; i++)
+		{
+			if (dst[i] == (0xffff-i))
+				dst[i] = 0x4e75;
+		}
+		memcpy(USER2, dst, 0x40000);
+		free (dst);
+	}
+}
+
+static int oldsInit()
+{
+	pPgmInitCallback = olds_ram;
+	pPgmResetCallback = oldsa_reset;
+
+	int nRet = pgmInit();
+
+	if (nRet == 0) {
+		install_oldsa_protection();
+	}
+
+	return nRet;
+}
+
 struct BurnDriver BurnDrvOlds = {
-	"olds", NULL, "pgm", "1999",
-	"Oriental Legend Special (ver. 101, Korean Board)\0", "Not working", "IGS", "PGM",
-	L"Oriental Legend Special\0\u897F\u6E38\u91CA\u5384\u4F20 Special (ver. 101, Korean Board)\0", NULL, NULL, NULL,
-	0, 4, HARDWARE_IGS_PGM,
-	NULL, oldsRomInfo, oldsRomName, pgmInputInfo, sangoDIPInfo,
-	pgmInit, pgmExit, pgmFrame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	"olds", NULL, "pgm", "1998",
+	"Oriental Legend Special\0Xi Yo Gi Shi Re Zuang Super (ver. 101, Korean Board)\0", NULL, "IGS", "PGM",
+	L"Oriental Legend Special\0\u897F\u6E38\u91CA\u5384\u4F20 Super (ver. 101, Korean Board)\0", NULL, NULL, NULL,
+	BDF_GAME_WORKING, 4, HARDWARE_IGS_PGM,
+	NULL, oldsRomInfo, oldsRomName, pgmInputInfo, oldsDIPInfo,
+	oldsInit, pgmExit, pgmFrame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448, 224, 4, 3
 };
 
@@ -936,6 +996,7 @@ static struct BurnRomInfo olds100RomDesc[] = {
 	{ "v100-u3.040",	  0x080000, 0xd0e2b741, 1 | BRF_ESS | BRF_PRG },
 	{ "v100-u4.040",	  0x080000, 0x32a6bdbd, 1 | BRF_ESS | BRF_PRG },
 	{ "v100-u5.040",	  0x080000, 0xb4a1cafb, 1 | BRF_ESS | BRF_PRG },
+	{ "v100-u1.040",	  0x080000, 0x37ea4e75, 1 | BRF_ESS | BRF_PRG },
 
 	{ "t0500.rom",		  0x400000, 0xd881726c, 2 | BRF_GRA },		 // Tile data
 	{ "t0501.rom",		  0x200000, 0xd2106864, 2 | BRF_GRA },
@@ -956,18 +1017,20 @@ static struct BurnRomInfo olds100RomDesc[] = {
 	{ "m0500.rom",		  0x200000, 0x37928cdd, 5 | BRF_SND },		 // Samples
 
 	{ "kd-u6.512",		  0x010000, 0xe7613dda, 0 | BRF_ESS | BRF_PRG }, // protection rom
+
+	{ "ram_dump", 		  0x040000, 0x619cc52d, 0 | BRF_ESS },		 // ram dump
 };
 
 STDROMPICKEXT(olds100, olds100, pgm);
 STD_ROM_FN(olds100);
 
 struct BurnDriver BurnDrvOlds100 = {
-	"olds100", "olds", "pgm", "1999",
-	"Oriental Legend Special\0Xi Yo Gi Shi Re Zuang Super (ver. 100)\0", "Not working", "IGS", "PGM",
+	"olds100", "olds", "pgm", "1998",
+	"Oriental Legend Special\0Xi Yo Gi Shi Re Zuang Super (ver. 100)\0", NULL, "IGS", "PGM",
 	L"Oriental Legend Special\0\u897F\u6E38\u91CA\u5384\u4F20 Super (ver. 100)\0", NULL, NULL, NULL,
-	BDF_CLONE , 4, HARDWARE_IGS_PGM,
-	NULL, olds100RomInfo, olds100RomName, pgmInputInfo, sangoDIPInfo,
-	pgmInit, pgmExit, pgmFrame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	BDF_GAME_WORKING | BDF_CLONE , 4, HARDWARE_IGS_PGM,
+	NULL, olds100RomInfo, olds100RomName, pgmInputInfo, olds100DIPInfo,
+	oldsInit, pgmExit, pgmFrame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448, 224, 4, 3
 };
 
@@ -1001,50 +1064,16 @@ static struct BurnRomInfo olds100aRomDesc[] = {
 STDROMPICKEXT(olds100a, olds100a, pgm);
 STD_ROM_FN(olds100a);
 
-static void olds100a_ram()
-{
-	USER2 = USER0 + 0x40000;
-	BurnLoadRom(USER2, 15, 1); // load ram dump
-	BurnByteswap(USER2, 0x40000);
-
-	// stage fix
-	unsigned short *dst = (unsigned short *)malloc(0x40000);
-	if (dst)
-	{
-		memcpy (dst, USER2, 0x40000);
-		for(int i=0;i<0x20000/2;i++)
-		{
-			if(dst[i] == (0xffff-i))
-				dst[i] = 0x4e75;
-		}
-		memcpy (USER2, dst, 0x40000);
-		free (dst);
-	}
-}
-
-static int olds100aInit()
-{
-	pPgmInitCallback = olds100a_ram;
-	pPgmResetCallback = oldsa_reset;
-
-	int nRet = pgmInit();
-
-	if (nRet == 0) {
-		install_oldsa_protection();
-	}
-
-	return nRet;
-}
-
 struct BurnDriver BurnDrvOlds100a = {
-	"olds100a", "olds", "pgm", "1999",
-	"Oriental Legend Special\0Xi Yo Gi Shi Re Zuang Super (alt ver. 100)\0", "Not working", "IGS", "PGM",
+	"olds100a", "olds", "pgm", "1998",
+	"Oriental Legend Special\0Xi Yo Gi Shi Re Zuang Super (alt ver. 100)\0", NULL, "IGS", "PGM",
 	L"Oriental Legend Special\0\u897F\u6E38\u91CA\u5384\u4F20 Super (alt ver. 100)\0", NULL, NULL, NULL,
 	BDF_GAME_WORKING | BDF_CLONE , 4, HARDWARE_IGS_PGM,
-	NULL, olds100aRomInfo, olds100aRomName, pgmInputInfo, oldsDIPInfo,
-	olds100aInit, pgmExit, pgmFrame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
+	NULL, olds100aRomInfo, olds100aRomName, pgmInputInfo, olds100DIPInfo,
+	oldsInit, pgmExit, pgmFrame, pgmDraw, pgmScan, 0, NULL, NULL, NULL, &nPgmPalRecalc,
 	448, 224, 4, 3
 };
+
 
 
 // Photo Y2K / Real and Fake (V104)
