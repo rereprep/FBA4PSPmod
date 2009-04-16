@@ -40,7 +40,10 @@ void (*pPgmResetCallback)() = NULL;
 void (*pPgmInitCallback)() = NULL;
 int (*pPgmScanCallback)(int, int*) = NULL;
 
+static int kov2 = 0;
 static int nEnableArm7 = 0;
+static int nReignHack = 0;
+static int nArm7Idle = 0;
 
 #define M68K_CYCS_PER_FRAME	(20000000 / 60)
 #define Z80_CYCS_PER_FRAME	( 8468000 / 60)
@@ -67,7 +70,10 @@ static int pgmMemIndex()
 	unsigned char *Next; Next = Mem;
 	PGM68KBIOS	= Next; Next += 0x0020000;		// 68000 BIOS
 	PGM68KROM	= Next; Next += nPGM68KROMLen;	// 68000 PRG (max 0x400000)
-	USER0		= Next; Next += 0x0200000;
+	if (!strstr(BurnDrvGetTextA(DRV_NAME), "kov")||strstr(BurnDrvGetTextA(DRV_NAME), "kov2")) {
+		USER0		= Next; Next += 0x0200000;
+	}
+	
 	if (BurnDrvGetHardwareCode() & HARDWARE_IGS_USE_ARM_CPU) {
 		PGMARMROM	= Next; Next += 0x0004000;
 	}
@@ -87,9 +93,9 @@ static int pgmMemIndex()
 
 	if (BurnDrvGetHardwareCode() & HARDWARE_IGS_USE_ARM_CPU) {
 		PGMARMShareRAM	= Next; Next += 0x0010000;
-		PGMARMRAM0	= Next; Next += 0x0001000; // minimum map is 0x1000 - should be 0x400 :S
+		PGMARMRAM0	= Next; Next += 0x00400; // minimum map is 0x1000 - should be 0x400 :S
 		PGMARMRAM1	= Next; Next += 0x0010000;
-		PGMARMRAM2	= Next; Next += 0x0001000; // minimum map is 0x1000 - should be 0x400 :S
+		PGMARMRAM2	= Next; Next += 0x00400; // minimum map is 0x1000 - should be 0x400 :S
 	}	
 	RamEnd		= Next;
 
@@ -546,10 +552,21 @@ void pgm_cpu_sync()
 	}
 }
 
+void pgm_arm7_resume()
+{
+	nArm7Idle = 0;
+	Arm7Run(ARM7_CYCS_PER_INTER);
+}
+
+void pgm_arm7_suspend()
+{
+	Arm7Idle();
+	nArm7Idle = 1;
+}
+
 int PgmDoReset()
 {
 	SekOpen(0);
-	SekSetIRQLine(0, SEK_IRQSTATUS_NONE);
 	SekReset();
 	SekClose();
 if (nEnableArm7) {
@@ -574,7 +591,9 @@ int pgmInit()
 	Mem = NULL;
 	bGamePuzlstar = strcmp(BurnDrvGetTextA(DRV_NAME), "puzlstar") == 0;
 	bGameDrgw2 = strcmp(BurnDrvGetTextA(DRV_NAME), "drgw2") == 0 || strcmp(BurnDrvGetTextA(DRV_NAME), "drgw2c") == 0 || strcmp(BurnDrvGetTextA(DRV_NAME), "drgw2j") == 0;
-		
+	if (strncmp(BurnDrvGetTextA(DRV_NAME), "kov2", 4) == 0) {
+		kov2 = 1;
+	}	
 	pgmGetRoms(false);
 
 	pgmMemIndex();
@@ -602,8 +621,8 @@ int pgmInit()
 		}
 		if(bPgmCreateCache)
 		{
-			if ((uniCacheHead = (unsigned char *)malloc(0x0A00000)) == NULL) return 1;
-			memset(uniCacheHead, 0, 0x0A00000);
+			if ((uniCacheHead = (unsigned char *)malloc(0x0800000)) == NULL) return 1;
+			memset(uniCacheHead, 0, 0x0800000);
 		}
 
 
@@ -631,27 +650,24 @@ int pgmInit()
 
 
 	{
-		SekInit(0, 0x68000);										// Allocate 68000
-	    SekOpen(0);
+		SekInit(0, 0x68000);				// Allocate 68000
+		SekOpen(0);
 
-		SekMapMemory(PGM68KBIOS,		0x000000, 0x01ffff, SM_ROM);				// 68000 BIOS
-		SekMapMemory(PGM68KROM,			0x100000, (nPGM68KROMLen-1)+0x100000, SM_ROM);				// 68000 ROM
+		SekMapMemory(PGM68KBIOS,	0x000000, 0x01ffff, SM_ROM);	// 68000 BIOS
+		SekMapMemory(PGM68KROM,		0x100000, (nPGM68KROMLen-1)+0x100000, SM_ROM);	// 68000 ROM
 
-		SekMapMemory(Ram68K,			0x800000, 0x81ffff, SM_RAM);				// Main Ram
-		SekMapMemory(Ram68K,			0x820000, 0x83ffff, SM_RAM);				// Mirrors...
-		SekMapMemory(Ram68K,			0x840000, 0x85ffff, SM_RAM);
-		SekMapMemory(Ram68K,			0x860000, 0x87ffff, SM_RAM);
-		SekMapMemory(Ram68K,			0x880000, 0x89ffff, SM_RAM);
-		SekMapMemory(Ram68K,			0x8a0000, 0x8bffff, SM_RAM);
-		SekMapMemory(Ram68K,			0x8c0000, 0x8dffff, SM_RAM);
-		SekMapMemory(Ram68K,			0x8e0000, 0x8fffff, SM_RAM);
+		for (int i = 0; i < 8; i++) {		// Main Ram + Mirrors...
+			SekMapMemory(Ram68K,		0x800000 + i * 0x020000, 0x81ffff + i * 0x020000, SM_RAM);
+		}
 
-		SekMapMemory((unsigned char *)RamBg,	0x900000, 0x903fff, SM_RAM);
-		SekMapMemory((unsigned char *)RamTx,	0x904000, 0x905fff, SM_RAM);
-		SekMapMemory((unsigned char *)RamRs,	0x907000, 0x9077ff, SM_RAM);
+		for (int i = 0; i < 32; i++) {		// Video Ram + Mirrors...
+			SekMapMemory((unsigned char *)RamBg,	0x900000 + i * 0x008000, 0x903fff + i * 0x008000, SM_RAM);
+			SekMapMemory((unsigned char *)RamTx,	0x904000 + i * 0x008000, 0x905fff + i * 0x008000, SM_RAM);
+			SekMapMemory((unsigned char *)RamRs,	0x907000 + i * 0x008000, 0x9077ff + i * 0x008000, SM_RAM);
+		}
+
 		SekMapMemory((unsigned char *)RamPal,	0xa00000, 0xa011ff, SM_RAM);
 		SekMapMemory((unsigned char *)RamVReg,	0xb00000, 0xb0ffff, SM_RAM);
-
 
 		SekMapHandler(1,			0xA00000, 0xA011FF, SM_WRITE);
 		SekMapHandler(2,			0xc10000, 0xc1ffff, SM_READ | SM_WRITE);
@@ -660,9 +676,9 @@ int pgmInit()
 		SekSetReadByteHandler(0, PgmReadByte);
 		SekSetWriteWordHandler(0, PgmWriteWord);
 		SekSetWriteByteHandler(0, PgmWriteByte);
-
-		SekSetWriteWordHandler(1, PgmPalWriteWord);
 		
+		SekSetWriteWordHandler(1, PgmPalWriteWord);
+
 		SekSetReadWordHandler(2, PgmZ80ReadWord);
 		SekSetWriteWordHandler(2, PgmZ80WriteWord);
 
@@ -681,11 +697,14 @@ int pgmInit()
 		ZetClose();
 	}
 
-	if (BurnDrvGetHardwareCode() & HARDWARE_IGS_USE_ARM_CPU)
-	{
+	if (BurnDrvGetHardwareCode() & HARDWARE_IGS_USE_ARM_CPU) {
 		nEnableArm7 = 1;
+	}
 
-		install_asic27A_protection();
+	if (BurnDrvGetHardwareCode() & HARDWARE_IGS_REIGNHACKA) {
+		nReignHack = 1;
+	} else if (BurnDrvGetHardwareCode() & HARDWARE_IGS_REIGNHACKB) {
+		nReignHack = 2;
 	}
 
 	ics2115_init();
@@ -724,7 +743,10 @@ int pgmExit()
 	pPgmInitCallback = NULL;
 	pPgmScanCallback = NULL;
 
+	kov2 = 0;
 	nEnableArm7 = 0;
+	nReignHack = 0;
+	nArm7Idle = 0;
 	destroyUniCache();
 
 	return 0;
@@ -783,7 +805,14 @@ int pgmFrame()
 	if (nEnableArm7) {
 		Arm7Open(0);
 
-		PGMARMShareRAM[0x138] = PgmInput[7]; // region hack
+			if (nReignHack == 1) {
+			PGMARMShareRAM[0x8] = PgmInput[7]; // region hack (55857E/F)
+		}
+		else if (nReignHack == 2) {
+			PGMARMShareRAM[0x138] = PgmInput[7]; // region hack (55857F/G)
+		}
+		else {
+		}
 	}
 	SekOpen(0);
 	//ZetOpen(0);
@@ -802,7 +831,7 @@ int pgmFrame()
 
 		cycles = nCyclesNext[2] - nCyclesDone[2];
 
-		if (cycles > 0 && nEnableArm7) {
+		if (cycles > 0 && nEnableArm7 && nArm7Idle == 0 ) {
 			nCyclesDone[2] += Arm7Run(cycles);
 		}
 

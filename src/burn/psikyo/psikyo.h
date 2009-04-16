@@ -1,5 +1,5 @@
 #include "burnint.h"
-
+#include "UniCache.h"
 // General
 enum {
 	PSIKYO_HW_SAMURAIA,
@@ -22,6 +22,7 @@ extern unsigned char* PsikyoPalSrc;
 extern unsigned char PsikyoRecalcPalette;
 extern unsigned int* PsikyoPalette;
 
+
 // Tile rendering
 int PsikyoTileRender();
 void PsikyoSetTileBank(int nLayer, int nBank);
@@ -39,6 +40,6 @@ void PsikyoSpriteExit();
 int PsikyoSpriteBuffer();
 int PsikyoSpriteRender(int nLowPriority, int nHighPriority);
 
-extern unsigned char* PsikyoSpriteROM;
+//extern unsigned char* PsikyoSpriteROM;
 extern unsigned char* PsikyoSpriteRAM;
 extern unsigned char* PsikyoSpriteLUT;

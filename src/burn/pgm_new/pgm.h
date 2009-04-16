@@ -48,6 +48,8 @@ extern void (*pPgmResetCallback)();
 extern int (*pPgmScanCallback)(int, int*);
 
 void pgm_cpu_sync();
+void pgm_arm7_resume();
+void pgm_arm7_suspend();
 
 // pgm_draw
 extern int pgmDraw();
@@ -61,6 +63,7 @@ void install_killbldt_protection();
 void install_asic3_protection();
 void install_asic27A_protection();
 void install_oldsa_protection();
+void install_kovsh_protection();
 
 void pstars_reset();
 void killbldt_reset();
@@ -85,6 +88,10 @@ void pgm_kov2_decrypt();
 void pgm_puzzli2_decrypt();
 void pgm_kov2p_decrypt();
 void pgm_theglad_decrypt();
+void pgm_oldsplus_decrypt();
+void pgm_kovshp_decrypt();
+void pgm_killbldp_decrypt();
+void pgm_svg_decrypt();
 
 struct BoffsetHead
 {

@@ -1,15 +1,16 @@
 
 #include "pgm.h"
-#include "pgmy2ks.h"
+//#include "pgmy2ks.h"
 #include "bitswap.h"
 #include "arm7_intf.h"
 
-int pstarsScan(int nAction,int */*pnMin*/);
-int killbldtScan(int nAction,int */*pnMin*/);
-int asic28Scan(int nAction,int */*pnMin*/);
-int asic3Scan(int nAction,int */*pnMin*/);
-int asic27AScan(int nAction,int *);
-int olds100aScan(int nAction, int */*pnMin*/);
+int pstarsScan(int nAction, int *);
+int killbldtScan(int nAction, int *);
+int asic28Scan(int nAction, int *);
+int asic3Scan(int nAction, int *);
+int asic27AScan(int nAction, int *);
+int olds100aScan(int nAction, int *);
+int kovshScan(int nAction, int *);
 
 //-----------------------------------------------------------------------------------------------------
 // ASIC3 - Oriental Legends
@@ -168,10 +169,10 @@ void install_asic3_protection()
 
 //-----------------------------------------------------------------------------------------------------
 // ASIC28 - Knights of Valour and PhotoY2k
-
+/*
 // photo2yk bonus stage
 static const unsigned int AETABLE[16]={0x00,0x0a,0x14,0x01,0x0b,0x15,0x02,0x0c,0x16};
-
+*/
 //Not sure if BATABLE is complete
 static const unsigned int BATABLE[0x40]= {
 		0x00,0x29,0x2c,0x35,0x3a,0x41,0x4a,0x4e,	//0x00
@@ -188,17 +189,17 @@ unsigned short ASIC28REGS[10];
 unsigned short ASICPARAMS[256];
 unsigned short ASIC28RCNT=0;
 unsigned int E0REGS[16];
-
+/*
 static unsigned int photoy2k_seqpos;
 static unsigned int photoy2k_trf[3], photoy2k_soff;
-
+*/
 static unsigned short sango_protram_r(unsigned short offset)
 {
 	if (offset == 8) return PgmInput[7];
 
 	return 0x0000;
 }
-
+/*
 static unsigned int photoy2k_spritenum()
 {
 	UINT32 base = photoy2k_seqpos & 0xffc00;
@@ -232,18 +233,18 @@ static unsigned int photoy2k_spritenum()
 	}
 	return 0;
 }
-
+*/
 static unsigned short pgm_asic28_r(unsigned short offset)
 {
 	unsigned int val=(ASIC28REGS[1]<<16)|(ASIC28REGS[0]);
 
 	switch(ASIC28REGS[1]&0xff) {
-		case 0x20: // PhotoY2k spritenum conversion 4/4
+/*		case 0x20: // PhotoY2k spritenum conversion 4/4
 			val = photoy2k_soff >> 16;
 			break;
 		case 0x21: // PhotoY2k spritenum conversion 3/4
 			if(!ASIC28RCNT) {
-
+				extern const unsigned int pgmy2ks[];
 				photoy2k_trf[2] = val & 0xffff;
 				if(photoy2k_trf[0] < 0x3c00)
 					photoy2k_soff = pgmy2ks[photoy2k_trf[0]];
@@ -268,15 +269,18 @@ static unsigned short pgm_asic28_r(unsigned short offset)
 			if(!ASIC28RCNT) photoy2k_seqpos = (val & 0xffff) << 4;
 			val = photoy2k_spritenum();
 			break;
+*/
 		case 0x99:
 			val=0x880000;
 			break;
 		case 0x9d:	// spr palette
 			val=0xa00000+((ASIC28REGS[0]&0x1f)<<6);
 			break;
+/*
 		case 0xae:  //Photo Y2k Bonus stage
 			val=AETABLE[ASIC28REGS[0]&0xf];
 			break;
+*/
 		case 0xb0:
 			val=B0TABLE[ASIC28REGS[0]&0xf];
 			break;
@@ -420,8 +424,8 @@ void asic28_reset()
 	memset(E0REGS, 0, 16);
 
 	// photoy2k
-	photoy2k_seqpos = photoy2k_soff = 0;
-	memset(photoy2k_trf, 0, 3);
+//	photoy2k_seqpos = photoy2k_soff = 0;
+//	memset(photoy2k_trf, 0, 3);
 }
 
 void __fastcall asic28_write_byte(unsigned int address, unsigned char data)
@@ -1348,7 +1352,7 @@ unsigned char __fastcall oldsa_mainram_read_byte(unsigned int address)
 void oldsa_reset()
 {
 	olds_bs = olds_cmd3 = kb_cmd = ptr = rego = 0;
-	memcpy (USER0, USER2, 0x04000);
+	memcpy (USER0, USER2, 0x4000);
 }
 
 void install_oldsa_protection()
@@ -1361,8 +1365,7 @@ void install_oldsa_protection()
 
 	SekOpen(0);
 
-	for (int i = 0; i < 0x100000; i+=0x4000) // mirrored?
-		SekMapMemory(USER0,	0x400000 + i, 0x403fff + i, SM_RAM);
+	SekMapMemory(USER0,	0x400000, 0x403fff, SM_RAM);
 
 	SekMapHandler(4,	0xdcb400, 0xdcb403, SM_READ | SM_WRITE);
 	SekSetReadWordHandler(4, oldsa_read_word);
@@ -1375,10 +1378,123 @@ void install_oldsa_protection()
 	SekClose();
 }
 
+//----------------------------------------------------------------------------------------------------------
+// kovsh
+
+static unsigned short kovsh_highlatch_arm_w = 0;
+static unsigned short kovsh_lowlatch_arm_w = 0;
+static unsigned short kovsh_highlatch_68k_w = 0;
+static unsigned short kovsh_lowlatch_68k_w = 0;
+static unsigned int kovsh_counter = 0;
+
+void __fastcall kovsh_write_word(unsigned int address, unsigned short data)
+{
+	switch (address)
+	{
+		case 0x500000:
+			kovsh_lowlatch_68k_w = data;
+		return;
+
+		case 0x500002:
+			kovsh_highlatch_68k_w = data;
+			pgm_arm7_resume();
+		return;
+	}
+}
+
+unsigned short __fastcall kovsh_read_word(unsigned int address)
+{
+	if ((address & 0xffffc0) == 0x4f0000) {
+		return *((unsigned short*)(PGMARMShareRAM + (address & 0x3e)));
+	}
+
+	switch (address)
+	{
+		case 0x500000:
+//			pgm_cpu_sync();
+			return kovsh_lowlatch_arm_w;
+
+		case 0x500002:
+//			pgm_cpu_sync();
+			return kovsh_highlatch_arm_w;
+	}
+
+	return 0;
+}
+
+void kovsh_arm7_write_word(unsigned int address, unsigned short data)
+{
+	// written... but never read?
+	if ((address & 0xffffff80) == 0x50800000) {
+		*((unsigned short*)(PGMARMShareRAM + ((address>>1) & 0x3e))) = data;
+		return;
+	}
+}
+
+void kovsh_arm7_write_long(unsigned int address, unsigned int data)
+{
+	switch (address)
+	{
+		case 0x40000000:
+		{
+			kovsh_highlatch_arm_w = data>>16;
+			kovsh_lowlatch_arm_w = data;
+
+			kovsh_highlatch_68k_w = 0;
+			kovsh_lowlatch_68k_w = 0;
+
+			if ((kovsh_highlatch_arm_w & 0xFF00) != 0)
+			{
+				pgm_arm7_suspend();
+			}
+		}
+		return;
+	}
+}
+
+unsigned int kovsh_arm7_read_long(unsigned int address)
+{
+	switch (address)
+	{
+		case 0x40000000:
+			return (kovsh_highlatch_68k_w << 16) | (kovsh_lowlatch_68k_w);
+
+		case 0x4000000c:
+			return kovsh_counter++;
+	}
+
+	return 0;
+}
+
+void install_kovsh_protection()
+{
+	pPgmScanCallback = kovshScan;
+
+	SekOpen(0);
+
+	SekMapMemory(PGMARMShareRAM, 0x4f0000, 0x4f003f, SM_RAM);
+
+	SekMapHandler(4, 0x500000, 0x500005, SM_READ | SM_WRITE);
+
+	SekSetReadWordHandler(4, kovsh_read_word);
+	SekSetWriteWordHandler(4, kovsh_write_word);
+	SekClose();
+
+	Arm7Init(1);
+	Arm7Open(0);
+	Arm7MapMemory(PGMARMROM, 0x00000000, 0x00003fff, ARM7_ROM);
+	Arm7MapMemory(PGMARMRAM0, 0x10000000, 0x100003ff, ARM7_RAM);
+	Arm7MapMemory(PGMARMRAM2, 0x50000000, 0x500003ff, ARM7_RAM);
+	Arm7SetWriteWordHandler(kovsh_arm7_write_word);
+	Arm7SetWriteLongHandler(kovsh_arm7_write_long);
+	Arm7SetReadLongHandler(kovsh_arm7_read_long);
+	Arm7Close();
+}
+
 //-----------------------------------------------------------------------------------------------------
 // Save states
 
-int asic28Scan(int nAction, int */*pnMin*/)
+int asic28Scan(int nAction, int *)
 {
 	if (nAction & ACB_DRIVER_DATA) {
 		// Scan critical driver variables
@@ -1387,15 +1503,15 @@ int asic28Scan(int nAction, int */*pnMin*/)
 		SCAN_VAR(ASICPARAMS);
 		SCAN_VAR(ASIC28RCNT);
 		SCAN_VAR(E0REGS);
-		SCAN_VAR(photoy2k_seqpos);
-		SCAN_VAR(photoy2k_trf);
-		SCAN_VAR(photoy2k_soff);
+//		SCAN_VAR(photoy2k_seqpos);
+//		SCAN_VAR(photoy2k_trf);
+//		SCAN_VAR(photoy2k_soff);
 	}
 
 	return 0;
 }
 
-int asic3Scan(int nAction, int */*pnMin*/)
+int asic3Scan(int nAction, int *)
 {
 	if (nAction & ACB_DRIVER_DATA) {
 		SCAN_VAR(asic3_reg);
@@ -1411,14 +1527,14 @@ int asic3Scan(int nAction, int */*pnMin*/)
 	return 0;
 }
 
-int killbldtScan(int nAction, int */*pnMin*/)
+int killbldtScan(int nAction, int *)
 {
 	struct BurnArea ba;
 
 	if (nAction & ACB_MEMORY_RAM) {
 		ba.Data		= USER0 + 0x000000;
 		ba.nLen		= 0x0004000;
-		ba.nAddress = 0;
+		ba.nAddress = 0x300000;
 		ba.szName	= "ProtRAM";
 		BurnAcb(&ba);
 	}
@@ -1432,7 +1548,7 @@ int killbldtScan(int nAction, int */*pnMin*/)
 	return 0;
 }
 
-int pstarsScan(int nAction, int */*pnMin*/)
+int pstarsScan(int nAction, int *)
 {
 	if (nAction & ACB_DRIVER_DATA) {
 		SCAN_VAR(PSTARSKEY);
@@ -1448,8 +1564,36 @@ int pstarsScan(int nAction, int */*pnMin*/)
 	return 0;
 }
 
-int asic27AScan(int nAction,int *)
+int asic27AScan(int nAction, int *)
 {
+	struct BurnArea ba;
+
+	if (nAction & ACB_MEMORY_RAM) {
+		ba.Data		= PGMARMShareRAM;
+		ba.nLen		= 0x0010000;
+		ba.nAddress	= 0xd00000;
+		ba.szName	= "ARM SHARE RAM";
+		BurnAcb(&ba);
+
+		ba.Data		= PGMARMRAM0;
+		ba.nLen		= 0x0000400;
+		ba.nAddress	= 0;
+		ba.szName	= "ARM RAM 0";
+		BurnAcb(&ba);
+
+		ba.Data		= PGMARMRAM1;
+		ba.nLen		= 0x0010000;
+		ba.nAddress	= 0;
+		ba.szName	= "ARM RAM 1";
+		BurnAcb(&ba);
+
+		ba.Data		= PGMARMRAM2;
+		ba.nLen		= 0x0000400;
+		ba.nAddress	= 0;
+		ba.szName	= "ARM RAM 2";
+		BurnAcb(&ba);
+	}
+
 	if (nAction & ACB_DRIVER_DATA) {
 		Arm7Scan(nAction);
 
@@ -1459,14 +1603,14 @@ int asic27AScan(int nAction,int *)
  	return 0;
 }
 
-int olds100aScan(int nAction, int */*pnMin*/)
+int olds100aScan(int nAction, int *)
 {
 	struct BurnArea ba;
 
 	if (nAction & ACB_MEMORY_RAM) {
 		ba.Data		= USER0 + 0x000000;
 		ba.nLen		= 0x0004000;
-		ba.nAddress	= 0;
+		ba.nAddress	= 0x400000;
 		ba.szName	= "ProtRAM";
 		BurnAcb(&ba);
 	}
@@ -1480,4 +1624,41 @@ int olds100aScan(int nAction, int */*pnMin*/)
 	}
 
 	return 0;
+}
+
+int kovshScan(int nAction, int *)
+{
+	struct BurnArea ba;
+
+	if (nAction & ACB_MEMORY_RAM) {
+		ba.Data		= PGMARMShareRAM;
+		ba.nLen		= 0x0000040;
+		ba.nAddress	= 0x400000;
+		ba.szName	= "ARM SHARE RAM";
+		BurnAcb(&ba);
+
+		ba.Data		= PGMARMRAM0;
+		ba.nLen		= 0x0000400;
+		ba.nAddress	= 0;
+		ba.szName	= "ARM RAM 0";
+		BurnAcb(&ba);
+
+		ba.Data		= PGMARMRAM2;
+		ba.nLen		= 0x0000400;
+		ba.nAddress	= 0;
+		ba.szName	= "ARM RAM 1";
+		BurnAcb(&ba);
+	}
+
+	if (nAction & ACB_DRIVER_DATA) {
+		Arm7Scan(nAction);
+
+		SCAN_VAR(kovsh_highlatch_arm_w);
+		SCAN_VAR(kovsh_lowlatch_arm_w);
+		SCAN_VAR(kovsh_highlatch_68k_w);
+		SCAN_VAR(kovsh_lowlatch_68k_w);
+		SCAN_VAR(kovsh_counter);
+	}
+
+ 	return 0;
 }

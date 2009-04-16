@@ -99,9 +99,9 @@
 
 #if ZBUFFER != 0
  #if FLIPY == 0
-  #define ADVANCEZROW pZTileRow += 512
+  #define ADVANCEZROW pZTileRow += 320
  #else
-  #define ADVANCEZROW pZTileRow -= 512
+  #define ADVANCEZROW pZTileRow -= 320
  #endif
 #endif
 
@@ -154,29 +154,29 @@ static void FUNCTIONNAME(BPP,TRANSMODE,DOFLIP,ROT,SCROLL,ZOOMMODE,ZBUF,CLIP)()
  #if ZOOM == 1
   #if ZBUFFER == 0
    #if FLIPY == 0
-	for (y = 0, pTileRow = pTile; y < nTileYSize; ADVANCEROW, pTileData += pYZoomInfo[y], y++) {
+	for (y = 0, pTileRow = pTile; y < nTileYSize; ADVANCEROW, tileDataOffset += pYZoomInfo[y], y++) {
    #else
-  	for (y = nTileYSize - 1, pTileRow = pTile + ((BPP >> 3) * 512 * (nTileYSize - 1)); y >= 0; ADVANCEROW, pTileData += pYZoomInfo[nTileYSize - 1 - y], y--) {
+  	for (y = nTileYSize - 1, pTileRow = pTile + ((BPP >> 3) * 512 * (nTileYSize - 1)); y >= 0; ADVANCEROW, tileDataOffset += pYZoomInfo[nTileYSize - 1 - y], y--) {
    #endif
   #else
    #if FLIPY == 0
-  	for (y = 0, pTileRow = pTile, pZTileRow = pZTile; y < nTileYSize; ADVANCEROW, ADVANCEZROW, pTileData += pYZoomInfo[y], y++) {
+  	for (y = 0, pTileRow = pTile, pZTileRow = pZTile; y < nTileYSize; ADVANCEROW, ADVANCEZROW, tileDataOffset += pYZoomInfo[y], y++) {
    #else
-  	for (y = nTileYSize - 1, pTileRow = pTile + ((BPP >> 3) * 512 * (nTileYSize - 1)), pZTileRow = pZTile + (512 * (nTileYSize - 1)); y >= 0; ADVANCEROW, ADVANCEZROW, pTileData += pYZoomInfo[nTileYSize - 1 - y],  y--) {
+  	for (y = nTileYSize - 1, pTileRow = pTile + ((BPP >> 3) * 512 * (nTileYSize - 1)), pZTileRow = pZTile + (512 * (nTileYSize - 1)); y >= 0; ADVANCEROW, ADVANCEZROW, tileDataOffset += pYZoomInfo[nTileYSize - 1 - y],  y--) {
    #endif
   #endif
  #else
   #if ZBUFFER == 0
    #if FLIPY == 0
-	for (y = 0, pTileRow = pTile; y < 16; y++, ADVANCEROW, pTileData += 16) {
+	for (y = 0, pTileRow = pTile; y < 16; y++, ADVANCEROW, tileDataOffset += 16) {
    #else
-  	for (y = 15, pTileRow = pTile + ((BPP >> 3) * 512 * 15); y >= 0; y--, ADVANCEROW, pTileData += 16) {
+  	for (y = 15, pTileRow = pTile + ((BPP >> 3) * 512 * 15); y >= 0; y--, ADVANCEROW, tileDataOffset += 16) {
    #endif
   #else
    #if FLIPY == 0
-  	for (y = 0, pTileRow = pTile, pZTileRow = pZTile; y < 16; y++, ADVANCEROW, ADVANCEZROW, pTileData += 16) {
+  	for (y = 0, pTileRow = pTile, pZTileRow = pZTile; y < 16; y++, ADVANCEROW, ADVANCEZROW, tileDataOffset += 16) {
    #else
-  	for (y = 15, pTileRow = pTile + ((BPP >> 3) * 512 * 15), pZTileRow = pZTile + (512 * 15); y >= 0; y--, ADVANCEROW, ADVANCEZROW, pTileData += 16) {
+  	for (y = 15, pTileRow = pTile + ((BPP >> 3) * 512 * 15), pZTileRow = pZTile + (512 * 15); y >= 0; y--, ADVANCEROW, ADVANCEZROW, tileDataOffset += 16) {
    #endif
   #endif
  #endif
@@ -216,9 +216,11 @@ static void FUNCTIONNAME(BPP,TRANSMODE,DOFLIP,ROT,SCROLL,ZOOMMODE,ZBUF,CLIP)()
   #define XPOS nTileXPos
   #define ROWOFFSET 0
  #endif
-
+	unsigned char* pTileData=getBlock(tileDataOffset,16);
+	if(pTileData==NULL) return;
  #if DOCLIP == 1 || ROWSCROLL == 1
   #define CLIPPIXEL(a,b) if (XPOS >= 0 - (a) && XPOS < 320 - (a)) { PLOTPIXEL(ROWOFFSET + a,b); }
+		
 		CLIPPIXEL( 0, pTileData[OFFSET( 0)]);
 		CLIPPIXEL( 1, pTileData[OFFSET( 1)]);
 		CLIPPIXEL( 2, pTileData[OFFSET( 2)]);

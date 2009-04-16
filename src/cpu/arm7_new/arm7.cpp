@@ -90,21 +90,9 @@ static ARM7_REGS arm7;
 static int ARM7_ICOUNT;
 static int total_cycles = 0;
 static int curr_cycles = 0;
-static bool arm7Suspend = false;
-
-void Arm7Suspend()
-{
-	arm7Suspend=true;
-}
-
-void Arm7Resume()
-{
-	arm7Suspend=false;
-}
 
 void Arm7Open(int )
 {
-
 }
 
 int Arm7TotalCycles()
@@ -117,6 +105,11 @@ void Arm7NewFrame()
 	total_cycles = 0;
 }
 
+void Arm7Idle()
+{
+	ARM7_ICOUNT = 0;
+}
+
 /* include the arm7 core */
 #include "arm7core.c"
 
@@ -125,7 +118,6 @@ void Arm7NewFrame()
  **************************************************************************/
 static void arm7_init(int )
 {
-
 }
 
 void Arm7Reset()
@@ -141,7 +133,6 @@ static void arm7_exit()
 
 int Arm7Run(int cycles)
 {
-	if(arm7Suspend) return cycles;
 /* include the arm7 core execute code */
 #include "arm7exec.c"
 }
