@@ -26,7 +26,7 @@ short wifiStatus=0;
 short saveIndex=0;
 short gameScreenWidth=SCREEN_WIDTH, gameScreenHeight=SCREEN_HEIGHT;
 bool enableJoyStick=true;
-char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_V12.4.0)";
+char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_V12.5.4)";
 static int find_rom_count = 0;
 static int find_rom_select = 0;
 static int find_rom_top = 0;

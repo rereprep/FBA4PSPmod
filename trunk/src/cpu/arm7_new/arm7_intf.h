@@ -32,13 +32,12 @@ int Arm7Scan(int nAction);
 
 int Arm7TotalCycles();
 void Arm7NewFrame();
+void Arm7Idle();
 
 void Arm7Init(int);
 void Arm7Open(int );
 void Arm7Reset();
 int Arm7Run(int cycles);
-void Arm7Suspend();
-void Arm7Resume();
 
 // defined in arm7core.h
 #define ARM7_IRQ_LINE		0

@@ -5,19 +5,15 @@
  #define __fastcall
 #endif
 
-#define EMU_C68K
-
-#ifndef EMU_C68K
- #define EMU_A68K								// Use A68K Assembler 68000 emulator
- #define EMU_M68K								// Use Musashi 68000 emulator
-#else
+#ifndef EMU_M68K
+ #define EMU_C68K
  #include "c68k.h"
-#endif 
+#endif
 
 #define SEK_MAX	(4)								// Maximum number of CPUs supported
 
 #if defined EMU_M68K
- #include "m68k.h" 
+ #include "m68k.h"
 #endif
 
 // Number of bits used for each page in the fast memory map
@@ -41,7 +37,6 @@
 
 #ifdef EMU_A68K
  // The format of the data in a68k.asm (at the _M68000_regs location)
-/*
  struct A68KContext {
 	unsigned int d[8], a[8];
 	unsigned int isp, srh, ccr, xc, pc, irq, sr;
@@ -53,27 +48,16 @@
 	unsigned int sfc, dfc, usp, vbr;
 	unsigned int nAsmBank, nCpuVersion;
  };
-*/
-struct A68KContext {
-	unsigned int d[8], a[8];
-	unsigned int isp, srh, sr, pc, irq;
-	int (*IrqCallback) (int nIrq);
-	unsigned int ppc;
-	int (*ResetCallback)();
-	unsigned int sfc, dfc, usp, vbr;
-	unsigned int nCpuVersion;
-}; 
- 
  extern "C" struct A68KContext M68000_regs;
- extern "C" struct A68KContext* SekRegs[SEK_MAX];
+ extern     struct A68KContext* SekRegs[SEK_MAX];
 
  extern "C" unsigned char* OP_ROM;
  extern "C" unsigned char* OP_RAM;
- extern "C" int m68k_ICount;
+
 
  void __fastcall AsekChangePc(unsigned int pc);
 #endif
-
+ extern "C" int m68k_ICount;
 #ifdef EMU_M68K
  extern "C" int nSekM68KContextSize[SEK_MAX];
  extern "C" char* SekM68KContext[SEK_MAX];
@@ -152,6 +136,7 @@ void SekSetCyclesScanline(int nCycles);
 
 void SekClose();
 void SekOpen(const int i);
+int SekGetActive();
 
 #define SEK_IRQSTATUS_NONE (0x0000)
 #define SEK_IRQSTATUS_AUTO (0x2000)

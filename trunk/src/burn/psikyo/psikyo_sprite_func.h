@@ -11,40 +11,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -55,40 +55,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -99,40 +99,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -143,40 +143,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -191,40 +191,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -235,40 +235,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -279,40 +279,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -323,40 +323,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -375,40 +375,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -419,40 +419,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -463,40 +463,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -507,40 +507,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -555,40 +555,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -599,40 +599,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -643,40 +643,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
@@ -687,40 +687,40 @@
 #define ZBUFFER 0
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 1
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 2
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER
 #define ZBUFFER 3
 
 #define DOCLIP 0
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 #define DOCLIP 1
-#include "psikyo_render.h"
+#include "psikyo_render_sprite.h"
 #undef DOCLIP
 
 #undef ZBUFFER

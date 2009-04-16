@@ -42,9 +42,12 @@ PERL = 1
 #
 #	execute an appropriate system-specific makefile
 #
-
 test: FORCE
 	@$(MAKE) -f makefile.test
+psikyo: FORCE
+
+	@$(MAKE) -s -f makefile.psikyo
+
 all: FORCE
 
 	@$(MAKE) -s -f makefile.all
@@ -110,3 +113,8 @@ alltarget : FORCE
 	-@rm -f -r src/generated/driverlist.h
 	@$(MAKE) -s -f makefile.all
 FORCE:
+#	@$(MAKE) -C src/psp/me/mediaengineprx clean
+#	@$(MAKE) -C src/psp/me/mediaengineprx
+#	@$(MAKE) -C src/psp/me/me_load
+#	@cp src/psp/me/mediaengineprx/mediaengine.prx bin/
+#	@cp src/psp/me/me_load/me_load.bin bin/
