@@ -1,6 +1,8 @@
 // 680x0 (Sixty Eight K) Interface
 #include "burnint.h"
 #include "sekdebug.h"
+#include "me.h"
+
 #ifdef EMU_C68K
  #include "c68k.c"
 #endif
@@ -14,10 +16,10 @@ c68k_struc * SekC68KCurrentContext = NULL;
 c68k_struc * SekC68KContext[SEK_MAX];
 #endif
 
-static int nSekCount = -1;							// Number of allocated 68000s
+static int nSekCount = -1;						// Number of allocated 68000s
 struct SekExt *SekExt[SEK_MAX] = { NULL, }, *pSekExt = NULL;
 
-int nSekActive = -1;								// The cpu which is currently being emulated
+int nSekActive = -1;						// The cpu which is currently being emulated
 int nSekCyclesTotal, nSekCyclesScanline, nSekCyclesSegment, nSekCyclesDone, nSekCyclesToDo;
 
 int nSekCPUType[SEK_MAX], nSekCycles[SEK_MAX], nSekIRQPending[SEK_MAX];
@@ -704,21 +706,153 @@ struct A68KInter a68k_inter_breakpoint = {
 // ----------------------------------------------------------------------------
 // Memory accesses (non-emu specific)
 
-unsigned int SekReadByte(unsigned int a) { return (unsigned int)ReadByte(a); }
-unsigned int SekReadWord(unsigned int a) { return (unsigned int)ReadWord(a); }
-unsigned int SekReadLong(unsigned int a) { return ReadLong(a); }
+unsigned int meSekReadByte(unsigned int a) { return (unsigned int)ReadByte(a); }
+unsigned int SekReadByte(unsigned int a) 
+{ 
+	if(isOnMe())
+	{
+		return meSekReadByte(a); 
+	}else
+	{
+		waitMeEnd();
+		return meSekReadByte(a);
+	}
+}
+unsigned int meSekReadWord(unsigned int a) { return (unsigned int)ReadWord(a); }
+unsigned int SekReadWord(unsigned int a)
+{
+	if(isOnMe())
+	{
+		return meSekReadWord(a); 
+	}else
+	{
+		waitMeEnd();
+		return meSekReadWord(a);
+	}
+}
+unsigned int meSekReadLong(unsigned int a) { return ReadLong(a); }
+unsigned int SekReadLong(unsigned int a)
+{
+	if(isOnMe())
+	{
+		return meSekReadLong(a); 
+	}else
+	{
+		waitMeEnd();
+		return meSekReadLong(a);
+	}
+}
 
-unsigned int SekFetchByte(unsigned int a) { return (unsigned int)FetchByte(a); }
-unsigned int SekFetchWord(unsigned int a) { return (unsigned int)FetchWord(a); }
-unsigned int SekFetchLong(unsigned int a) { return FetchLong(a); }
+unsigned int meSekFetchByte(unsigned int a) { return (unsigned int)FetchByte(a); }
+unsigned int SekFetchByte(unsigned int a)
+{
+	if(isOnMe())
+	{
+		return meSekFetchByte(a); 
+	}else
+	{
+		waitMeEnd();
+		return meSekFetchByte(a);
+	}
+}
+unsigned int meSekFetchWord(unsigned int a) { return (unsigned int)FetchWord(a); }
+unsigned int SekFetchWord(unsigned int a)
+{
+	if(isOnMe())
+	{
+		return meSekFetchWord(a); 
+	}else
+	{
+		waitMeEnd();
+		return meSekFetchWord(a);
+	}
+}
+unsigned int meSekFetchLong(unsigned int a) { return FetchLong(a); }
+unsigned int SekFetchLong(unsigned int a)
+{
+	if(isOnMe())
+	{
+		return meSekFetchLong(a); 
+	}else
+	{
+		waitMeEnd();
+		return meSekFetchLong(a);
+	}
+}
 
-void SekWriteByte(unsigned int a, unsigned char d) { WriteByte(a, d); }
-void SekWriteWord(unsigned int a, unsigned short d) { WriteWord(a, d); }
-void SekWriteLong(unsigned int a, unsigned int d) { WriteLong(a, d); }
+void meSekWriteByte(unsigned int a, unsigned char d) { WriteByte(a, d); }
+void SekWriteByte(unsigned int a, unsigned char d)
+{
+	if(isOnMe())
+	{
+		meSekWriteByte(a,d); 
+	}else
+	{
+		meSekWriteByte(a,d);
+		waitMeEnd();
+	}
+}
+void meSekWriteWord(unsigned int a, unsigned short d) { WriteWord(a, d); }
+void SekWriteWord(unsigned int a, unsigned short d)
+{
+	if(isOnMe())
+	{
+		meSekWriteWord(a,d); 
+	}else
+	{
+		meSekWriteWord(a,d);
+		waitMeEnd();
+	}
+}
+void meSekWriteLong(unsigned int a, unsigned int d) { WriteLong(a, d); }
+void SekWriteLong(unsigned int a, unsigned int d)
+{
+	if(isOnMe())
+	{
+		meSekWriteLong(a,d); 
+	}else
+	{
+		meSekWriteLong(a,d);
+		waitMeEnd();
+	}
+}
 
-void SekWriteByteROM(unsigned int a, unsigned char d) { WriteByteROM(a, d); }
-void SekWriteWordROM(unsigned int a, unsigned short d) { WriteWordROM(a, d); }
-void SekWriteLongROM(unsigned int a, unsigned int d) { WriteLongROM(a, d); }
+void meSekWriteByteROM(unsigned int a, unsigned char d) { WriteByteROM(a, d); }
+void SekWriteByteROM(unsigned int a, unsigned char d)
+{
+	if(isOnMe())
+	{
+		meSekWriteByteROM(a,d); 
+	}else
+	{
+		meSekWriteByteROM(a,d);
+		waitMeEnd();
+	}
+}
+void meSekWriteWordROM(unsigned int a, unsigned short d) { WriteWordROM(a, d); }
+void SekWriteWordROM(unsigned int a, unsigned short d)
+{
+	if(isOnMe())
+	{
+		meSekWriteWordROM(a,d); 
+	}else
+	{
+		meSekWriteWordROM(a,d);
+		waitMeEnd();
+	}
+}
+void meSekWriteLongROM(unsigned int a, unsigned int d) { WriteLongROM(a, d); }
+void SekWriteLongROM(unsigned int a, unsigned int d)
+{
+	if(isOnMe())
+	{
+		meSekWriteLongROM(a,d); 
+	}else
+	{
+		meSekWriteLongROM(a,d);
+		waitMeEnd();
+	}
+}
 
 // ----------------------------------------------------------------------------
 // Callbacks for A68K
@@ -900,13 +1034,12 @@ static int SekInitCPUC68K(int nCount, int nCPUType)
 	
 	SekC68KCurrentContext->Interrupt_CallBack = C68KInterruptCallBack;
 	SekC68KCurrentContext->Reset_CallBack = C68KResetCallBack;
-	
 	return 0;
 }
 #endif
 
 
-void SekNewFrame()
+void meSekNewFrame()
 {
 	for (int i = 0; i <= nSekCount; i++) {
 		nSekCycles[i] = 0;
@@ -915,17 +1048,41 @@ void SekNewFrame()
 	nSekCyclesTotal = 0;
 }
 
-void SekSetCyclesScanline(int nCycles)
+void SekNewFrame()
+{
+	if(isOnMe())
+	{
+		meSekNewFrame();
+	}else
+	{
+		meAddCmd(SEKNEWFRAME);
+	}
+}
+
+void meSekSetCyclesScanline(int nCycles)
 {
 	nSekCyclesScanline = nCycles;
+}
+void SekSetCyclesScanline(int nCycles)
+{
+	if(isOnMe())
+	{
+		SekSetCyclesScanline(nCycles);
+	}else
+	{
+		mei->meOrders[mei->meOrderEnd].param[0]= nCycles;
+		meAddCmd(SEKSETCYCLESSCANLINE);
+	}
 }
 
 int SekInit(int nCount, int nCPUType)
 {
+	waitMeEnd();
 	struct SekExt* ps = NULL;
 
 	if (nSekActive >= 0) {
 		SekClose();
+		waitMeEnd();
 		nSekActive = -1;
 	}
 
@@ -1051,7 +1208,7 @@ int SekInit(int nCount, int nCPUType)
 
 	nSekCyclesTotal = 0;
 	nSekCyclesScanline = 0;
-
+	waitMeEnd();
 	return 0;
 }
 
@@ -1081,6 +1238,7 @@ static void SekCPUExitC68K(int i)
 
 int SekExit()
 {
+	waitMeEnd();
 	// Deallocate cpu extenal data (memory map etc)
 	for (int i = 0; i <= nSekCount; i++) {
 
@@ -1107,13 +1265,13 @@ int SekExit()
 
 	nSekActive = -1;
 	nSekCount = -1;
-
+	waitMeEnd();
 	return 0;
 }
 
 void SekReset()
 {
-	
+	waitMeEnd();
 #ifdef EMU_A68K
 	if (nSekCPUType[nSekActive] == 0) {
 		// A68K has no internal support for resetting the processor, so do what's needed ourselves
@@ -1135,7 +1293,7 @@ void SekReset()
 #ifdef EMU_C68K
 	C68k_Reset( SekC68KCurrentContext );
 #endif
-
+	waitMeEnd();
 
 }
 
@@ -1143,7 +1301,7 @@ void SekReset()
 // Control the active CPU
 
 // Open a CPU
-void SekOpen(const int i)
+void meSekOpen(const int i)
 {
 	if (i != nSekActive) {
 		nSekActive = i;
@@ -1172,11 +1330,20 @@ void SekOpen(const int i)
 		nSekCyclesTotal = nSekCycles[nSekActive];
 	}
 }
-
-// Close the active cpu
-void SekClose()
+void SekOpen(const int i)
 {
-	
+	if(isOnMe())
+	{
+		meSekOpen(i);
+	}else
+	{
+		mei->meOrders[mei->meOrderEnd].param[0]=i;
+		meAddCmd(SEKOPEN);
+	}
+}
+// Close the active cpu
+void meSekClose()
+{
 #ifdef EMU_C68K
 	// ....
 #endif
@@ -1197,9 +1364,18 @@ void SekClose()
 
 	nSekCycles[nSekActive] = nSekCyclesTotal;
 }
-
+void SekClose()
+{
+	if(isOnMe())
+	{
+		meSekClose();
+	}else
+	{
+		meAddCmd(SEKCLOSE);
+	}
+}
 // Set the status of an IRQ line on the active CPU
-void SekSetIRQLine(const int line, const int status)
+void meSekSetIRQLine(const int line, const int status)
 {
 //	bprintf(PRINT_NORMAL, _T("  - irq line %i -> %i\n"), line, status);
 
@@ -1258,6 +1434,18 @@ void SekSetIRQLine(const int line, const int status)
 
 }
 
+void SekSetIRQLine(const int line, const int status)
+{
+	if(isOnMe())
+	{
+		meSekSetIRQLine(line, status);
+	}else
+	{
+		mei->meOrders[mei->meOrderEnd].param[0]=line;
+		mei->meOrders[mei->meOrderEnd].param[1]=status;
+		meAddCmd(SEKSETIRQLINE);
+	}
+}
 // Adjust the active CPU's timeslice
 void SekRunAdjust(const int nCycles)
 {
@@ -1292,7 +1480,7 @@ void SekRunAdjust(const int nCycles)
 }
 
 // End the active CPU's timeslice
-void SekRunEnd()
+void meSekRunEnd()
 {
 
 #ifdef EMU_A68K
@@ -1320,9 +1508,19 @@ void SekRunEnd()
 #endif
 
 }
-
+void SekRunEnd()
+{
+	if(isOnMe())
+	{
+		meSekRunEnd();
+	}else
+	{
+		waitMeEnd();
+		meSekRunEnd();
+	}
+}
 // Run the active CPU
-int SekRun(const int nCycles)
+int meSekRun(const int nCycles)
 {
 
 #ifdef EMU_A68K
@@ -1380,7 +1578,18 @@ int SekRun(const int nCycles)
 #endif
 
 }
-
+int SekRun(const int nCycles)
+{
+	if(isOnMe())
+	{
+		return meSekRun(nCycles);
+	}else
+	{
+		mei->meOrders[mei->meOrderEnd].param[0]=nCycles;
+		meAddCmd(SEKRUN);
+		return nCycles;
+	}
+}
 // ----------------------------------------------------------------------------
 // Breakpoint support
 
@@ -1543,6 +1752,7 @@ int SekDbgSetBreakpointFetch(unsigned int nAddress, int nIdentifier)
 // Note - each page is 1 << SEK_BITS.
 int SekMapMemory(unsigned char* pMemory, unsigned int nStart, unsigned int nEnd, int nType)
 {
+	waitMeEnd();
 	unsigned char* Ptr = pMemory - nStart;
 	unsigned char** pMemMap = pSekExt->MemMap + (nStart >> SEK_SHIFT);
 
@@ -1568,12 +1778,13 @@ int SekMapMemory(unsigned char* pMemory, unsigned int nStart, unsigned int nEnd,
 			pMemMap[SEK_WADD * 2] = Ptr + i;
 		}
 	}
-
+	waitMeEnd();
 	return 0;
 }
 
 int SekMapHandler(unsigned int nHandler, unsigned int nStart, unsigned int nEnd, int nType)
 {
+	waitMeEnd();
 	unsigned char** pMemMap = pSekExt->MemMap + (nStart >> SEK_SHIFT);
 
 	// Add to memory map
@@ -1589,36 +1800,40 @@ int SekMapHandler(unsigned int nHandler, unsigned int nStart, unsigned int nEnd,
 			pMemMap[SEK_WADD * 2] = (unsigned char*)nHandler;
 		}
 	}
-
+	waitMeEnd();
 	return 0;
 }
 
 // Set callbacks
 int SekSetResetCallback(pSekResetCallback pCallback)
 {
+	waitMeEnd();
 	pSekExt->ResetCallback = pCallback;
-
+	waitMeEnd();
 	return 0;
 }
 
 int SekSetRTECallback(pSekRTECallback pCallback)
 {
+	waitMeEnd();
 	pSekExt->RTECallback = pCallback;
-
+	waitMeEnd();
 	return 0;
 }
 
 int SekSetIrqCallback(pSekIrqCallback pCallback)
 {
+	waitMeEnd();
 	pSekExt->IrqCallback = pCallback;
-
+	waitMeEnd();
 	return 0;
 }
 
 int SekSetCmpCallback(pSekCmpCallback pCallback)
 {
+	waitMeEnd();
 	pSekExt->CmpCallback = pCallback;
-
+	waitMeEnd();
 	return 0;
 }
 
@@ -1628,9 +1843,9 @@ int SekSetReadByteHandler(int i, pSekReadByteHandler pHandler)
 	if (i >= SEK_MAXHANDLER) {
 		return 1;
 	}
-
+	waitMeEnd();
 	pSekExt->ReadByte[i] = pHandler;
-
+	waitMeEnd();
 	return 0;
 }
 
@@ -1639,9 +1854,9 @@ int SekSetWriteByteHandler(int i, pSekWriteByteHandler pHandler)
 	if (i >= SEK_MAXHANDLER) {
 		return 1;
 	}
-
+	waitMeEnd();
 	pSekExt->WriteByte[i] = pHandler;
-
+	waitMeEnd();
 	return 0;
 }
 
@@ -1650,9 +1865,9 @@ int SekSetReadWordHandler(int i, pSekReadWordHandler pHandler)
 	if (i >= SEK_MAXHANDLER) {
 		return 1;
 	}
-
+	waitMeEnd();
 	pSekExt->ReadWord[i] = pHandler;
-
+	waitMeEnd();
 	return 0;
 }
 
@@ -1661,9 +1876,9 @@ int SekSetWriteWordHandler(int i, pSekWriteWordHandler pHandler)
 	if (i >= SEK_MAXHANDLER) {
 		return 1;
 	}
-
+	waitMeEnd();
 	pSekExt->WriteWord[i] = pHandler;
-
+	waitMeEnd();
 	return 0;
 }
 
@@ -1672,9 +1887,9 @@ int SekSetReadLongHandler(int i, pSekReadLongHandler pHandler)
 	if (i >= SEK_MAXHANDLER) {
 		return 1;
 	}
-
+	waitMeEnd();
 	pSekExt->ReadLong[i] = pHandler;
-
+	waitMeEnd();
 	return 0;
 }
 
@@ -1683,16 +1898,16 @@ int SekSetWriteLongHandler(int i, pSekWriteLongHandler pHandler)
 	if (i >= SEK_MAXHANDLER) {
 		return 1;
 	}
-
+	waitMeEnd();
 	pSekExt->WriteLong[i] = pHandler;
-
+	waitMeEnd();
 	return 0;
 }
 
 // ----------------------------------------------------------------------------
 // Query register values
 
-int SekGetPC(int n)
+int meSekGetPC(int n)
 {
 	
 #ifdef EMU_C68K
@@ -1718,6 +1933,18 @@ int SekGetPC(int n)
 #ifdef EMU_A68K
 	}
 #endif
+
+}
+int SekGetPC(int n)
+{
+	if(isOnMe())
+	{
+		return meSekGetPC(n);
+	}else
+	{
+		waitMeEnd();
+		return meSekGetPC(n);
+	}
 
 }
 
@@ -1937,6 +2164,7 @@ bool SekDbgSetRegister(SekRegister nRegister, unsigned int nValue)
 
 int SekScan(int nAction)
 {
+	waitMeEnd();
 	// Scan the 68000 states
 	struct BurnArea ba;
 
@@ -2017,6 +2245,75 @@ int SekScan(int nAction)
 				BurnAcb(&ba);
 #endif
 	}
-
+	waitMeEnd();
 	return 0;
 }
+
+int meSekIdle(int nCycles)
+{
+	nSekCyclesTotal += nCycles;
+
+	return nCycles;
+}
+
+int SekIdle(int nCycles)
+{
+	if(isOnMe())
+	{
+		return meSekIdle(nCycles);
+	}else
+	{
+		mei->meOrders[mei->meOrderEnd].param[0]=nCycles;
+		meAddCmd(SEKIDLE);
+		return nCycles;
+	}
+}
+
+int meSekSegmentCycles()
+{
+	return nSekCyclesDone + nSekCyclesToDo - m68k_ICount;
+}
+int SekSegmentCycles()
+{
+	if(isOnMe())
+	{
+		return meSekSegmentCycles();
+	}else
+	{
+		waitMeEnd();
+		return meSekSegmentCycles();
+	}
+}
+int meSekTotalCycles()
+{
+	return nSekCyclesTotal + nSekCyclesToDo - m68k_ICount;
+}
+
+int SekTotalCycles()
+{
+	if(isOnMe())
+	{
+		return meSekTotalCycles();
+	}else
+	{
+		waitMeEnd();
+		return meSekTotalCycles();
+	}
+}
+
+int meSekCurrentScanline()
+{
+	return meSekTotalCycles() / nSekCyclesScanline;
+}
+int SekCurrentScanline()
+{
+	if(isOnMe())
+	{
+		return meSekCurrentScanline();
+	}else
+	{
+		waitMeEnd();
+		return meSekCurrentScanline();
+	}
+}
+

@@ -342,8 +342,8 @@ static unsigned char pgm_calendar_r()
 static void pgm_calendar_w(unsigned short data)
 {
 	// initialize the time, otherwise it crashes
-	time_t nLocalTime = time(NULL);
-	tm* tmLocalTime = localtime(&nLocalTime);
+	//time_t nLocalTime = time(NULL);
+	//tm* tmLocalTime = localtime(&nLocalTime);
 
 	CalCom <<= 1;
 	CalCom |= data & 1;
@@ -360,34 +360,35 @@ static void pgm_calendar_w(unsigned short data)
 				CalVal++;
 				break;
 			case 0:
-				CalVal=bcd(tmLocalTime->tm_wday); //??
+				CalVal=bcd(3);//tmLocalTime->tm_wday); //??
 				break;
 			case 2:  //Hours
-				CalVal=bcd(tmLocalTime->tm_hour);
+				CalVal=bcd(3);//tmLocalTime->tm_hour);
 				break;
 			case 4:  //Seconds
-				CalVal=bcd(tmLocalTime->tm_sec);
+				CalVal=bcd(3);//bcd(tmLocalTime->tm_sec);
 				break;
 			case 6:  //Month
-				CalVal=bcd(tmLocalTime->tm_mon + 1); //?? not bcd in MVS
+				CalVal=bcd(3);//bcd(tmLocalTime->tm_mon + 1); //?? not bcd in MVS
 				break;
 			case 8:
 				CalVal=0; //Controls blinking speed, maybe milliseconds
 				break;
 			case 0xa: //Day
-				CalVal=bcd(tmLocalTime->tm_mday);
+				CalVal=bcd(3);//bcd(tmLocalTime->tm_mday);
 				break;
 			case 0xc: //Minute
-				CalVal=bcd(tmLocalTime->tm_min);
+				CalVal=bcd(3);//bcd(tmLocalTime->tm_min);
 				break;
 			case 0xe:  //Year
-				CalVal=bcd(tmLocalTime->tm_year % 100);
+				CalVal=bcd(9);//bcd(tmLocalTime->tm_year % 100);
 				break;
 			case 0xf:  //Load Date
-				tmLocalTime = localtime(&nLocalTime);
+				//tmLocalTime = localtime(&nLocalTime);
 				break;
 		}
 	}
+	
 }
 
 
@@ -1216,27 +1217,17 @@ int pgmFrame()
 	if (PgmReset) 
 		PgmDoReset();
 	
-	if (nPgmPalRecalc) {
-		for (int i=0;i<(0x1200/2);i++)
-			RamCurPal[i] = CalcCol(RamPal[i]);
-		nPgmPalRecalc = 0;
-	}
+	#ifndef PGM_MUTE
+	ics2115_frame();
+#endif
 
-	// Compile digital inputs
-	PgmInput[0] = 0x0000;
-	PgmInput[1] = 0x0000;
-	PgmInput[2] = 0x0000;
-	PgmInput[3] = 0x0000;
-	PgmInput[4] = 0x0000;
-	PgmInput[5] = 0x0000;
-	for (int i = 0; i < 8; i++) {
-		PgmInput[0] |= (PgmJoy1[i] & 1) << i;
-		PgmInput[1] |= (PgmJoy2[i] & 1) << i;
-		PgmInput[2] |= (PgmJoy3[i] & 1) << i;
-		PgmInput[3] |= (PgmJoy4[i] & 1) << i;
-		PgmInput[4] |= (PgmBtn1[i] & 1) << i;
-		PgmInput[5] |= (PgmBtn2[i] & 1) << i;
-	}	
+	//SekClose();
+	//ZetClose();
+#ifndef PGM_MUTE
+	ics2115_update(nBurnSoundLen);
+#endif
+
+	if (pBurnDraw) pgmDraw();
 
 	int nCyclesDone[2] = {0, 0};
 	int nCyclesNext[2] = {0, 0};
@@ -1270,26 +1261,6 @@ int pgmFrame()
 		SekSetIRQLine(6, SEK_IRQSTATUS_AUTO);
 	}
 
-#ifndef PGM_MUTE
-	ics2115_frame();
-#endif
-
-	//SekClose();
-	//ZetClose();
-#ifndef PGM_MUTE
-	ics2115_update(nBurnSoundLen);
-#endif
-
-	if (pBurnDraw) pgmDraw();
-	
-	return 0;
-}
-
-int kov2Frame()
-{
-	if (PgmReset) 
-		PgmDoReset();
-	
 	if (nPgmPalRecalc) {
 		for (int i=0;i<(0x1200/2);i++)
 			RamCurPal[i] = CalcCol(RamPal[i]);
@@ -1311,7 +1282,26 @@ int kov2Frame()
 		PgmInput[4] |= (PgmBtn1[i] & 1) << i;
 		PgmInput[5] |= (PgmBtn2[i] & 1) << i;
 	}	
-	RamArmShared[0x138] = PgmInput[7];  // region hack
+	return 0;
+}
+
+int kov2Frame()
+{
+	if (PgmReset) 
+		PgmDoReset();
+	
+
+#ifndef PGM_MUTE
+	ics2115_frame();
+#endif
+
+	//SekClose();
+	//ZetClose();
+#ifndef PGM_MUTE
+	ics2115_update(nBurnSoundLen);
+#endif
+
+	if (pBurnDraw) pgmDraw();
 	
 	int nCyclesDone[2] = {0, 0};
 	int nCyclesNext[2] = {0, 0};
@@ -1358,18 +1348,28 @@ int kov2Frame()
 		SekSetIRQLine(6, SEK_IRQSTATUS_AUTO);
 
 
-#ifndef PGM_MUTE
-	ics2115_frame();
-#endif
+		if (nPgmPalRecalc) {
+		for (int i=0;i<(0x1200/2);i++)
+			RamCurPal[i] = CalcCol(RamPal[i]);
+		nPgmPalRecalc = 0;
+	}
 
-	//SekClose();
-	//ZetClose();
-#ifndef PGM_MUTE
-	ics2115_update(nBurnSoundLen);
-#endif
-
-	if (pBurnDraw) pgmDraw();
-	
+	// Compile digital inputs
+	PgmInput[0] = 0x0000;
+	PgmInput[1] = 0x0000;
+	PgmInput[2] = 0x0000;
+	PgmInput[3] = 0x0000;
+	PgmInput[4] = 0x0000;
+	PgmInput[5] = 0x0000;
+	for (int i = 0; i < 8; i++) {
+		PgmInput[0] |= (PgmJoy1[i] & 1) << i;
+		PgmInput[1] |= (PgmJoy2[i] & 1) << i;
+		PgmInput[2] |= (PgmJoy3[i] & 1) << i;
+		PgmInput[3] |= (PgmJoy4[i] & 1) << i;
+		PgmInput[4] |= (PgmBtn1[i] & 1) << i;
+		PgmInput[5] |= (PgmBtn2[i] & 1) << i;
+	}	
+	RamArmShared[0x138] = PgmInput[7];  // region hack
 	return 0;
 }
 #undef PGM_MUTE

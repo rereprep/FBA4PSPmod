@@ -13,7 +13,7 @@
 #include <psptypes.h>
 #include <pspiofilemgr.h>
 #include "malloc.h"
-#define malloc(size) memalign(4, size)
+#define malloc(size) memalign(64, size)
 
 #define CACHE_BLOCK_SIZE 0xFFFF
 #define CACHE_INDEX_SHIFT 16

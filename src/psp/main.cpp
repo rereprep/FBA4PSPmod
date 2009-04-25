@@ -8,6 +8,7 @@
 #include <pspaudio.h>
 #include <psprtc.h>
 #include <pspiofilemgr.h>
+#include <pspsdk.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +21,7 @@
 #include "UniCache.h"
 #include "exception.h"
 #include "pspadhoc.h"
+#include "me.h"
 
 PSP_MODULE_INFO(PBPNAME, PSP_MODULE_USER, VERSION_MAJOR, VERSION_MINOR);
 PSP_HEAP_SIZE_MAX();
@@ -38,7 +40,7 @@ unsigned int debugValue[2]={0,};
 
 void returnToMenu()
 {
-	scePowerSetClockFrequency(222, 222, 111);
+	//scePowerSetClockFrequency(222, 222, 111);
 	setGameStage(1);
 	sound_pause();
 	draw_ui_main();
@@ -111,7 +113,18 @@ void chech_and_mk_dir(const char * dir)
 	if (fd >= 0) sceIoDclose(fd);
 	else sceIoMkdir(dir, 0777);
 }
-
+/*
+int loadBinFile(unsigned char* mem)
+{
+	SceUID fd = sceIoOpen( "me_load.bin", PSP_O_RDONLY, 0777);
+	if(fd<0)
+		return -1;
+	mei->meBinSize=sceIoRead(fd, mem, MAX_BIN_SIZE);
+	sceIoClose(fd);
+	mei->meBin=mem;
+	return 0;	
+}
+*/
 int main(int argc, char** argv) {
 	initExceptionHandler();
 	SceCtrlData pad,padTemp;
@@ -122,6 +135,41 @@ int main(int argc, char** argv) {
 	//recvThreadSem=sceKernelCreateSema("recvThreadSem", 0, 0, 1, 0);
 	
 	adhocLoadDrivers();
+	scePowerSetClockFrequency(333, 333,166);
+
+#define printf pspDebugScreenPrintf	
+	  pspDebugScreenInit();
+    pspDebugScreenSetBackColor(0x00000000);
+    pspDebugScreenSetTextColor(0xffffff00);
+    pspDebugScreenClear();
+    sceCtrlSetSamplingCycle(0);
+    sceCtrlSetSamplingMode(PSP_CTRL_MODE_DIGITAL);
+		pspSdkLoadStartModule("mediaengine.prx", PSP_MEMORY_PARTITION_KERNEL);
+	bzero((void*)mei,sizeof(me_struct));
+
+//loadBinFile
+
+
+//mei->mem=memalign(64,0x100000);
+mei->func=me_loop;
+/*
+loadBinFile(mem);
+	*/
+	if (InitME(mei) != 0)
+	{
+		printf(" Couldn't initialize MediaEngine Instance\n");
+	}
+printf("testValue:%d\n",mei->count);
+printf("testValue:%d\n",mei->result);
+printf("testValue:%d\n",mei->func);
+    sceKernelDelayThread(1*1000*1000);
+   printf("testValue:%d\n",mei->count);
+   printf("testValue:%d\n",mei->result);
+  sceKernelDelayThread(1*1000*1000);
+   printf("testValue:%d\n",mei->count); 
+   printf("testValue:%d\n",mei->result); 
+//free (mem);
+
 	
 	loadDefaultInput();
 	sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
@@ -169,6 +217,7 @@ int main(int argc, char** argv) {
 #endif
 	while( bGameRunning ) {
 GAME_RUNNING:
+
 		sceCtrlPeekBufferPositive(&pad, 1); 
 		
 #ifdef SHOW_FPS
@@ -176,20 +225,24 @@ GAME_RUNNING:
 		nTicksCountInSec=ctk - ptk;
 		if ( nTicksCountInSec>= 1000000 ) {
 			ptk += 1000000;
-			sprintf( fps, "%2d FPS, debugValue:0x%X,0x%X",  nframes,debugValue[0],debugValue[1]);
+			debugValue[0]=mei->meOrderHead;
+			debugValue[1]=mei->meOrderEnd;
+			//debugValue[1]=mei->meOrders[mei->meOrderHead].command;
+			sprintf( fps, "%2d FPS, debugValue:%u,%u,%u ",  nframes,debugValue[0],debugValue[1],mei->debugValue );
 			nframes = 0;
 			nTicksCountInSec=0;
 		}
 		nframes ++;
-#endif
+	#endif
 		if ( nGameStage ) {
-
+			
 			do_ui_key( pad.Buttons );	
 			update_gui();
 			sceDisplayWaitVblankStart();
 			show_frame = draw_frame;
 			draw_frame = sceGuSwapBuffers();
 		} else {
+			
 				//Key hook
 				if(enableJoyStick)
 				{
@@ -304,35 +357,43 @@ GAME_RUNNING:
 			{
 				skipFrame=0;
 				
-				while(mixbufidDiff>6&&bGameRunning)
+				for(int i=0;mixbufidDiff>6&&bGameRunning&&i<30;i++)
 				{
 					sceKernelDelayThread(1000);
 				}
 				
 				pBurnDraw = (unsigned char *) video_frame_addr(tex_frame, 0, 0);
 			}
-#ifdef SHOW_FPS			
-			drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 11, 11, R8G8B8_to_B5G6R5(0x404040));
-			drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 10, 10, R8G8B8_to_B5G6R5(0xffffff));
-#endif			
+	#ifdef SHOW_FPS
+		drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 11, 11, R8G8B8_to_B5G6R5(0x606060));
+		drawString(fps, (unsigned short*)((unsigned int)GU_FRAME_ADDR(tex_frame)|0x40000000), 10, 10, R8G8B8_to_B5G6R5(0xf7f7f7));
+	#endif
 			if(pBurnDraw)
 			{
+				
 				show_frame = draw_frame;
+				
 				draw_frame = sceGuSwapBuffers();
+				
 				update_gui();
+				
 			}
+			waitMeEnd();
 			BurnDrvFrame();
+
+			//waitMeEnd();
 			pBurnDraw = NULL;
-			
+
 						
 					
 			//sceDisplayWaitVblankStart();
 			sound_next();
+		
 		}
 		
 	}
 
-	scePowerSetClockFrequency(222, 222, 111);
+	//scePowerSetClockFrequency(222, 222, 111);
 	
 	sound_stop();
 	exit_gui();

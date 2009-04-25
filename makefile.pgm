@@ -65,7 +65,7 @@ depobj	:= 	$(drvobj) \
 	   	adler32.o compress.o crc32.o deflate.o inffast.o inflate.o inftrees.o trees.o uncompr.o zutil.o \
 	   	\
 	   	main.o drv.o input.o state.o statec.o unzip.o zipfn.o bzip.o font.o \
-	   	roms.o ui.o gui.o snd.o UniCache.o exception.o pspadhoc.o	
+	   	roms.o ui.o gui.o snd.o UniCache.o exception.o pspadhoc.o me.o	
 autobj += $(depobj)
 
 # burn_sound_mips.o
@@ -120,7 +120,8 @@ LD		= psp-gcc
 AS		= psp-as
 FIXUP	= psp-fixup-imports
 
-CFLAGS	 = -O3 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
+CFLAGS	 = -O2 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir) \
+	-falign-functions=64  -falign-jumps=64 -falign-labels=64 -falign-loops=64
 #	   -fomit-frame-pointer -fsigned-char \
 #	   -fstrict-aliasing -falign-functions=32 -falign-loops -falign-labels -falign-jumps \
 #	   -Wall -Wno-long-long -Wno-sign-compare -Wno-uninitialized -Wno-unused \
@@ -129,7 +130,7 @@ CFLAGS	 = -O3 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(D
 
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 
-ASFLAGS	= -O3 -G0
+ASFLAGS	= -O3 -G0 -falign-functions=64  -falign-jumps=64 -falign-labels=64 -falign-loops=64
 
 #	   -fomit-frame-pointer -fsigned-char \
 #	   -fstrict-aliasing -falign-functions=32 -falign-loops -falign-labels -falign-jumps \
@@ -142,7 +143,7 @@ ASFLAGS	= -O3 -G0
 
 LDFLAGS	= -static -L. -L$(PSPSDK)/lib
 
-DEF	:= -DSUB_VERSION=\"PGM\" -DPSP_FW_VERSION=$(PSP_FW_VERSION) -DFILENAME=$(NAME) \
+DEF	:= -DSHOW_FPS -DSUB_VERSION=\"PGM\" -DPSP_FW_VERSION=$(PSP_FW_VERSION) -DFILENAME=$(NAME) \
 	-DBUILD_PSP -DUSE_SPEEDHACKS -DNEOGEO_HACKS \
 	-DPBPNAME='"$(TARGET)"' -DVERSION_MAJOR=$(VERSION_MAJOR) -DVERSION_MINOR=$(VERSION_MINOR)
 	
@@ -206,7 +207,7 @@ ifeq ($(MAKELEVEL),2)
 $(NAME):	$(allobj)
 	@echo
 	@echo Linking executable... $(NAME)
-	@$(LD) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(lib)
+	@$(LD) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(lib)  $(srcdir)psp/MediaEngine.o 
 	@echo Creating PSP EBOOT.PBP...
 	@$(FIXUP) $@
 	@psp-strip $(NAME) -o eboot_strip.elf
