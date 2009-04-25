@@ -41,7 +41,7 @@ srcdir	= src/
 
 alldir	= burn burn/toaplan burn/taito generated psp zlib \
 		  burn/misc burn/misc/post90s burn/misc/pre90s cpu cpu/c68k cpu/cz80 cpu/m6502 cpu/nec cpu/m6809 cpu/hd6309 cpu/m6800 \
-		  burn/misc burn/misc/dec0 burn/konami
+		  burn/misc burn/misc/dec0 burn/konami psp/me
 
 incdir	= -I. -I$(PSPSDK)/include $(foreach dir,$(alldir),-I$(srcdir)$(dir)) -I$(objdir)generated
 
@@ -111,7 +111,7 @@ depobj	:= 	$(drvobj) \
 	   	\
 	   	dec_aud.o dec_misc.o dec_vid.o \
 	   	\
-	   	k052109.o k051960.o konamiic.o k007232.o 
+	   	k052109.o k051960.o konamiic.o k007232.o me.o
 	   	
 	   	
 autobj += $(depobj)
@@ -168,7 +168,7 @@ LD		= psp-gcc
 AS		= psp-as
 FIXUP	= psp-fixup-imports
 
-CFLAGS	 = -O3 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
+CFLAGS	 = -O2 -G0 -fomit-frame-pointer -fno-bounds-check -freg-struct-return $(DEF) $(incdir)
 #	   -fomit-frame-pointer -fsigned-char \
 #	   -fstrict-aliasing -falign-functions=32 -falign-loops -falign-labels -falign-jumps \
 #	   -Wall -Wno-long-long -Wno-sign-compare -Wno-uninitialized -Wno-unused \
@@ -190,7 +190,7 @@ ASFLAGS	= -O3 -G0
 
 LDFLAGS	= -static -L. -L$(PSPSDK)/lib
 
-DEF	:= -DSUB_VERSION=\"SMALL\" -DPSP_FW_VERSION=$(PSP_FW_VERSION) -DFILENAME=$(NAME) \
+DEF	:= -DSHOW_FPS -DSUB_VERSION=\"SMALL\" -DPSP_FW_VERSION=$(PSP_FW_VERSION) -DFILENAME=$(NAME) \
 	-DBUILD_PSP -DUSE_SPEEDHACKS -DNEOGEO_HACKS \
 	-DPBPNAME='"$(TARGET)"' -DVERSION_MAJOR=$(VERSION_MAJOR) -DVERSION_MINOR=$(VERSION_MINOR)
 
@@ -254,7 +254,7 @@ ifeq ($(MAKELEVEL),2)
 $(NAME):	$(allobj)
 	@echo
 	@echo Linking executable... $(NAME)
-	@$(LD) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(lib)
+	@$(LD) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(lib) $(srcdir)psp/MediaEngine.o
 	@echo Creating PSP EBOOT.PBP...
 	@$(FIXUP) $@
 	@psp-strip $(NAME) -o eboot_strip.elf

@@ -22,7 +22,7 @@
 #include "title.h"
 #include "burn.h"
 #include <malloc.h>
-#define malloc(size) memalign(4, size)
+#define malloc(size) memalign(64, size)
 // ---------------------------------------------------------------------------
 // OS dependent functionality
 

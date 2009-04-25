@@ -14,11 +14,11 @@
 #include "UniCache.h"
 #include "burner.h"
 #include "pspadhoc.h"
-
+#include "me.h"
 
 #define find_rom_list_cnt	10
 
-short gameSpeedCtrl = 1;
+short gameSpeedCtrl = 0;
 unsigned int hotButtons = (PSP_CTRL_SQUARE|PSP_CTRL_CIRCLE|PSP_CTRL_CROSS);
 
 short screenMode=0;
@@ -26,7 +26,7 @@ short wifiStatus=0;
 short saveIndex=0;
 short gameScreenWidth=SCREEN_WIDTH, gameScreenHeight=SCREEN_HEIGHT;
 bool enableJoyStick=true;
-char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_V12.5.4)";
+char LBVer[]="FinalBurn Alpha for PSP "SUB_VERSION" (ver: LB_V12.5.5)";
 static int find_rom_count = 0;
 static int find_rom_select = 0;
 static int find_rom_top = 0;
@@ -503,10 +503,10 @@ static void return_to_game()
 			adhocTerm();
 		if(wifiStatus!=2)
 		{
-				scePowerSetClockFrequency(
+				/*scePowerSetClockFrequency(
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].cpu, 
-								cpu_speeds[cpu_speeds_select].bus );				
+								cpu_speeds[cpu_speeds_select].bus );				*/
 				sound_continue();
 		}			
 		setGameStage(0);
@@ -586,12 +586,13 @@ static void process_key( int key, int down, int repeat )
 				}	
 				draw_ui_main();					
 				break;
-			case CPU_SPEED:
+	/*		case CPU_SPEED:
 				if ( cpu_speeds_select > 0 ) {
 					cpu_speeds_select--;
 					draw_ui_main();
 				}
 				break;
+	*/
 			case JOYSTICK:
 				enableJoyStick=!enableJoyStick;
 				draw_ui_main();
@@ -605,6 +606,7 @@ static void process_key( int key, int down, int repeat )
 				draw_ui_main();
 				break;
 			case PREVIEW:
+				disableMe=1;
 				needPreview=!needPreview;
 				draw_ui_main();
 				break;
@@ -672,12 +674,13 @@ static void process_key( int key, int down, int repeat )
 				}	
 				draw_ui_main();					
 				break;
-			case CPU_SPEED:
+	/*		case CPU_SPEED:
 				if ( cpu_speeds_select < 3 ) {
 					cpu_speeds_select++;
 					draw_ui_main();
 				}
 				break;
+				*/
 			case JOYSTICK:
 				enableJoyStick=!enableJoyStick;
 				draw_ui_main();
@@ -691,6 +694,7 @@ static void process_key( int key, int down, int repeat )
 				draw_ui_main();
 				break;
 			case PREVIEW:
+				disableMe=0;
 				needPreview=!needPreview;
 				draw_ui_main();
 				break;
@@ -726,10 +730,10 @@ static void process_key( int key, int down, int repeat )
 									
 					if(!BurnStateLoad(ui_current_path,1,&DrvInitCallback))
 					{
-						scePowerSetClockFrequency(
+					/*	scePowerSetClockFrequency(
 									cpu_speeds[cpu_speeds_select].cpu, 
 									cpu_speeds[cpu_speeds_select].cpu, 
-									cpu_speeds[cpu_speeds_select].bus );
+									cpu_speeds[cpu_speeds_select].bus );*/
 						setGameStage(0);
 						sound_continue();
 					}
@@ -749,10 +753,10 @@ static void process_key( int key, int down, int repeat )
 						sprintf(buf,"_%1u.png",saveIndex);	
 						strcat(ui_current_path,buf);
 						screenshot(ui_current_path);
-						scePowerSetClockFrequency(
+						/*scePowerSetClockFrequency(
 									cpu_speeds[cpu_speeds_select].cpu, 
 									cpu_speeds[cpu_speeds_select].cpu, 
-									cpu_speeds[cpu_speeds_select].bus );
+									cpu_speeds[cpu_speeds_select].bus );*/
 						setGameStage(0);
 						sound_continue();
 					}
@@ -762,10 +766,10 @@ static void process_key( int key, int down, int repeat )
 			case RESET_GAME:
 				if(nPrevGame != ~0U)
 				{					
-						scePowerSetClockFrequency(
+						/*scePowerSetClockFrequency(
 								cpu_speeds[cpu_speeds_select].cpu, 
 								cpu_speeds[cpu_speeds_select].cpu, 
-								cpu_speeds[cpu_speeds_select].bus );
+								cpu_speeds[cpu_speeds_select].bus );*/
 						resetGame();
 						if(wifiStatus==3)
 							wifiSend(WIFI_CMD_RESET);					
@@ -778,10 +782,10 @@ static void process_key( int key, int down, int repeat )
 						strcat(ui_current_path,BurnDrvGetTextA(DRV_NAME));
 						strcat(ui_current_path,".png");
 						screenshot(ui_current_path);
-						scePowerSetClockFrequency(
+						/*scePowerSetClockFrequency(
 									cpu_speeds[cpu_speeds_select].cpu, 
 									cpu_speeds[cpu_speeds_select].cpu, 
-									cpu_speeds[cpu_speeds_select].bus );
+									cpu_speeds[cpu_speeds_select].bus );*/
 						setGameStage(0);
 						sound_continue();
 				}
@@ -889,7 +893,8 @@ static void process_key( int key, int down, int repeat )
 						
 						setGameStage(3);
 						ui_process_pos = 0;
-
+						waitMeEnd();
+						disableMe=1;
 						if ( DrvInit( nBurnDrvSelect, false ) == 0 ) {
 							
 							BurnRecalcPal();
@@ -902,7 +907,8 @@ static void process_key( int key, int down, int repeat )
 							nBurnDrvSelect = ~0U; 
 							setGameStage(2);
 						}
-
+						disableMe=0;
+						waitMeEnd();
 					} else
 						nBurnDrvSelect = ~0U; 
 

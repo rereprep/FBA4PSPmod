@@ -1716,7 +1716,7 @@
 	ostruct = c68k_opcode_jump_table;
 	if(JumpTable==NULL)
 	{
-		JumpTable=(void**)memalign(4,0x10000*sizeof(int));
+		JumpTable=(void**)memalign(64,0x10000*sizeof(int));
 		if(JumpTable==NULL) return 0;
 	}
 	while (ostruct->match != 0x4afc)
