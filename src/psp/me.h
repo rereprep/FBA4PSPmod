@@ -109,8 +109,53 @@ inline static int isOnMe()
 	);
 	return result>0||disableMe>0;
 }
-void meAddCmd(unsigned int command);
-void waitMeEnd ();
+inline static void meAddCmd(unsigned int command)//, unsigned int param0=0, unsigned int param1=0, unsigned int param2=0, unsigned int param3=0)
+{
+	unsigned short currentOrder=mei->meOrderEnd;
+	/*
+	volatile MeOrders *pMeOrder=&(mei->meOrders[currentOrder]);
+ 	pMeOrder->param[0]=param0;
+ 	pMeOrder->param[1]=param1;
+ 	pMeOrder->param[2]=param2;
+ 	pMeOrder->param[3]=param3;
+  pMeOrder->command=command;
+  */
+
+  mei->meOrders[currentOrder].command=command;
+  currentOrder++;
+  if(currentOrder>=MAX_ORDERS)
+  	currentOrder=0;
+  //sceKernelDcacheWritebackInvalidateAll();
+  int iCount;
+  for(iCount=0;iCount<4000;iCount++)
+  {
+  	if(currentOrder!=mei->meOrderHead)
+  	{
+  		mei->meOrderEnd=currentOrder;
+  		return;
+  	}
+  	sceKernelDelayThread(1000);
+  }
+  disableMe=1;
+ 
+  
+}
+inline static void waitMeEnd ()
+{
+	if(isOnMe())
+		return;
+	unsigned short currentOrder=mei->meOrderEnd;
+	dcache_wbinv_all();
+
+	int iCount;
+	for(iCount=0;iCount<0x50000000;iCount++)
+	{
+  	if(currentOrder==mei->meOrderHead)
+  		return;
+  	//sceKernelDelayThread(1000);
+  }
+  disableMe=1;
+}
 
 #ifdef __cplusplus
 }
