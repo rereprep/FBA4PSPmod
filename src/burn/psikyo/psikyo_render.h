@@ -176,7 +176,7 @@ static void FUNCTIONNAME(BPP,TRANSMODE,DOFLIP,ROT,SCROLL,ZOOMMODE,ZBUF,CLIP)()
    #if FLIPY == 0
   	for (y = 0, pTileRow = pTile, pZTileRow = pZTile; y < 16; y++, ADVANCEROW, ADVANCEZROW, pTileData += 16) {
    #else
-  	for (y = 15, pTileRow = pTile + ((BPP >> 3) * 512 * 15), pZTileRow = pZTile + (512 * 15); y >= 0; y--, ADVANCEROW, ADVANCEZROW, pTileData += 16) {
+  	for (y = 15, pTileRow = pTile + ((BPP >> 3) * 320 * 15), pZTileRow = pZTile + (320 * 15); y >= 0; y--, ADVANCEROW, ADVANCEZROW, pTileData += 16) {
    #endif
   #endif
  #endif

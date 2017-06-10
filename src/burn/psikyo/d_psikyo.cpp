@@ -656,7 +656,7 @@ void __fastcall samuraiaZ80Out(unsigned short nAddress, unsigned char nValue)
 		case 0x0C:									// Write reply to sound commands
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply sent (0x%02X).\n"), nValue);
 
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 			if (!nSoundlatchAck && ZetTotalCycles() > nCycles68KSync) {
 				BurnTimerUpdateEnd();
 			}
@@ -709,7 +709,7 @@ void __fastcall gunbirdZ80Out(unsigned short nAddress, unsigned char nValue)
 		case 0x0C:									// Write reply to sound commands
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply sent (0x%02X).\n"), nValue);
 
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 			if (!nSoundlatchAck && ZetTotalCycles() > nCycles68KSync) {
 				BurnTimerUpdateEnd();
 			}
@@ -764,7 +764,7 @@ void __fastcall tengaiZ80Out(unsigned short nAddress, unsigned char nValue)
 		case 0x18:									// Write reply to sound commands
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply sent (0x%02X).\n"), nValue);
 
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 			if (!nSoundlatchAck && ZetTotalCycles() > nCycles68KSync) {
 				BurnTimerUpdateEnd();
 			}
@@ -815,7 +815,7 @@ unsigned char __fastcall samuraiaReadByte(unsigned int sekAddress)
 		case 0xC00008: {						// Inputs / Sound CPU status
 			return ~DrvInput[1] >> 8;
 		case 0xC80009:
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply read.\n"));
 			if (!nSoundlatchAck) {
 				PsikyoSynchroniseZ80(0x0100);
@@ -852,7 +852,7 @@ unsigned short __fastcall samuraiaReadWord(unsigned int sekAddress)
 		case 0xC00006:							//
 			return ~DrvInput[3];
 		case 0xC00008: {						// Inputs / Sound CPU status
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply read.\n"));
 			if (!nSoundlatchAck) {
 				PsikyoSynchroniseZ80(0x0100);
@@ -892,7 +892,7 @@ unsigned char __fastcall gunbirdReadByte(unsigned int sekAddress)
 		case 0xC00002:							// Inputs / Sound CPU status
 			return ~DrvInput[1] >> 8;
 		case 0xC00003:
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply read.\n"));
 			if (!nSoundlatchAck) {
 				PsikyoSynchroniseZ80(0x0100);
@@ -930,7 +930,7 @@ unsigned short __fastcall gunbirdReadWord(unsigned int sekAddress)
 		case 0xC00000:							// Joysticks
 			return ~DrvInput[0];
 		case 0xC00002: {						// Inputs / Sound CPU status
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply read.\n"));
 			if (!nSoundlatchAck) {
 				PsikyoSynchroniseZ80(0x0100);
@@ -1134,7 +1134,7 @@ unsigned char __fastcall tengaiReadByte(unsigned int sekAddress)
 		case 0xC00002:							// Inputs / Sound CPU status
 			return ~DrvInput[1] >> 8;
 		case 0xC00003:
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply read.\n"));
 			if (!nSoundlatchAck) {
 				PsikyoSynchroniseZ80(0x0200);
@@ -1176,7 +1176,7 @@ unsigned short __fastcall tengaiReadWord(unsigned int sekAddress)
 		case 0xC00000:							// Joysticks
 			return ~DrvInput[0];
 		case 0xC00002: {						// Inputs / Sound CPU status
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 //			bprintf(PRINT_NORMAL, _T("  - Sound reply read.\n"));
 			if (!nSoundlatchAck) {
 				PsikyoSynchroniseZ80(0x0200);
@@ -1272,7 +1272,6 @@ void __fastcall PsikyoWriteWordPalette(unsigned int sekAddress, unsigned short w
 
 static int DrvExit()
 {
-	destroyUniCache();
 	switch (PsikyoHardwareVersion) {
 		case PSIKYO_HW_SAMURAIA:
 		case PSIKYO_HW_GUNBIRD: {
@@ -1295,7 +1294,7 @@ static int DrvExit()
 	// Deallocate all used memory
 	free(Mem);
 	Mem = NULL;
-	
+
 	return 0;
 }
 
@@ -1360,7 +1359,7 @@ static int DrvDraw()
 
 static int samuraiaCheckSleep(int)
 {
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 	int nCurrentPC = SekGetPC(-1);
 
 	if (bVBlank && nCurrentPC >= 0x000462 && nCurrentPC <= 0x00046E) {
@@ -1377,7 +1376,7 @@ static int samuraiaCheckSleep(int)
 
 static int gunbirdCheckSleep(int)
 {
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 	int nCurrentPC = SekGetPC(-1);
 
 	if (bVBlank && nCurrentPC >= 0x015E68 && nCurrentPC <= 0x015E76) {
@@ -1394,7 +1393,7 @@ static int gunbirdCheckSleep(int)
 
 static int gunbirdjCheckSleep(int)
 {
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 	int nCurrentPC = SekGetPC(-1);
 
 	if (bVBlank && nCurrentPC >= 0x015EA6 && nCurrentPC <= 0x015EB4) {
@@ -1411,7 +1410,7 @@ static int gunbirdjCheckSleep(int)
 
 static int gunbirdkCheckSleep(int)
 {
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 	int nCurrentPC = SekGetPC(-1);
 
 	if (bVBlank && nCurrentPC >= 0x015E70 && nCurrentPC <= 0x015E7E) {
@@ -1428,7 +1427,7 @@ static int gunbirdkCheckSleep(int)
 
 static int s1945jnCheckSleep(int)
 {
-#ifdef USE_SPEEDHACKS
+#if 1 && defined USE_SPEEDHACKS
 	int nCurrentPC = SekGetPC(-1);
 
 	if (bVBlank && nCurrentPC >= 0x019646 && nCurrentPC <= 0x019654) {
@@ -1573,7 +1572,10 @@ static void Nibbleswap(unsigned char* pData, int nLen)
 static int samuraiaLoadRoms()
 {
 	// Load 68000 ROM
-	unsigned char* pTemp = PsikyoTileROM;
+	unsigned char* pTemp = (unsigned char*)malloc(0x080000);
+	if (pTemp == NULL) {
+		return 1;
+	}
 
 	BurnLoadRom(pTemp + 0x000000, 0, 1);
 	BurnLoadRom(pTemp + 0x040000, 1, 1);
@@ -1583,10 +1585,11 @@ static int samuraiaLoadRoms()
 		((unsigned short*)Psikyo68KROM)[2 * i + 1] = ((unsigned short*)pTemp)[0x020000 + i];
 	}
 
-/*
+	free(pTemp);
+
 	BurnLoadRom(PsikyoSpriteROM + 0x000000, 2, 1);
 	Nibbleswap(PsikyoSpriteROM, 0x200000);
-*/
+
 	BurnLoadRom(PsikyoSpriteLUT, 3, 1);
 
 	BurnLoadRom(PsikyoTileROM + 0x000000, 4, 1);
@@ -1607,8 +1610,10 @@ static int samuraiaLoadRoms()
 static int gunbirdLoadRoms()
 {
 	// Load 68000 ROM
-	unsigned char* pTemp = PsikyoTileROM;
-	
+	unsigned char* pTemp = (unsigned char*)malloc(0x100000);
+	if (pTemp == NULL) {
+		return 1;
+	}
 
 	BurnLoadRom(pTemp + 0x000000, 0, 1);
 	BurnLoadRom(pTemp + 0x080000, 1, 1);
@@ -1618,16 +1623,16 @@ static int gunbirdLoadRoms()
 		((unsigned short*)Psikyo68KROM)[2 * i + 1] = ((unsigned short*)pTemp)[0x040000 + i];
 	}
 
-/*	
+	free(pTemp);
+
 	BurnLoadRom(PsikyoSpriteROM + 0x000000, 2, 1);
 	BurnLoadRom(PsikyoSpriteROM + 0x200000, 3, 1);
 	BurnLoadRom(PsikyoSpriteROM + 0x400000, 4, 1);
-	//if (PsikyoSpriteROMSize > 0x0C00000) 
-	{
+	if (PsikyoSpriteROMSize > 0x0C00000) {
 		BurnLoadRom(PsikyoSpriteROM + 0x600000, 5, 1);
 	}
 	Nibbleswap(PsikyoSpriteROM, PsikyoSpriteROMSize >> 1);
-*/
+
 	BurnLoadRom(PsikyoSpriteLUT, 6, 1);
 
 	BurnLoadRom(PsikyoTileROM, 7, 1);
@@ -1644,8 +1649,11 @@ static int gunbirdLoadRoms()
 static int s1945LoadRoms()
 {
 	// Load 68000 ROM
-	unsigned char* pTemp = PsikyoTileROM;
-	
+	unsigned char* pTemp = (unsigned char*)malloc(0x100000);
+	if (pTemp == NULL) {
+		return 1;
+	}
+
 	BurnLoadRom(pTemp + 0x000000, 0, 1);
 	BurnLoadRom(pTemp + 0x080000, 1, 1);
 
@@ -1654,13 +1662,14 @@ static int s1945LoadRoms()
 		((unsigned short*)Psikyo68KROM)[2 * i + 1] = ((unsigned short*)pTemp)[0x040000 + i];
 	}
 
-/*
+	free(pTemp);
+
 	BurnLoadRom(PsikyoSpriteROM + 0x000000, 2, 1);
 	BurnLoadRom(PsikyoSpriteROM + 0x200000, 3, 1);
 	BurnLoadRom(PsikyoSpriteROM + 0x400000, 4, 1);
 	BurnLoadRom(PsikyoSpriteROM + 0x600000, 5, 1);
 	Nibbleswap(PsikyoSpriteROM, 0x800000);
-*/
+
 	BurnLoadRom(PsikyoSpriteLUT, 6, 1);
 
 	BurnLoadRom(PsikyoTileROM, 7, 1);
@@ -1685,8 +1694,11 @@ static void tengaiNibbleswap(unsigned char* pData, int nLen)
 static int tengaiLoadRoms()
 {
 	// Load 68000 ROM
-	unsigned char* pTemp = PsikyoTileROM;
-	
+	unsigned char* pTemp = (unsigned char*)malloc(0x100000);
+	if (pTemp == NULL) {
+		return 1;
+	}
+
 	BurnLoadRom(pTemp + 0x000000, 0, 1);
 	BurnLoadRom(pTemp + 0x080000, 1, 1);
 
@@ -1694,12 +1706,12 @@ static int tengaiLoadRoms()
 		((unsigned short*)Psikyo68KROM)[2 * i + 0] = ((unsigned short*)pTemp)[0x000000 + i];
 		((unsigned short*)Psikyo68KROM)[2 * i + 1] = ((unsigned short*)pTemp)[0x040000 + i];
 	}
-/*
+
 	BurnLoadRom(PsikyoSpriteROM + 0x000000, 2, 1);
 	BurnLoadRom(PsikyoSpriteROM + 0x200000, 3, 1);
 	BurnLoadRom(PsikyoSpriteROM + 0x400000, 4, 1);
 	tengaiNibbleswap(PsikyoSpriteROM, 0x800000);
-*/
+
 	BurnLoadRom(PsikyoSpriteLUT, 5, 1);
 
 	BurnLoadRom(PsikyoTileROM, 6, 1);
@@ -1724,7 +1736,7 @@ static int MemIndex()
 
 	Psikyo68KROM		= Next; Next += 0x100000;		// 68K program
 	PsikyoZ80ROM		= Next; Next += 0x020000;		// Z80 program
-	//PsikyoSpriteROM		= Next; Next += PsikyoSpriteROMSize;
+	PsikyoSpriteROM		= Next; Next += PsikyoSpriteROMSize;
 	PsikyoSpriteLUT		= Next; Next += 0x040000;
 	PsikyoTileROM		= Next; Next += PsikyoTileROMSize;
 	PsikyoSampleROM01	= Next; Next += PsikyoSampleROM01Size;
@@ -1751,7 +1763,6 @@ static int DrvInit()
 {
 	int nLen;
 
-	struct BurnRomInfo ri;
 	BurnSetRefreshRate(15625.0 / 263.5);
 
 	if (!strcmp(BurnDrvGetTextA(DRV_NAME), "samuraia") || !strcmp(BurnDrvGetTextA(DRV_NAME), "sngkace")) {
@@ -1788,9 +1799,6 @@ static int DrvInit()
 		PsikyoTileROMSize = 0x0400000;
 		if (!strcmp(BurnDrvGetTextA(DRV_NAME), "btlkroad")) {
 			PsikyoSpriteROMSize = 0x0C00000;
-		}else if(strstr(BurnDrvGetTextA(DRV_NAME), "gunbird"))
-		{
-			PsikyoSpriteROMSize = 0x0E00000;
 		} else {
 			PsikyoSpriteROMSize = 0x1000000;
 		}
@@ -1847,57 +1855,6 @@ static int DrvInit()
 	memset(Mem, 0, nLen);										// blank all memory
 	MemIndex();													// Index the allocated memory
 
-	cacheFileSize=PsikyoSpriteROMSize;
-		
-	extern char szAppCachePath[];
-		
-	strcpy(filePathName, szAppCachePath);
-	strcat(filePathName, BurnDrvGetTextA(DRV_NAME));
-	strcat(filePathName, "_LB");
-	needCreateCache = false;
-	cacheFile = sceIoOpen( filePathName, PSP_O_RDONLY, 0777);
-	if (cacheFile<0)
-	{
-		needCreateCache = true;
-		cacheFile = sceIoOpen( filePathName, PSP_O_RDWR|PSP_O_CREAT, 0777 );
-	}else if(sceIoLseek(cacheFile,0,SEEK_END)!=cacheFileSize)
-	{
-		needCreateCache = true;
-		sceIoClose(cacheFile);
-		cacheFile = sceIoOpen( filePathName, PSP_O_RDWR|PSP_O_TRUNC, 0777 );
-	}
-	if(needCreateCache)
-	{
-		
-		memset(Mem,0,0x400000);
-
-		for(int i=2,cacheFileSize=0;cacheFileSize<PsikyoSpriteROMSize;i++)
-		{
-			BurnDrvGetRomInfo(&ri, i);
-			BurnLoadRom(Mem , i, 1);
-			if(PsikyoHardwareVersion!=PSIKYO_HW_TENGAI)
-			{
-				Nibbleswap(Mem,ri.nLen);
-			}else
-			{
-				tengaiNibbleswap(Mem,ri.nLen);
-			}
-			unsigned int romLength=ri.nLen*2;
-			for(int j=0;j<5;j++)
-			{
-				sceIoLseek( cacheFile, cacheFileSize, SEEK_SET );
-				if( romLength == sceIoWrite(cacheFile,Mem, romLength ) )
-					break;
-			}
-			cacheFileSize=cacheFileSize+romLength;
-			
-		}
-		
-		sceIoClose( cacheFile );
-		cacheFile = sceIoOpen( filePathName,PSP_O_RDONLY, 0777);
-	}
-	
-	
 	// Load the roms into memory
 	switch (PsikyoHardwareVersion) {
 		case PSIKYO_HW_SAMURAIA: {
@@ -2030,8 +1987,7 @@ static int DrvInit()
 	}
 
 	PsikyoPalInit();
-	//Init cacheIndex
-	initCacheStructure(0.3);
+
 	PsikyoTileInit(PsikyoTileROMSize);
 	PsikyoSpriteInit(PsikyoSpriteROMSize);
 
@@ -2057,7 +2013,7 @@ static int DrvInit()
 #endif
 
 	DrvDoReset(); // Reset machine
-	
+
 	return 0;
 }
 

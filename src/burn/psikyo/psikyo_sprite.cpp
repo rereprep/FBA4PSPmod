@@ -1,7 +1,7 @@
 // Psikyo hardware sprites
 #include "psikyo.h"
 
-//unsigned char* PsikyoSpriteROM = NULL;
+unsigned char* PsikyoSpriteROM = NULL;
 unsigned char* PsikyoSpriteRAM = NULL;
 unsigned char* PsikyoSpriteLUT = NULL;
 
@@ -27,7 +27,7 @@ static int* PsikyoZoomXTable = NULL;
 static int* PsikyoZoomYTable = NULL;
 
 static unsigned char* pTile;
-static unsigned int tileDataOffset;
+static unsigned char* pTileData;
 static unsigned int* pTilePalette;
 
 static unsigned short* pZBuffer = NULL;
@@ -196,17 +196,11 @@ int PsikyoSpriteRender(int nLowPriority, int nHighPriority)
 
 				for (int x = 0; x < nXSize; x++, nTileXPos += 16, nAddress += nNextTileX, pTile += nBurnBpp << 4, pZTile += 16) {
 
-					unsigned char attibValue;
-					unsigned short attribAddress=((unsigned short*)PsikyoSpriteLUT)[nAddress];
-					if (attribAddress>nSpriteAddressMask)
-						attibValue=0xFF;
-					else
-						attibValue=PsikyoSpriteAttrib[attribAddress];
-					if (attibValue == nTransColour) {
+					if (PsikyoSpriteAttrib[((unsigned short*)PsikyoSpriteLUT)[nAddress]] == nTransColour) {
 						continue;
 					}
 
-					tileDataOffset = ((((unsigned short*)PsikyoSpriteLUT)[nAddress] << 8) );
+					pTileData = PsikyoSpriteROM + ((((unsigned short*)PsikyoSpriteLUT)[nAddress] << 8) & nSpriteAddressMask);
 					if (nTileYPos < 0 || nTileYPos > 208 || nTileXPos < 0 || nTileXPos > 304) {
 						if (nTileYPos > -16 && nTileYPos < 224 && nTileXPos > -16 && nTileXPos < 320) {
 							RenderSprite[nRenderFunction + 1]();
@@ -272,18 +266,12 @@ int PsikyoSpriteRender(int nLowPriority, int nHighPriority)
 
 					nTileXSize = (x + 1) * nXZoom / 2 - (x * nXZoom / 2);
 
-					unsigned char attibValue;
-					unsigned short attribAddress=((unsigned short*)PsikyoSpriteLUT)[nAddress];
-					if (attribAddress>nSpriteAddressMask)
-						attibValue=0xFF;
-					else
-						attibValue=PsikyoSpriteAttrib[attribAddress];
-					if (attibValue == nTransColour) {
+					if (PsikyoSpriteAttrib[((unsigned short*)PsikyoSpriteLUT)[nAddress]] == nTransColour) {
 						continue;
 					}
 
 					pXZoomInfo = PsikyoZoomXTable + (nTileXSize << 4);
-					tileDataOffset = ((((unsigned short*)PsikyoSpriteLUT)[nAddress] << 8) );
+					pTileData = PsikyoSpriteROM + ((((unsigned short*)PsikyoSpriteLUT)[nAddress] << 8) & nSpriteAddressMask);
 					if (nTileYPos < 0 || nTileYPos > (224 - nTileYSize) || nTileXPos < 0 || nTileXPos > (320 - nTileXSize)) {
 						if (nTileYPos > -nTileYSize && nTileYPos < 224 && nTileXPos > -nTileXSize && nTileXPos < 320) {
 							RenderSprite[nRenderFunction + 33]();
@@ -436,11 +424,8 @@ int PsikyoSpriteInit(int nROMSize)
 	const int nTileSize = 256;
 	int nNumTiles = nROMSize / nTileSize;
 
-	//if(pSpriteLists==NULL)
 	free(pSpriteLists);
-	{
-		pSpriteLists = (PsikyoSprite*)malloc(0x0800 * sizeof(PsikyoSprite));
-	}
+	pSpriteLists = (PsikyoSprite*)malloc(0x0800 * sizeof(PsikyoSprite));
 	if (pSpriteLists == NULL) {
 		PsikyoSpriteExit();
 		return 1;
@@ -452,9 +437,8 @@ int PsikyoSpriteInit(int nROMSize)
 		nLastSprites[i] = -1;
 	}
 
-	//if(pZBuffer==NULL)
 	free(pZBuffer);
-		pZBuffer = (unsigned short*)malloc(512 * 224 * sizeof(short));
+	pZBuffer = (unsigned short*)malloc(512 * 224 * sizeof(short));
 	if (pZBuffer == NULL) {
 		PsikyoSpriteExit();
 		return 1;
@@ -463,12 +447,11 @@ int PsikyoSpriteInit(int nROMSize)
 	memset(pZBuffer, 0, 512 * 224 * sizeof(short));
 	nZOffset = 0;
 
-	for (nSpriteAddressMask = 1; nSpriteAddressMask < nNumTiles; nSpriteAddressMask <<= 1) {}
+	for (nSpriteAddressMask = 1; nSpriteAddressMask < nROMSize; nSpriteAddressMask <<= 1) {}
 	nSpriteAddressMask--;
 
-	//if(PsikyoSpriteAttrib==NULL)
 	free(PsikyoSpriteAttrib);
-		PsikyoSpriteAttrib = (char*)malloc(nSpriteAddressMask + 1);
+	PsikyoSpriteAttrib = (char*)malloc(nSpriteAddressMask + 1);
 	if (PsikyoSpriteAttrib == NULL) {
 		return 1;
 	}
@@ -477,17 +460,14 @@ int PsikyoSpriteInit(int nROMSize)
 	for (int i = 0; i < nNumTiles; i++) {
 		bool bTransparent0 = true;
 		bool bTransparent15 = true;
-		unsigned char* pTileData=getBlock(i * nTileSize, nTileSize);
-		if(pTileData==NULL) continue;
-		for (int j = 0; j < nTileSize; j++) {
-
-			if (pTileData[j] != 0x00) {
+		for (int j = i * nTileSize; j < (i + 1) * nTileSize; j++) {
+			if (PsikyoSpriteROM[j] != 0x00) {
 				bTransparent0 = false;
 				if (!bTransparent15) {
 					break;
 				}
 			}
-			if (pTileData[j] != 0xFF) {
+			if (PsikyoSpriteROM[j] != 0xFF) {
 				bTransparent15 = false;
 				if (!bTransparent0) {
 					break;
@@ -502,17 +482,13 @@ int PsikyoSpriteInit(int nROMSize)
 			PsikyoSpriteAttrib[i] = 15;
 		}
 	}
-/*
+
 	for (int i = nNumTiles; i <= nSpriteAddressMask; i++) {
 		PsikyoSpriteAttrib[i] = 0xFF;
 	}
-*/
-	//if(PsikyoZoomXTable==NULL)
-	free(PsikyoZoomXTable);
-		PsikyoZoomXTable = (int*)malloc(272 * sizeof(int));
-	//if(PsikyoZoomYTable=NULL)
-	free(PsikyoZoomYTable);
-		PsikyoZoomYTable = (int*)malloc(272 * sizeof(int));
+
+	PsikyoZoomXTable = (int*)malloc(272 * sizeof(int));
+	PsikyoZoomYTable = (int*)malloc(272 * sizeof(int));
 	if (PsikyoZoomXTable == NULL || PsikyoZoomYTable == NULL) {
 		PsikyoSpriteExit();
 		return 1;
